@@ -70,21 +70,23 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
             />
           </div>
 
-          <div className="config-field">
-            <label>Grid Rows</label>
-            <div className="grid-control">
-              <button onClick={decrementRows} className="grid-button">-</button>
-              <span className="grid-value">{gridRows}</span>
-              <button onClick={incrementRows} className="grid-button">+</button>
+          <div className="grid-fields-container">
+            <div className="config-field">
+              <label>Grid Rows</label>
+              <div className="grid-control">
+                <button onClick={decrementRows} className="grid-button">-</button>
+                <span className="grid-value">{gridRows}</span>
+                <button onClick={incrementRows} className="grid-button">+</button>
+              </div>
             </div>
-          </div>
 
-          <div className="config-field">
-            <label>Grid Columns</label>
-            <div className="grid-control">
-              <button onClick={decrementCols} className="grid-button">-</button>
-              <span className="grid-value">{gridCols}</span>
-              <button onClick={incrementCols} className="grid-button">+</button>
+            <div className="config-field">
+              <label>Grid Columns</label>
+              <div className="grid-control">
+                <button onClick={decrementCols} className="grid-button">-</button>
+                <span className="grid-value">{gridCols}</span>
+                <button onClick={incrementCols} className="grid-button">+</button>
+              </div>
             </div>
           </div>
 
