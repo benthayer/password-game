@@ -88,6 +88,17 @@
   cursor: not-allowed;
 }
 
+.practice-controls .header-button:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.practice-controls .header-button:disabled:hover {
+  background: #9ca3af !important;
+  cursor: not-allowed;
+}
+
 .practice-configs-container {
   display: flex;
   gap: 24px;

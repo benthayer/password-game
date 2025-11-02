@@ -385,8 +385,12 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                 >
                   &gt;
                 </button>
-                <button onClick={handleResetPractice} className="header-button">
-                  Reset Practice
+                <button 
+                  onClick={handleResetPractice} 
+                  className="header-button"
+                  disabled={activeWordIndex === 0}
+                >
+                  Beginning
                 </button>
               </div>
             )}
