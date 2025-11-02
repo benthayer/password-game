@@ -1,5 +1,5 @@
-import CryptoJS from 'crypto-js';
-import * as corpus from '../corpus.json';
+import * as crypto from 'crypto';
+import * as corpus from './corpus.json';
 
 const wordList: string[] = corpus.words;
 
@@ -9,7 +9,9 @@ const wordList: string[] = corpus.words;
  * @returns {string} - The hexadecimal hash of the input string
  */
 export function hash(string: string): string {
-  return CryptoJS.SHA256(string).toString();
+  return crypto.createHash('sha256')
+    .update(string, 'utf8')
+    .digest('hex');
 }
 
 export function hashModN(hash: string, n: number): number {
@@ -22,17 +24,16 @@ export function getWordFromHash(hash: string): string {
   return wordList[index] as string;
 }
 
-export function hashSubpassword(subpassword: string[], seedPhrase: string = ''): string {
-  // Hash so that we have the conceptual cleanness of delimited strings
-  let combined = hash(seedPhrase);
+export function hashSubpassword(subpassword: string[]): string {
+  const hash = crypto.createHash('sha256');
   for (const word of subpassword) {
-    combined += `:${word}`;
+    hash.update(word, 'utf8');
   }
-  return hash(combined);
+  return hash.digest('hex');
 }
 
-export function getNextWords(subpassword: string[], numOptions: number, seedPhrase: string = ''): string[] {
-  const baseHash = hashSubpassword(subpassword, seedPhrase);
+export function getNextWords(subpassword: string[], numOptions: number): string[] {
+  const baseHash = hashSubpassword(subpassword);
   let tempHash = baseHash;
   const words: string[] = [];
   for (let i = 0; i < numOptions; i++) {
@@ -42,16 +43,16 @@ export function getNextWords(subpassword: string[], numOptions: number, seedPhra
   return words;
 }
 
-export function selectRandomNextWord(subpassword: string[], numOptions: number, seedPhrase: string = ''): string[] {
-  const nextWords = getNextWords(subpassword, numOptions, seedPhrase);
+export function selectRandomNextWord(subpassword: string[], numOptions: number): string[] {
+  const nextWords = getNextWords(subpassword, numOptions);
   const nextWord = nextWords[Math.floor(Math.random() * nextWords.length)] as string;
   return [...subpassword, nextWord];
 }
 
-export function generatePassword(numWords: number, numOptions: number, seedPhrase: string = ''): string[] {
+export function generatePassword(numWords: number, numOptions: number): string {
   let subpassword: string[] = [];
   for (let i = 0; i < numWords; i++) {
-    subpassword = selectRandomNextWord(subpassword, numOptions, seedPhrase);
+    subpassword = selectRandomNextWord(subpassword, numOptions);
   }
-  return subpassword;
+  return subpassword.join(' ');
 }

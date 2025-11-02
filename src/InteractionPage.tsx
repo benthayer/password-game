@@ -18,10 +18,6 @@ interface InteractionPageProps {
   setConfig: (config: GenerationConfig) => void;
   subpassword: string[];
   setSubpassword: (subpassword: string[]) => void;
-  selectedWords: string[];
-  setSelectedWords: (selectedWords: string[]) => void;
-  activeWordIndex: number;
-  setActiveWordIndex: (activeWordIndex: number) => void;
 }
 
 export default function InteractionPage({ 
@@ -29,10 +25,6 @@ export default function InteractionPage({
   setConfig, 
   subpassword, 
   setSubpassword,
-  selectedWords,
-  setSelectedWords,
-  activeWordIndex,
-  setActiveWordIndex
 }: InteractionPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,11 +32,10 @@ export default function InteractionPage({
   const mode: Mode = location.pathname === '/practice' ? 'practice' : 'recovery';
   const [configModalOpen, setConfigModalOpen] = useState(false);
   
-  // Recovery mode state
+  // State
   const [nextWords, setNextWords] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  // Practice mode state
+  const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
   const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(() => {
@@ -70,28 +61,19 @@ export default function InteractionPage({
   }, [practiceDisplayConfig]);
 
   // Recovery mode: load next words for building password
-  const loadNextWordsRecovery = async (currentSubpassword: string[]) => {
-    setLoading(true);
-    try {
-      const words = await getNextWords(currentSubpassword, gridSize, config.seedPhrase);
-      setNextWords(words);
-    } catch (error) {
-      console.error('Error loading next words:', error);
-    } finally {
-      setLoading(false);
-    }
+  const loadNextWordsRecovery = (currentSubpassword: string[]) => {
+    setNextWords(getNextWords(currentSubpassword, gridSize, config.seedPhrase));
   };
 
   // Practice mode: load next words with correct word highlighting
-  const loadNextWordsPractice = async (currentSelected: string[], targetWords: string[], wordIndex: number, showLoading = false) => {
-    if (showLoading) {
-      setLoading(true);
-    }
+  const loadNextWordsPractice = (targetWords: string[], wordIndex: number) => {
     try {
       // Use the full prefix up to (but not including) the active word index
       // This ensures we get the correct options for the active word
       const prefix = targetWords.slice(0, wordIndex);
-      const words = await getNextWords(prefix, gridSize, config.seedPhrase);
+      console.log('loadNextWordsPractice', prefix, gridSize, config.seedPhrase, config.seedPhrase.length);
+      const words = getNextWords(prefix, gridSize, config.seedPhrase);
+      console.log('words', words);
       setNextWords(words);
       
       // Find which word in the options matches the word at the active index
@@ -102,10 +84,6 @@ export default function InteractionPage({
       }
     } catch (error) {
       console.error('Error loading next words:', error);
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
     }
   };
 
@@ -118,20 +96,20 @@ export default function InteractionPage({
         loadNextWordsRecovery([]);
       }
     } else if (mode === 'practice') {
-      loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
+      loadNextWordsPractice(subpassword, activeWordIndex);
     }
   }, [mode, config, subpassword, selectedWords, activeWordIndex]);
 
 
   // Recovery mode: handle word selection
-  const handleWordSelectRecovery = async (word: string) => {
+  const handleWordSelectRecovery = (word: string) => {
     const newSubpassword = [...subpassword, word];
     setSubpassword(newSubpassword);
-    await loadNextWordsRecovery(newSubpassword);
+    loadNextWordsRecovery(newSubpassword);
   };
 
   // Practice mode: handle word selection
-  const handleWordSelectPractice = async (word: string) => {
+  const handleWordSelectPractice = (word: string) => {
     // Don't allow selection when completed (activeWordIndex out of range)
     if (isCompleted || activeWordIndex >= subpassword.length) {
       return;
@@ -153,7 +131,7 @@ export default function InteractionPage({
       
       // Only load next words if not completed
       if (newActiveIndex < subpassword.length) {
-        await loadNextWordsPractice(newSelected, subpassword, newActiveIndex, false);
+        loadNextWordsPractice(subpassword, newActiveIndex);
       }
     } else {
       // Wrong word selected - show error animation
@@ -187,7 +165,7 @@ export default function InteractionPage({
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
     if (subpassword.length > 0) {
-      loadNextWordsPractice([], subpassword, 0, false);
+      loadNextWordsPractice(subpassword, 0);
     }
   };
 
@@ -200,7 +178,7 @@ export default function InteractionPage({
   };
 
   // Navigate to previous word in practice mode
-  const handlePreviousWord = async () => {
+  const handlePreviousWord = () => {
     if (activeWordIndex > 0) {
       const newActiveIndex = activeWordIndex - 1;
       setActiveWordIndex(newActiveIndex);
@@ -209,25 +187,25 @@ export default function InteractionPage({
       const newSelected = selectedWords.slice(0, newActiveIndex);
       setSelectedWords(newSelected);
       setErrorButtonIndex(null);
-      await loadNextWordsPractice(newSelected, subpassword, newActiveIndex, false);
+      loadNextWordsPractice(subpassword, newActiveIndex);
     }
   };
 
   // Navigate to next word in practice mode
-  const handleNextWord = async () => {
+  const handleNextWord = () => {
     if (activeWordIndex < subpassword.length) {
       const newActiveIndex = activeWordIndex + 1;
       setActiveWordIndex(newActiveIndex);
       setErrorButtonIndex(null);
       // Only load next words if not completed
       if (newActiveIndex < subpassword.length) {
-        await loadNextWordsPractice(selectedWords, subpassword, newActiveIndex, false);
+        loadNextWordsPractice(subpassword, newActiveIndex);
       }
     }
   };
 
   // Handle clicking on a word in practice mode to set it as active
-  const handleWordClickInDisplay = async (index: number) => {
+  const handleWordClickInDisplay = (index: number) => {
     if (index < 0 || index >= subpassword.length) {
       return;
     }
@@ -237,11 +215,11 @@ export default function InteractionPage({
     // This allows the user to jump back to any word and start from there
     const newSelected = selectedWords.slice(0, index);
     setSelectedWords(newSelected);
-    await loadNextWordsPractice(newSelected, subpassword, index, false);
+    loadNextWordsPractice(subpassword, index);
   };
 
   // Delete last word
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (subpassword.length === 0) return;
     
     const newSubpassword = subpassword.slice(0, -1);
@@ -255,7 +233,7 @@ export default function InteractionPage({
     }
     
     // Reload words for the new password state
-    await loadNextWordsRecovery(newSubpassword);
+    loadNextWordsRecovery(newSubpassword);
   };
 
   // Reset all words and state
@@ -471,7 +449,6 @@ export default function InteractionPage({
             <WordSelectionGrid
               words={isCompleted ? [] : nextWords}
               onWordClick={handleWordSelectPractice}
-              loading={loading}
               {...(isCompleted 
                 ? { showPlaceholder: true, placeholderText: "-" as const }
                 : { correctWordIndex, errorWordIndex: errorButtonIndex })}
@@ -483,7 +460,6 @@ export default function InteractionPage({
             <WordSelectionGrid
               words={nextWords}
               onWordClick={handleWordSelectRecovery}
-              loading={loading}
               gridCols={config.gridCols}
               gridRows={config.gridRows}
             />

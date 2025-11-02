@@ -9,7 +9,6 @@ import './MainPage.css';
 interface MainPageProps {
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
-  subpassword: string[];
   setSubpassword: (subpassword: string[]) => void;
   setSelectedWords: (selectedWords: string[]) => void;
   setActiveWordIndex: (activeWordIndex: number) => void;
@@ -18,23 +17,10 @@ interface MainPageProps {
 export default function MainPage({ 
   config, 
   setConfig, 
-  subpassword, 
   setSubpassword,
-  setSelectedWords,
-  setActiveWordIndex
 }: MainPageProps) {
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
-
-  const handleGeneratePassword = async (numWords: number) => {
-    const gridSize = getGridSize(config);
-    const passwordWords = await generatePassword(numWords, gridSize, config.seedPhrase);
-    setSubpassword(passwordWords);
-    setSelectedWords([]);
-    setActiveWordIndex(0);
-
-    navigate('/practice');
-  };
 
   const handleRecover = () => {
     navigate('/recovery');
@@ -65,7 +51,7 @@ export default function MainPage({
         onClose={() => setGenerateModalOpen(false)}
         config={config}
         setConfig={setConfig}
-        onGenerate={handleGeneratePassword}
+        setSubpassword={setSubpassword}
       />
     </div>
   );

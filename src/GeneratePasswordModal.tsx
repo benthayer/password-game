@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord, getGridSize } from './generation-config';
 import './GeneratePasswordModal.css';
+import { generatePassword } from './crypto-utils';
+import { useNavigate } from 'react-router-dom';
 
 interface GeneratePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
-  onGenerate: (numWords: number) => void;
+  setSubpassword: (password: string[]) => void;
 }
 
 export default function GeneratePasswordModal({ 
@@ -16,8 +18,9 @@ export default function GeneratePasswordModal({
   onClose, 
   config, 
   setConfig,
-  onGenerate 
+  setSubpassword,
 }: GeneratePasswordModalProps) {
+  const navigate = useNavigate();
   const [desiredBits, setDesiredBits] = useState<number>(80);
   const [seedPhrase, setSeedPhrase] = useState(config.seedPhrase);
   const [gridRows, setGridRows] = useState(config.gridRows);
@@ -42,7 +45,8 @@ export default function GeneratePasswordModal({
   const handleGenerate = () => {
     // Save config before generating
     setConfig(currentConfig);
-    onGenerate(Math.ceil(numWords));
+    setSubpassword(generatePassword(Math.ceil(numWords), numOptions, seedPhrase));
+    navigate('/practice');
     onClose();
   };
 

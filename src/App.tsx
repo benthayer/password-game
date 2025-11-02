@@ -4,8 +4,6 @@ import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
 import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
 
-export type PasswordSource = 'auto-generated' | 'manual';
-
 function AppRouter() {
   const [config, setConfig] = useState<GenerationConfig>(() => {
     // Load from localStorage if available
@@ -90,7 +88,6 @@ function AppRouter() {
             <MainPage
               config={config}
               setConfig={updateConfig}
-              subpassword={subpassword}
               setSubpassword={setSubpassword}
               setSelectedWords={setSelectedWords}
               setActiveWordIndex={setActiveWordIndex}
@@ -105,10 +102,6 @@ function AppRouter() {
               setConfig={updateConfig}
               subpassword={subpassword}
               setSubpassword={setSubpassword}
-              selectedWords={selectedWords}
-              setSelectedWords={setSelectedWords}
-              activeWordIndex={activeWordIndex}
-              setActiveWordIndex={setActiveWordIndex}
             />
           }
         />
@@ -120,10 +113,6 @@ function AppRouter() {
               setConfig={updateConfig}
               subpassword={subpassword}
               setSubpassword={setSubpassword}
-              selectedWords={selectedWords}
-              setSelectedWords={setSelectedWords}
-              activeWordIndex={activeWordIndex}
-              setActiveWordIndex={setActiveWordIndex}
             />
           }
         />

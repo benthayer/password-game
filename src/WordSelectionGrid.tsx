@@ -4,7 +4,6 @@ import './PracticePage.css';
 interface WordSelectionGridProps {
   words: string[];
   onWordClick: (word: string) => void;
-  loading?: boolean;
   correctWordIndex?: number | undefined;
   errorWordIndex?: number | null;
   gridCols?: number;
@@ -17,7 +16,6 @@ interface WordSelectionGridProps {
 export default function WordSelectionGrid({
   words,
   onWordClick,
-  loading = false,
   correctWordIndex,
   errorWordIndex = null,
   gridCols = 4,
@@ -36,7 +34,6 @@ export default function WordSelectionGrid({
       <div 
         className="word-grid" 
         style={{ 
-          opacity: loading ? 0.6 : 1, 
           transition: 'opacity 0.2s',
           gridTemplateColumns: `repeat(${gridCols}, 1fr)`
         }}
@@ -58,15 +55,15 @@ export default function WordSelectionGrid({
           return (
             <button
               key={showPlaceholder ? `placeholder-${index}` : `${word}-${index}`}
-              onClick={() => !loading && !showPlaceholder && onWordClick(word)}
-              disabled={loading || showPlaceholder}
+              onClick={() => !showPlaceholder && onWordClick(word)}
+              disabled={showPlaceholder}
               className={buttonClasses}
               style={{
                 background: shouldHighlight ? '#10b981' : showPlaceholder ? '#e5e7eb' : undefined,
                 border: shouldHighlight ? '3px solid #059669' : '3px solid transparent',
                 boxShadow: shouldHighlight ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
                 fontWeight: shouldHighlight ? 'bold' : 'normal',
-                cursor: showPlaceholder ? 'default' : loading ? 'wait' : 'pointer',
+                cursor: showPlaceholder ? 'default' : 'pointer',
                 boxSizing: 'border-box',
                 color: showPlaceholder ? '#9ca3af' : undefined,
               }}
@@ -76,9 +73,6 @@ export default function WordSelectionGrid({
           );
         })}
       </div>
-      {loading && words.length === 0 && !showPlaceholder && (
-        <div className="loading">Loading options...</div>
-      )}
     </>
   );
 }
