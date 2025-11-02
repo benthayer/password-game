@@ -241,6 +241,20 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     }
   };
 
+  // Handle clicking on a word in practice mode to set it as active
+  const handleWordClickInDisplay = async (index: number) => {
+    if (index < 0 || index >= subpassword.length) {
+      return;
+    }
+    setActiveWordIndex(index);
+    setErrorButtonIndex(null);
+    // Truncate selectedWords to only include words up to (but not including) the clicked index
+    // This allows the user to jump back to any word and start from there
+    const newSelected = selectedWords.slice(0, index);
+    setSelectedWords(newSelected);
+    await loadNextWordsPractice(newSelected, subpassword, index, false);
+  };
+
   // Delete last word
   const handleDelete = async () => {
     if (subpassword.length === 0) return;
@@ -401,6 +415,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               completedCount={isCompleted ? subpassword.length : selectedWords.length}
               practiceConfig={practiceDisplayConfig}
               activeWordIndex={isCompleted ? undefined : activeWordIndex}
+              onWordClick={handleWordClickInDisplay}
             />
           ) : (
             <PasswordProgressDisplay

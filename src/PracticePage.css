@@ -37,6 +37,27 @@
   background-color: transparent;
 }
 
+.password-word.clickable {
+  transition: background-color 0.2s ease;
+}
+
+.password-word.clickable:hover {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+}
+
+.password-word.clickable.completed:hover {
+  background-color: #2563eb !important;
+}
+
+.password-word.clickable.current:hover {
+  background-color: #d97706 !important;
+}
+
+.password-word.clickable.future:hover {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  color: #6b7280;
+}
+
 .placeholder-wrapper {
   width: 100%;
   text-align: center;

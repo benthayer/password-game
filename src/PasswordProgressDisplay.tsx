@@ -8,6 +8,7 @@ interface PasswordProgressDisplayProps {
   showFuture?: boolean;
   practiceConfig?: PracticeDisplayConfig;
   activeWordIndex?: number | undefined;
+  onWordClick?: (index: number) => void;
 }
 
 export default function PasswordProgressDisplay({
@@ -16,6 +17,7 @@ export default function PasswordProgressDisplay({
   showFuture = true,
   practiceConfig,
   activeWordIndex,
+  onWordClick,
 }: PasswordProgressDisplayProps) {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [showPlaceholder, setShowPlaceholder] = useState(words.length === 0);
@@ -124,12 +126,21 @@ export default function PasswordProgressDisplay({
             
             let style: CSSProperties = { visibility: shouldShow ? 'visible' : 'hidden' };
             
+            // In practice mode, make words clickable
+            const isClickable = practiceConfig && onWordClick && shouldShow;
+            if (isClickable) {
+              style.cursor = 'pointer';
+              style.userSelect = 'none';
+              wordClass += ' clickable';
+            }
+            
             // Always render the word but use visibility to hide it, preserving layout space
             return (
               <span 
                 key={index} 
                 className={wordClass}
                 style={style}
+                onClick={isClickable ? () => onWordClick(index) : undefined}
               >
                 {word}
               </span>
