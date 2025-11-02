@@ -2,7 +2,7 @@
   background: #f3f4f6;
   border-radius: 8px;
   padding: 16px;
-  margin: 0 auto 24px auto;
+  margin: 0 0 24px 0;
   border: 1px solid #e5e7eb;
   width: fit-content;
   min-width: 250px;
@@ -31,7 +31,7 @@
   color: #1f2937;
   font-weight: 600;
   font-family: 'Consolas', 'Monaco', 'Menlo', 'Courier New', monospace;
-  text-align: right;
+  text-align: left;
 }
 
 .config-seed-phrase {

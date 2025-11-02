@@ -31,8 +31,8 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
   };
 
   const handleHighlightCurrentWordChange = () => {
-    // Can only enable highlight if display current word is enabled
-    if (config.displayCurrentWord) {
+    // Can only enable highlight if display and display current word are enabled
+    if (config.display && config.displayCurrentWord) {
       onConfigChange({
         ...config,
         highlightCurrentWord: !config.highlightCurrentWord,
@@ -41,8 +41,8 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
   };
 
   const handleDisplayFutureWordsChange = () => {
-    // Can only enable display future words if display current word is enabled
-    if (config.displayCurrentWord) {
+    // Can only enable display future words if display and display current word are enabled
+    if (config.display && config.displayCurrentWord) {
       onConfigChange({
         ...config,
         displayFutureWords: !config.displayFutureWords,
@@ -76,12 +76,12 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
             
             <div className="practice-config-sub-items">
               <div className="practice-config-item practice-config-sub-item">
-                <label className={`practice-config-checkbox-label ${!config.displayCurrentWord ? 'disabled' : ''}`}>
+                <label className={`practice-config-checkbox-label ${!config.display || !config.displayCurrentWord ? 'disabled' : ''}`}>
                   <input
                     type="checkbox"
                     checked={config.highlightCurrentWord}
                     onChange={handleHighlightCurrentWordChange}
-                    disabled={!config.displayCurrentWord}
+                    disabled={!config.display || !config.displayCurrentWord}
                   />
                   <span>Highlight current word</span>
                 </label>
@@ -90,12 +90,12 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
             
             <div className="practice-config-sub-items">
               <div className="practice-config-item practice-config-sub-item">
-                <label className={`practice-config-checkbox-label ${!config.displayCurrentWord ? 'disabled' : ''}`}>
+                <label className={`practice-config-checkbox-label ${!config.display || !config.displayCurrentWord ? 'disabled' : ''}`}>
                   <input
                     type="checkbox"
                     checked={config.displayFutureWords}
                     onChange={handleDisplayFutureWordsChange}
-                    disabled={!config.displayCurrentWord}
+                    disabled={!config.display || !config.displayCurrentWord}
                   />
                   <span>Display future words</span>
                 </label>
