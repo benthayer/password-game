@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
 import type { PasswordSource } from './App';
 import { GRID_SIZE } from './game-config';
+import PasswordProgressDisplay from './PasswordProgressDisplay';
+import WordSelectionGrid from './WordSelectionGrid';
 import './GamePage.css';
 import './PracticePage.css';
 
@@ -53,8 +55,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     navigate('/display');
   };
 
-  const currentPasswordText = subpassword.join(' ');
-
   return (
     <div className="game-page">
       <div className="game-content">
@@ -77,18 +77,12 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
 
         <div className="current-password-section">
           <h2>Current Password</h2>
-          <div className="password-progress-display">
-            {currentPasswordText ? (
-              currentPasswordText.split(/\s+/).filter(word => word.length > 0).map((word, index) => (
-                <span key={index} className="password-word completed">
-                  {word}
-                </span>
-              ))
-            ) : (
-              <span className="password-word future">No words selected yet</span>
-            )}
-          </div>
-          {currentPasswordText && (
+          <PasswordProgressDisplay
+            words={subpassword}
+            completedCount={subpassword.length}
+            showFuture={false}
+          />
+          {subpassword.length > 0 && (
             <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
               {subpassword.length} {subpassword.length === 1 ? 'word' : 'words'} selected
             </p>
@@ -97,24 +91,11 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
 
         <div className="word-selection-section">
           <h2>Select Next Word</h2>
-          <div className="word-grid" style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-            {nextWords.map((word, index) => (
-              <button
-                key={`${word}-${index}`}
-                onClick={() => !loading && handleWordSelect(word)}
-                disabled={loading}
-                className="word-button"
-                style={{
-                  cursor: loading ? 'wait' : 'pointer',
-                }}
-              >
-                {word}
-              </button>
-            ))}
-          </div>
-          {loading && nextWords.length === 0 && (
-            <div className="loading">Loading options...</div>
-          )}
+          <WordSelectionGrid
+            words={nextWords}
+            onWordClick={handleWordSelect}
+            loading={loading}
+          />
         </div>
 
         {subpassword.length > 0 && (

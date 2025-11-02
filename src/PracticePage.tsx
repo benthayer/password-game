@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
 import { GRID_SIZE } from './game-config';
+import PasswordProgressDisplay from './PasswordProgressDisplay';
+import WordSelectionGrid from './WordSelectionGrid';
 import './GamePage.css';
 import './PracticePage.css';
 
@@ -110,12 +112,12 @@ export default function PracticePage({ password }: PracticePageProps) {
             <p style={{ color: '#6b7280', fontSize: '1.2rem', marginBottom: '32px' }}>
               You've successfully practiced all words in your password.
             </p>
-            <div className="password-progress-display" style={{ textAlign: 'center', margin: '0 auto', marginBottom: '0', display: 'inline-block', padding: '16px 18px' }}>
-              {passwordWords.map((word, index) => (
-                <span key={index} className="password-word completed">
-                  {word}
-                </span>
-              ))}
+            <div style={{ textAlign: 'center', margin: '0 auto', marginBottom: '0', display: 'inline-block' }}>
+              <PasswordProgressDisplay
+                words={passwordWords}
+                completedCount={passwordWords.length}
+                showFuture={false}
+              />
             </div>
           </div>
           <div className="header-buttons" style={{ marginTop: '26px', justifyContent: 'center' }}>
@@ -148,23 +150,11 @@ export default function PracticePage({ password }: PracticePageProps) {
 
         <div className="current-password-section">
           <h2>Password Progress</h2>
-          <div className="password-progress-display">
-            {passwordWords.map((word, index) => {
-              let wordClass = 'password-word';
-              if (index < selectedWords.length) {
-                wordClass += ' completed';
-              } else if (index === selectedWords.length) {
-                wordClass += ' current';
-              } else {
-                wordClass += ' future';
-              }
-              return (
-                <span key={index} className={wordClass}>
-                  {word}
-                </span>
-              );
-            })}
-          </div>
+          <PasswordProgressDisplay
+            words={passwordWords}
+            completedCount={selectedWords.length}
+            showFuture={true}
+          />
           <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
             Word {selectedWords.length + 1} of {passwordWords.length}
           </p>
@@ -175,43 +165,13 @@ export default function PracticePage({ password }: PracticePageProps) {
           <p style={{ marginBottom: '20px', color: '#6b7280', fontSize: '0.95rem' }}>
             Click the highlighted word to continue
           </p>
-          <div className="word-grid" style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-            {nextWords.map((word, index) => {
-              const isCorrect = index === correctWordIndex;
-              const isError = errorButtonIndex === index;
-              let buttonClasses = 'word-button';
-              if (isCorrect && !isError) {
-                buttonClasses += ' correct';
-              }
-              if (isError) {
-                buttonClasses += ' error';
-                if (isCorrect) {
-                  buttonClasses += ' correct-word';
-                }
-              }
-              return (
-                <button
-                  key={`${word}-${index}`}
-                  onClick={() => !loading && handleWordSelect(word)}
-                  disabled={loading}
-                  className={buttonClasses}
-                  style={{
-                    background: isCorrect && !isError ? '#10b981' : undefined,
-                    border: isCorrect && !isError ? '3px solid #059669' : '3px solid transparent',
-                    boxShadow: isCorrect && !isError ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
-                    fontWeight: isCorrect ? 'bold' : 'normal',
-                    cursor: loading ? 'wait' : 'pointer',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  {word}
-                </button>
-              );
-            })}
-          </div>
-          {loading && nextWords.length === 0 && (
-            <div className="loading">Loading options...</div>
-          )}
+          <WordSelectionGrid
+            words={nextWords}
+            onWordClick={handleWordSelect}
+            loading={loading}
+            correctWordIndex={correctWordIndex}
+            errorWordIndex={errorButtonIndex}
+          />
         </div>
       </div>
     </div>

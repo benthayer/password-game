@@ -13,7 +13,7 @@
 .password-word {
   display: inline-block;
   padding: 4px 8px;
-  margin: 0 4px;
+  margin: 4px;
   border-radius: 4px;
   transition: all 0.3s ease;
 }
