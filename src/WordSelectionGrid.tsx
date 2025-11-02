@@ -5,10 +5,13 @@ interface WordSelectionGridProps {
   words: string[];
   onWordClick: (word: string) => void;
   loading?: boolean;
-  correctWordIndex?: number;
+  correctWordIndex?: number | undefined;
   errorWordIndex?: number | null;
   gridCols?: number;
+  gridRows?: number;
   highlightCorrect?: boolean;
+  showPlaceholder?: boolean | undefined;
+  placeholderText?: string | undefined;
 }
 
 export default function WordSelectionGrid({
@@ -18,8 +21,16 @@ export default function WordSelectionGrid({
   correctWordIndex,
   errorWordIndex = null,
   gridCols = 4,
+  gridRows = 3,
   highlightCorrect = true,
+  showPlaceholder = false,
+  placeholderText = '-',
 }: WordSelectionGridProps) {
+  // If showing placeholders, create an array of placeholder buttons
+  // Use the same size as the normal grid (gridRows * gridCols)
+  const placeholderCount = showPlaceholder ? gridRows * gridCols : 0;
+  const displayWords = showPlaceholder ? Array(placeholderCount).fill(placeholderText) : words;
+
   return (
     <>
       <div 
@@ -30,10 +41,10 @@ export default function WordSelectionGrid({
           gridTemplateColumns: `repeat(${gridCols}, 1fr)`
         }}
       >
-        {words.map((word, index) => {
-          const isCorrect = index === correctWordIndex;
-          const isError = errorWordIndex === index;
-          const shouldHighlight = highlightCorrect && isCorrect && !isError;
+        {displayWords.map((word, index) => {
+          const isCorrect = !showPlaceholder && index === correctWordIndex;
+          const isError = !showPlaceholder && errorWordIndex === index;
+          const shouldHighlight = !showPlaceholder && highlightCorrect && isCorrect && !isError;
           let buttonClasses = 'word-button';
           if (shouldHighlight) {
             buttonClasses += ' correct';
@@ -46,17 +57,18 @@ export default function WordSelectionGrid({
           }
           return (
             <button
-              key={`${word}-${index}`}
-              onClick={() => !loading && onWordClick(word)}
-              disabled={loading}
+              key={showPlaceholder ? `placeholder-${index}` : `${word}-${index}`}
+              onClick={() => !loading && !showPlaceholder && onWordClick(word)}
+              disabled={loading || showPlaceholder}
               className={buttonClasses}
               style={{
-                background: shouldHighlight ? '#10b981' : undefined,
+                background: shouldHighlight ? '#10b981' : showPlaceholder ? '#e5e7eb' : undefined,
                 border: shouldHighlight ? '3px solid #059669' : '3px solid transparent',
                 boxShadow: shouldHighlight ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
                 fontWeight: shouldHighlight ? 'bold' : 'normal',
-                cursor: loading ? 'wait' : 'pointer',
+                cursor: showPlaceholder ? 'default' : loading ? 'wait' : 'pointer',
                 boxSizing: 'border-box',
+                color: showPlaceholder ? '#9ca3af' : undefined,
               }}
             >
               {word}
@@ -64,7 +76,7 @@ export default function WordSelectionGrid({
           );
         })}
       </div>
-      {loading && words.length === 0 && (
+      {loading && words.length === 0 && !showPlaceholder && (
         <div className="loading">Loading options...</div>
       )}
     </>

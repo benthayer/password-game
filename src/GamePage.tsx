@@ -38,9 +38,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
-  const [completed, setCompleted] = useState(false);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
   const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(DEFAULT_PRACTICE_DISPLAY_CONFIG);
+  
+  // Check if practice is completed (activeWordIndex is out of range)
+  const isCompleted = activeWordIndex >= subpassword.length;
 
   const gridSize = getGridSize(config);
 
@@ -99,7 +101,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
       // Initialize practice mode state
       setSelectedWords([]);
       setActiveWordIndex(0);
-      setCompleted(false);
       setErrorButtonIndex(null);
       setMode('practice');
       loadNextWordsPractice([], passwordWords, 0, true);
@@ -115,6 +116,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
   // Practice mode: handle word selection
   const handleWordSelectPractice = async (word: string) => {
+    // Don't allow selection when completed (activeWordIndex out of range)
+    if (isCompleted || activeWordIndex >= subpassword.length) {
+      return;
+    }
+    
     const expectedWord = subpassword[activeWordIndex];
     
     if (word === expectedWord) {
@@ -125,14 +131,13 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
       const newSelected = subpassword.slice(0, activeWordIndex + 1);
       setSelectedWords(newSelected);
       
-      // Move to next word if not at the end
-      if (activeWordIndex + 1 < subpassword.length) {
-        const newActiveIndex = activeWordIndex + 1;
-        setActiveWordIndex(newActiveIndex);
+      // Move to next word (or beyond if at the end)
+      const newActiveIndex = activeWordIndex + 1;
+      setActiveWordIndex(newActiveIndex);
+      
+      // Only load next words if not completed
+      if (newActiveIndex < subpassword.length) {
         await loadNextWordsPractice(newSelected, subpassword, newActiveIndex, false);
-      } else {
-        // All words have been selected
-        setCompleted(true);
       }
     } else {
       // Wrong word selected - show error animation
@@ -165,7 +170,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
       // Initialize practice mode state
       setSelectedWords([]);
       setActiveWordIndex(0);
-      setCompleted(false);
       setErrorButtonIndex(null);
       setPracticeDisplayConfig(DEFAULT_PRACTICE_DISPLAY_CONFIG);
       setMode('practice');
@@ -187,7 +191,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     // Initialize practice mode state
     setSelectedWords([]);
     setActiveWordIndex(0);
-    setCompleted(false);
     setErrorButtonIndex(null);
     setMode('practice');
     loadNextWordsPractice([], subpassword, 0, true);
@@ -197,7 +200,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   const handleResetPractice = () => {
     setSelectedWords([]);
     setActiveWordIndex(0);
-    setCompleted(false);
     setErrorButtonIndex(null);
     if (subpassword.length > 0) {
       loadNextWordsPractice([], subpassword, 0, false);
@@ -209,7 +211,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     setMode('game');
     setSelectedWords([]);
     setActiveWordIndex(0);
-    setCompleted(false);
     setErrorButtonIndex(null);
   };
 
@@ -222,7 +223,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
       // (don't include words that were selected beyond this point)
       const newSelected = selectedWords.slice(0, newActiveIndex);
       setSelectedWords(newSelected);
-      setCompleted(false);
       setErrorButtonIndex(null);
       await loadNextWordsPractice(newSelected, subpassword, newActiveIndex, false);
     }
@@ -230,14 +230,14 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
   // Navigate to next word in practice mode
   const handleNextWord = async () => {
-    if (activeWordIndex < subpassword.length - 1) {
+    if (activeWordIndex < subpassword.length) {
       const newActiveIndex = activeWordIndex + 1;
       setActiveWordIndex(newActiveIndex);
-      // Don't modify selectedWords - only navigation, not auto-selection
-      setCompleted(false);
       setErrorButtonIndex(null);
-      // Pass selectedWords for consistency, but loadNextWordsPractice uses the prefix based on activeWordIndex
-      await loadNextWordsPractice(selectedWords, subpassword, newActiveIndex, false);
+      // Only load next words if not completed
+      if (newActiveIndex < subpassword.length) {
+        await loadNextWordsPractice(selectedWords, subpassword, newActiveIndex, false);
+      }
     }
   };
 
@@ -251,7 +251,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     // If in practice mode, reset practice state
     if (mode === 'practice') {
       setSelectedWords([]);
-      setCompleted(false);
       setErrorButtonIndex(null);
       setMode('game');
     }
@@ -264,7 +263,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   const handleReset = () => {
     setSubpassword([]);
     setSelectedWords([]);
-    setCompleted(false);
     setErrorButtonIndex(null);
     setMode('game');
     loadNextWordsGame([]);
@@ -374,7 +372,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                 <button
                   onClick={handlePreviousWord}
                   className="header-button navigation-button"
-                  disabled={activeWordIndex === 0 || completed}
+                  disabled={activeWordIndex === 0}
                   title="Previous word"
                 >
                   &lt;
@@ -382,7 +380,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                 <button
                   onClick={handleNextWord}
                   className="header-button navigation-button"
-                  disabled={activeWordIndex >= subpassword.length - 1 || completed}
+                  disabled={activeWordIndex >= subpassword.length}
                   title="Next word"
                 >
                   &gt;
@@ -396,9 +394,9 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           {mode === 'practice' ? (
             <PasswordProgressDisplay
               words={subpassword}
-              completedCount={selectedWords.length}
+              completedCount={isCompleted ? subpassword.length : selectedWords.length}
               practiceConfig={practiceDisplayConfig}
-              activeWordIndex={activeWordIndex}
+              activeWordIndex={isCompleted ? undefined : activeWordIndex}
             />
           ) : (
             <PasswordProgressDisplay
@@ -414,7 +412,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           )}
           {mode === 'practice' && (
             <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
-              Word {activeWordIndex + 1} of {subpassword.length}
+              {isCompleted ? (
+                <>All {subpassword.length} words completed</>
+              ) : (
+                <>Word {activeWordIndex + 1} of {subpassword.length}</>
+              )}
             </p>
           )}
         </div>
@@ -423,12 +425,14 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           <h2>Select Next Word</h2>
           {mode === 'practice' ? (
             <WordSelectionGrid
-              words={nextWords}
+              words={isCompleted ? [] : nextWords}
               onWordClick={handleWordSelectPractice}
               loading={loading}
-              correctWordIndex={correctWordIndex}
-              errorWordIndex={errorButtonIndex}
+              {...(isCompleted 
+                ? { showPlaceholder: true, placeholderText: "-" as const }
+                : { correctWordIndex, errorWordIndex: errorButtonIndex })}
               gridCols={config.gridCols}
+              gridRows={config.gridRows}
               highlightCorrect={practiceDisplayConfig.hint}
             />
           ) : (
@@ -437,6 +441,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               onWordClick={handleWordSelectGame}
               loading={loading}
               gridCols={config.gridCols}
+              gridRows={config.gridRows}
             />
           )}
         </div>

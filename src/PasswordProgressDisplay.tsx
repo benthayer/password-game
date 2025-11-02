@@ -7,7 +7,7 @@ interface PasswordProgressDisplayProps {
   completedCount: number;
   showFuture?: boolean;
   practiceConfig?: PracticeDisplayConfig;
-  activeWordIndex?: number;
+  activeWordIndex?: number | undefined;
 }
 
 export default function PasswordProgressDisplay({
@@ -73,6 +73,9 @@ export default function PasswordProgressDisplay({
                 }
               }
               // displayMode === 'all' shows all words, so shouldShow stays true
+            } else if (practiceConfig && activeWordIndex === undefined) {
+              // Practice completed - show all words regardless of display mode
+              shouldShow = true;
             } else {
               // Game mode or practice mode without config
               if (index >= completedCount && !showFuture) {
@@ -97,6 +100,13 @@ export default function PasswordProgressDisplay({
                 }
               } else {
                 // Future words
+                wordClass += ' future';
+              }
+            } else if (practiceConfig && activeWordIndex === undefined) {
+              // Practice completed - all words should show as completed
+              if (index < completedCount) {
+                wordClass += ' completed';
+              } else {
                 wordClass += ' future';
               }
             } else {
