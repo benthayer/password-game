@@ -14,7 +14,7 @@ interface MainPageProps {
   setConfig: (config: GenerationConfig) => void;
 }
 
-export default function MainPage({ setPassword, setPasswordSource, config }: MainPageProps) {
+export default function MainPage({ setPassword, setPasswordSource, config, setConfig }: MainPageProps) {
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
@@ -23,24 +23,30 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
     const password = await generatePassword(numWords, gridSize, config.seedPhrase);
     setPassword(password);
     setPasswordSource('auto-generated');
-    navigate('/');
+    navigate('/recover');
   };
 
   const handleRecover = () => {
-    navigate('/');
+    navigate('/recover');
+  };
+
+  const handlePractice = () => {
+    navigate('/recover');
   };
 
   return (
     <div className="main-page">
       <div className="main-content">
-        <h1>Password Game</h1>
-        <p className="subtitle">Generate secure passwords through word selection</p>
+        <h1>Main</h1>
         <div className="button-container">
-          <button onClick={() => setGenerateModalOpen(true)} className="primary-button">
-            Generate Password
+          <button onClick={() => setGenerateModalOpen(true)} className="primary-button generate-button">
+            Generate
           </button>
-          <button onClick={handleRecover} className="primary-button">
-            Recover Password
+          <button onClick={handleRecover} className="primary-button recover-button">
+            Recover
+          </button>
+          <button onClick={handlePractice} className="primary-button practice-button">
+            Practice
           </button>
         </div>
       </div>
@@ -48,6 +54,7 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
         isOpen={generateModalOpen}
         onClose={() => setGenerateModalOpen(false)}
         config={config}
+        setConfig={setConfig}
         onGenerate={handleGeneratePassword}
       />
     </div>

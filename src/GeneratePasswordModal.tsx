@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord } from './generation-config';
 import ConfigDisplay from './ConfigDisplay';
+import ConfigModal from './ConfigModal';
 import './GeneratePasswordModal.css';
 
 interface GeneratePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: GenerationConfig;
+  setConfig: (config: GenerationConfig) => void;
   onGenerate: (numWords: number) => void;
 }
 
@@ -15,9 +17,11 @@ export default function GeneratePasswordModal({
   isOpen, 
   onClose, 
   config, 
+  setConfig,
   onGenerate 
 }: GeneratePasswordModalProps) {
   const [desiredBits, setDesiredBits] = useState<number>(80);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,8 +29,6 @@ export default function GeneratePasswordModal({
       setDesiredBits(80);
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const entropyPerWord = calculateEntropyPerWord(config);
   const numWords = desiredBits / entropyPerWord;
@@ -37,17 +39,36 @@ export default function GeneratePasswordModal({
   };
 
   return (
-    <div className="generate-modal-overlay" onClick={onClose}>
-      <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="generate-modal-header">
-          <h2>Generate Password</h2>
-          <button className="generate-modal-close" onClick={onClose}>×</button>
-        </div>
-        <div className="generate-modal-body">
-          <div className="current-config-section">
-            <h3>Your current config:</h3>
-            <ConfigDisplay config={config} />
+    <>
+      {isOpen && (
+      <div className="generate-modal-overlay" onClick={onClose}>
+        <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="generate-modal-header">
+            <h2>Generate Password</h2>
+            <button className="generate-modal-close" onClick={onClose}>×</button>
           </div>
+          <div className="generate-modal-body">
+            <div className="current-config-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3>Your current config:</h3>
+                <button 
+                  onClick={() => setConfigModalOpen(true)}
+                  style={{
+                    background: '#6366f1',
+                    color: 'white',
+                    padding: '8px 16px',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Edit Config
+                </button>
+              </div>
+              <ConfigDisplay config={config} />
+            </div>
 
           <div className="bits-input-section">
             <label htmlFor="desired-bits">Desired Bits of Security:</label>
@@ -81,6 +102,14 @@ export default function GeneratePasswordModal({
         </div>
       </div>
     </div>
+      )}
+    <ConfigModal
+      isOpen={configModalOpen}
+      onClose={() => setConfigModalOpen(false)}
+      config={config}
+      onSave={setConfig}
+    />
+    </>
   );
 }
 

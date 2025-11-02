@@ -39,3 +39,27 @@
   font-size: 1.1rem;
 }
 
+.generate-button {
+  background: #10b981;
+}
+
+.generate-button:hover {
+  background: #059669;
+}
+
+.recover-button {
+  background: #dc2626;
+}
+
+.recover-button:hover {
+  background: #b91c1c;
+}
+
+.practice-button {
+  background: #6366f1;
+}
+
+.practice-button:hover {
+  background: #4f46e5;
+}
+

@@ -479,6 +479,7 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
           isOpen={generateModalOpen}
           onClose={() => setGenerateModalOpen(false)}
           config={config}
+          setConfig={setConfig}
           onGenerate={handleGeneratePassword}
         />
       </div>

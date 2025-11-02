@@ -34,8 +34,7 @@ function AppRouter() {
         <Route
           path="/"
           element={
-            <InteractionPage
-              password={password}
+            <MainPage
               setPassword={setPassword}
               setPasswordSource={setPasswordSource}
               config={config}
@@ -44,9 +43,10 @@ function AppRouter() {
           }
         />
         <Route
-          path="/main"
+          path="/recover"
           element={
-            <MainPage
+            <InteractionPage
+              password={password}
               setPassword={setPassword}
               setPasswordSource={setPasswordSource}
               config={config}
