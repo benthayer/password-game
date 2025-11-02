@@ -5,6 +5,7 @@
   border: 1px solid #e5e7eb;
   width: fit-content;
   min-width: 250px;
+  margin-left: auto;
 }
 
 .practice-config-item {
