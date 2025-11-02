@@ -23,7 +23,7 @@ function AppRouter() {
         />
         <Route
           path="/game"
-          element={<GamePage setPassword={setPassword} setPasswordSource={setPasswordSource} />}
+          element={<GamePage password={password} setPassword={setPassword} setPasswordSource={setPasswordSource} />}
         />
       </Routes>
     </BrowserRouter>

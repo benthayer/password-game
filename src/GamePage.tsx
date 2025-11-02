@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNextWords } from './crypto-utils';
+import { getNextWords, generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
 import { GRID_SIZE } from './game-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
@@ -11,11 +11,12 @@ import './PracticePage.css';
 type Mode = 'game' | 'practice';
 
 interface GamePageProps {
+  password?: string;
   setPassword: (password: string) => void;
   setPasswordSource: (source: PasswordSource) => void;
 }
 
-export default function GamePage({ setPassword, setPasswordSource }: GamePageProps) {
+export default function GamePage({ password, setPassword, setPasswordSource }: GamePageProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('game');
   
@@ -78,6 +79,21 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     }
   }, [mode]);
 
+  // Auto-initialize practice mode if password is provided
+  useEffect(() => {
+    if (password && password.trim() !== '' && subpassword.length === 0) {
+      const passwordWords = password.split(' ');
+      setSubpassword(passwordWords);
+      // Initialize practice mode state
+      setSelectedWords([]);
+      setActiveWordIndex(0);
+      setCompleted(false);
+      setErrorButtonIndex(null);
+      setMode('practice');
+      loadNextWordsPractice([], passwordWords, 0, true);
+    }
+  }, [password]);
+
   // Game mode: handle word selection
   const handleWordSelectGame = async (word: string) => {
     const newSubpassword = [...subpassword, word];
@@ -116,6 +132,37 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
           setErrorButtonIndex(null);
         }, 1500);
       }
+    }
+  };
+
+  // Generate password and switch to practice mode
+  const handleGeneratePassword = async () => {
+    setLoading(true);
+    try {
+      // Generate a password with 18 words (same as MainPage)
+      const passwordString = await generatePassword(18, GRID_SIZE);
+      const passwordWords = passwordString.split(' ');
+      
+      // Set the password in the game state
+      setSubpassword(passwordWords);
+      
+      // Set the password in the app state
+      setPassword(passwordString);
+      setPasswordSource('auto-generated');
+      
+      // Initialize practice mode state
+      setSelectedWords([]);
+      setActiveWordIndex(0);
+      setCompleted(false);
+      setErrorButtonIndex(null);
+      setMode('practice');
+      
+      // Load words for practice mode
+      await loadNextWordsPractice([], passwordWords, 0, false);
+    } catch (error) {
+      console.error('Error generating password:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -253,6 +300,20 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
           <div className="header-buttons">
             {mode === 'game' && (
               <>
+                <button 
+                  onClick={handleGeneratePassword} 
+                  className="header-button"
+                  disabled={loading}
+                  style={{ 
+                    background: '#10b981', 
+                    color: 'white',
+                    padding: '12px 24px',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  {loading ? 'Generating...' : 'Generate Password'}
+                </button>
                 <button 
                   onClick={handleReset} 
                   className="header-button reset-button"

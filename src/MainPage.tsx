@@ -16,7 +16,7 @@ export default function MainPage({ setPassword, setPasswordSource }: MainPagePro
     const password = await generatePassword(18, GRID_SIZE);
     setPassword(password);
     setPasswordSource('auto-generated');
-    navigate('/display');
+    navigate('/game');
   };
 
   const handlePlayGame = () => {
@@ -26,7 +26,7 @@ export default function MainPage({ setPassword, setPasswordSource }: MainPagePro
   return (
     <div className="main-page">
       <div className="main-content">
-        <h1>Word Game Safe</h1>
+        <h1>Password Game</h1>
         <p className="subtitle">Generate secure passwords through word selection</p>
         <div className="button-container">
           <button onClick={handleGeneratePassword} className="primary-button">
