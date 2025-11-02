@@ -3,7 +3,6 @@ import { useState } from 'react';
 import MainPage from './MainPage';
 import PasswordDisplay from './PasswordDisplay';
 import GamePage from './GamePage';
-import PracticePage from './PracticePage';
 
 export type PasswordSource = 'auto-generated' | 'manual';
 
@@ -25,10 +24,6 @@ function AppRouter() {
         <Route
           path="/game"
           element={<GamePage setPassword={setPassword} setPasswordSource={setPasswordSource} />}
-        />
-        <Route
-          path="/practice"
-          element={<PracticePage password={password} />}
         />
       </Routes>
     </BrowserRouter>
