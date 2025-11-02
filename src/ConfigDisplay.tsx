@@ -13,6 +13,7 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
 
   return (
     <div className="config-display">
+      <h3 className="config-title">Configuration</h3>
       <div className="config-display-item">
         <span className="config-label">Seed phrase:</span>
         <span className="config-value config-seed-phrase">"{config.seedPhrase || ''}"</span>
@@ -21,15 +22,6 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
         <span className="config-label">Grid:</span>
         <span className="config-value">{config.gridCols} × {config.gridRows}</span>
       </div>
-      <div className="config-display-item">
-        <span className="config-label">Entropy per word:</span>
-        <span className="config-value">{entropyPerWord.toFixed(2)}</span>
-      </div>
-      <div className="config-display-item">
-        <span className="config-label">Words for 80 bits:</span>
-        <span className="config-value">{wordsFor80Bits.toFixed(2)}</span>
-      </div>
     </div>
   );
 }
-

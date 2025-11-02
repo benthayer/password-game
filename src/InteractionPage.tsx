@@ -317,14 +317,21 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
                     fontWeight: '500'
                   }}
                 >
-                  Practice Recovered Password
+                  Practice Mode
                 </button>
               </>
             )}
             {mode === 'practice' && (
               <>
-                <button onClick={handleReturnToRecovery} className="header-button">
-                  Back to Recovery
+                <button onClick={handleReturnToRecovery} className="header-button"
+                  style={{ 
+                    background: '#6366f1', 
+                    color: 'white',
+                    padding: '12px 24px',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}>
+                  Recovery Mode
                 </button>
               </>
             )}
