@@ -59,21 +59,29 @@ export default function PasswordProgressDisplay({
       {words.length > 0 && (
         <div className="password-words-container">
           {words.map((word, index) => {
+            let shouldShow = true;
+            
             // In practice mode with config, respect the config settings
             if (practiceConfig && activeWordIndex !== undefined) {
               // If display is off, hide all words
               if (!practiceConfig.display) {
-                return null;
+                shouldShow = false;
+              } else {
+                // Check if we should display current word (requires both display and displayCurrentWord)
+                if (index === activeWordIndex && !practiceConfig.displayCurrentWord) {
+                  shouldShow = false;
+                }
+                
+                // Check if we should display future words (requires displayCurrentWord and displayFutureWords)
+                if (index > activeWordIndex && !(practiceConfig.displayCurrentWord && practiceConfig.displayFutureWords)) {
+                  shouldShow = false;
+                }
               }
-              
-              // Check if we should display current word (requires both display and displayCurrentWord)
-              if (index === activeWordIndex && !practiceConfig.displayCurrentWord) {
-                return null;
-              }
-              
-              // Check if we should display future words (requires displayCurrentWord and displayFutureWords)
-              if (index > activeWordIndex && !(practiceConfig.displayCurrentWord && practiceConfig.displayFutureWords)) {
-                return null;
+            } else {
+              // Game mode or practice mode without config
+              if (index >= completedCount && !showFuture) {
+                // In game mode, don't render future words
+                shouldShow = false;
               }
             }
             
@@ -99,14 +107,17 @@ export default function PasswordProgressDisplay({
               } else {
                 if (showFuture) {
                   wordClass += ' future';
-                } else {
-                  // In game mode, don't render future words
-                  return null;
                 }
               }
             }
+            
+            // Always render the word but use visibility to hide it, preserving layout space
             return (
-              <span key={index} className={wordClass}>
+              <span 
+                key={index} 
+                className={wordClass}
+                style={{ visibility: shouldShow ? 'visible' : 'hidden' }}
+              >
                 {word}
               </span>
             );

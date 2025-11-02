@@ -8,6 +8,7 @@
   font-family: 'Courier New', monospace;
   line-height: 2;
   word-break: break-word;
+  min-height: 200px;
 }
 
 .password-word {
@@ -15,7 +16,6 @@
   padding: 4px 8px;
   margin: 4px;
   border-radius: 4px;
-  transition: all 0.3s ease;
 }
 
 .password-word.completed {
@@ -77,7 +77,7 @@
 .password-words-container {
   position: relative;
   z-index: 1;
-  min-height: 0;
+  min-height: 160px;
 }
 
 @keyframes pulse {

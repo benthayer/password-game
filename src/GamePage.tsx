@@ -310,19 +310,21 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
         <div className="game-header">
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
-            <button
-              onClick={() => setConfigModalOpen(true)}
-              className="header-button config-button"
-              style={{
-                background: '#6366f1',
-                color: 'white',
-                padding: '12px 24px',
-                fontSize: '1rem',
-                fontWeight: '500'
-              }}
-            >
-              Config
-            </button>
+            {mode === 'game' && (
+              <button
+                onClick={() => setConfigModalOpen(true)}
+                className="header-button config-button"
+                style={{
+                  background: '#6366f1',
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '1rem',
+                  fontWeight: '500'
+                }}
+              >
+                Config
+              </button>
+            )}
             {mode === 'game' && (
               <>
                 <button 
