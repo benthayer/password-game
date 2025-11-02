@@ -302,8 +302,12 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
           )}
         </div>
 
-        {mode === 'game' && subpassword.length > 0 && (
-          <button onClick={handlePracticePassword} className="display-password-button">
+        {mode === 'game' && (
+          <button 
+            onClick={handlePracticePassword} 
+            className="display-password-button"
+            disabled={subpassword.length === 0}
+          >
             Practice Password
           </button>
         )}

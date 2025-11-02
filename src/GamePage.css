@@ -121,8 +121,18 @@
   background: #10b981;
 }
 
-.display-password-button:hover {
+.display-password-button:hover:not(:disabled) {
   background: #059669;
+}
+
+.display-password-button:disabled {
+  background: #9ca3af;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.display-password-button:disabled:hover {
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
