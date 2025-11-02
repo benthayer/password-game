@@ -15,39 +15,28 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
   };
 
   const handleDisplayCurrentWordChange = () => {
-    const newDisplayCurrentWord = !config.displayCurrentWord;
-    const newConfig: PracticeDisplayConfig = {
+    // Can toggle, but only has effect if display is enabled
+    onConfigChange({
       ...config,
-      displayCurrentWord: newDisplayCurrentWord,
-    };
-    
-    // If disabling display current word, also disable display future words and highlight
-    if (!newDisplayCurrentWord) {
-      newConfig.displayFutureWords = false;
-      newConfig.highlightCurrentWord = false;
-    }
-    
-    onConfigChange(newConfig);
+      displayCurrentWord: !config.displayCurrentWord,
+    });
   };
 
   const handleHighlightCurrentWordChange = () => {
-    // Can only enable highlight if display and display current word are enabled
-    if (config.display && config.displayCurrentWord) {
-      onConfigChange({
-        ...config,
-        highlightCurrentWord: !config.highlightCurrentWord,
-      });
-    }
+    // Can toggle, but only has effect if display and display current word are enabled
+    // Note: highlight state is retained even when displayCurrentWord is disabled
+    onConfigChange({
+      ...config,
+      highlightCurrentWord: !config.highlightCurrentWord,
+    });
   };
 
   const handleDisplayFutureWordsChange = () => {
-    // Can only enable display future words if display and display current word are enabled
-    if (config.display && config.displayCurrentWord) {
-      onConfigChange({
-        ...config,
-        displayFutureWords: !config.displayFutureWords,
-      });
-    }
+    // Can toggle, but only has effect if display and display current word are enabled
+    onConfigChange({
+      ...config,
+      displayFutureWords: !config.displayFutureWords,
+    });
   };
 
   return (
@@ -64,12 +53,11 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
         
         <div className="practice-config-sub-items">
           <div className="practice-config-item practice-config-sub-item">
-            <label className="practice-config-checkbox-label">
+            <label className={`practice-config-checkbox-label ${!config.display ? 'disabled' : ''}`}>
               <input
                 type="checkbox"
                 checked={config.displayCurrentWord}
                 onChange={handleDisplayCurrentWordChange}
-                disabled={!config.display}
               />
               <span>Display current word</span>
             </label>
@@ -81,26 +69,22 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
                     type="checkbox"
                     checked={config.highlightCurrentWord}
                     onChange={handleHighlightCurrentWordChange}
-                    disabled={!config.display || !config.displayCurrentWord}
                   />
                   <span>Highlight current word</span>
                 </label>
               </div>
             </div>
-            
-            <div className="practice-config-sub-items">
-              <div className="practice-config-item practice-config-sub-item">
-                <label className={`practice-config-checkbox-label ${!config.display || !config.displayCurrentWord ? 'disabled' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={config.displayFutureWords}
-                    onChange={handleDisplayFutureWordsChange}
-                    disabled={!config.display || !config.displayCurrentWord}
-                  />
-                  <span>Display future words</span>
-                </label>
-              </div>
-            </div>
+          </div>
+          
+          <div className="practice-config-item practice-config-sub-item">
+            <label className={`practice-config-checkbox-label ${!config.display || !config.displayCurrentWord ? 'disabled' : ''}`}>
+              <input
+                type="checkbox"
+                checked={config.displayFutureWords}
+                onChange={handleDisplayFutureWordsChange}
+              />
+              <span>Display future words</span>
+            </label>
           </div>
         </div>
       </div>
