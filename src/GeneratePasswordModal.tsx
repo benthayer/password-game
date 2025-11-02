@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GenerationConfig } from './generation-config';
-import { calculateEntropyPerWord } from './generation-config';
-import ConfigDisplay from './ConfigDisplay';
-import ConfigModal from './ConfigModal';
+import { calculateEntropyPerWord, getGridSize } from './generation-config';
 import './GeneratePasswordModal.css';
 
 interface GeneratePasswordModalProps {
@@ -21,21 +19,47 @@ export default function GeneratePasswordModal({
   onGenerate 
 }: GeneratePasswordModalProps) {
   const [desiredBits, setDesiredBits] = useState<number>(80);
-  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [seedPhrase, setSeedPhrase] = useState(config.seedPhrase);
+  const [gridRows, setGridRows] = useState(config.gridRows);
+  const [gridCols, setGridCols] = useState(config.gridCols);
 
   useEffect(() => {
     if (isOpen) {
       // Default to 80 bits if modal is newly opened
       setDesiredBits(80);
+      // Reset config fields to current config
+      setSeedPhrase(config.seedPhrase);
+      setGridRows(config.gridRows);
+      setGridCols(config.gridCols);
     }
-  }, [isOpen]);
+  }, [isOpen, config]);
 
-  const entropyPerWord = calculateEntropyPerWord(config);
+  const currentConfig: GenerationConfig = { seedPhrase, gridRows, gridCols };
+  const entropyPerWord = calculateEntropyPerWord(currentConfig);
   const numWords = desiredBits / entropyPerWord;
+  const numOptions = getGridSize(currentConfig);
 
   const handleGenerate = () => {
+    // Save config before generating
+    setConfig(currentConfig);
     onGenerate(Math.ceil(numWords));
     onClose();
+  };
+
+  const incrementRows = () => {
+    if (gridRows < 10) setGridRows(gridRows + 1);
+  };
+
+  const decrementRows = () => {
+    if (gridRows > 1) setGridRows(gridRows - 1);
+  };
+
+  const incrementCols = () => {
+    if (gridCols < 10) setGridCols(gridCols + 1);
+  };
+
+  const decrementCols = () => {
+    if (gridCols > 1) setGridCols(gridCols - 1);
   };
 
   return (
@@ -48,67 +72,85 @@ export default function GeneratePasswordModal({
             <button className="generate-modal-close" onClick={onClose}>×</button>
           </div>
           <div className="generate-modal-body">
-            <div className="current-config-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3>Your current config:</h3>
-                <button 
-                  onClick={() => setConfigModalOpen(true)}
-                  style={{
-                    background: '#6366f1',
-                    color: 'white',
-                    padding: '8px 16px',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Edit Config
-                </button>
+            <div className="config-section">
+              <h3>Configuration</h3>
+              <div className="config-field">
+                <label htmlFor="seed-phrase">Public Seed Phrase</label>
+                <input
+                  id="seed-phrase"
+                  type="text"
+                  value={seedPhrase}
+                  onChange={(e) => setSeedPhrase(e.target.value)}
+                  placeholder="Enter seed phrase"
+                />
               </div>
-              <ConfigDisplay config={config} />
+
+              <div className="grid-fields-container">
+                <div className="config-field">
+                  <label>Grid Rows</label>
+                  <div className="grid-control">
+                    <button onClick={decrementRows} className="grid-button">-</button>
+                    <span className="grid-value">{gridRows}</span>
+                    <button onClick={incrementRows} className="grid-button">+</button>
+                  </div>
+                </div>
+
+                <div className="config-field">
+                  <label>Grid Columns</label>
+                  <div className="grid-control">
+                    <button onClick={decrementCols} className="grid-button">-</button>
+                    <span className="grid-value">{gridCols}</span>
+                    <button onClick={incrementCols} className="grid-button">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="config-calculated">
+                <h3>Calculated numbers:</h3>
+                <div className="calculated-item">
+                  <span>Number of words:</span>
+                  <span className="calculated-value">{numOptions}</span>
+                </div>
+                <div className="calculated-item">
+                  <span>Entropy per word:</span>
+                  <span className="calculated-value">{entropyPerWord.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
 
-          <div className="bits-input-section">
-            <label htmlFor="desired-bits">Desired Bits of Security:</label>
-            <input
-              id="desired-bits"
-              type="number"
-              value={desiredBits}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                if (!isNaN(value) && value > 0) {
-                  setDesiredBits(value);
-                }
-              }}
-              min="1"
-              step="1"
-              placeholder="Enter bits"
-            />
-          </div>
+            <div className="bits-input-section">
+              <label htmlFor="desired-bits">Desired Bits of Security:</label>
+              <input
+                id="desired-bits"
+                type="number"
+                value={desiredBits}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value > 0) {
+                    setDesiredBits(value);
+                  }
+                }}
+                min="1"
+                step="1"
+                placeholder="Enter bits"
+              />
+            </div>
 
-          <div className="conversion-display">
-            <span className="conversion-text">
-              {desiredBits} bits ≈ {numWords.toFixed(2)} words
-            </span>
+            <div className="conversion-display">
+              <span className="conversion-text">
+                {desiredBits} bits ≈ {numWords.toFixed(2)} words
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="generate-modal-footer">
-          <button onClick={onClose} className="generate-button cancel-button">Cancel</button>
-          <button onClick={handleGenerate} className="generate-button generate-button-primary">
-            Generate {Math.ceil(numWords)} words
-          </button>
+          <div className="generate-modal-footer">
+            <button onClick={onClose} className="generate-button cancel-button">Cancel</button>
+            <button onClick={handleGenerate} className="generate-button generate-button-primary">
+              Generate {Math.ceil(numWords)} words
+            </button>
+          </div>
         </div>
       </div>
-    </div>
       )}
-    <ConfigModal
-      isOpen={configModalOpen}
-      onClose={() => setConfigModalOpen(false)}
-      config={config}
-      onSave={setConfig}
-    />
     </>
   );
 }
