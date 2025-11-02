@@ -123,26 +123,22 @@ export default function GeneratePasswordModal({
                 placeholder="Enter bits"
               />
             </div>
-            <div>
-
 
             <div className="config-calculated">
-                <h3>Calculated numbers:</h3>
-                <div className="calculated-item">
-                  <span>Number of words:</span>
-                  <span className="calculated-value">{numOptions}</span>
-                </div>
-                <div className="calculated-item">
-                  <span>Entropy per word:</span>
-                  <span className="calculated-value">{entropyPerWord.toFixed(2)}</span>
-                </div>
+              <h3>Calculated numbers:</h3>
+              <div className="calculated-item">
+                <span>Number of words:</span>
+                <span className="calculated-value">{numOptions}</span>
               </div>
-            </div>
-
-            <div className="conversion-display">
-              <span className="conversion-text">
-                {desiredBits} bits ≈ {numWords.toFixed(2)} words
-              </span>
+              <div className="calculated-item">
+                <span>Entropy per word:</span>
+                <span className="calculated-value">{entropyPerWord.toFixed(2)}</span>
+              </div>
+              <div className="conversion-display">
+                <span className="conversion-text">
+                  {desiredBits} bits ≈ {numWords.toFixed(2)} words
+                </span>
+              </div>
             </div>
           </div>
           <div className="generate-modal-footer">
