@@ -1,4 +1,4 @@
-import './GamePage.css';
+import './InteractionPage.css';
 import './PracticePage.css';
 
 interface WordSelectionGridProps {

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { GameConfig } from './game-config';
-import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './game-config';
+import type { GenerationConfig } from './generation-config';
+import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './generation-config';
 import './ConfigModal.css';
 
 interface ConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
-  config: GameConfig;
-  onSave: (config: GameConfig) => void;
+  config: GenerationConfig;
+  onSave: (config: GenerationConfig) => void;
 }
 
 export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigModalProps) {
@@ -25,7 +25,7 @@ export default function ConfigModal({ isOpen, onClose, config, onSave }: ConfigM
 
   if (!isOpen) return null;
 
-  const currentConfig: GameConfig = { seedPhrase, gridRows, gridCols };
+  const currentConfig: GenerationConfig = { seedPhrase, gridRows, gridCols };
   const numOptions = getGridSize(currentConfig);
   const entropyPerWord = calculateEntropyPerWord(currentConfig);
   const wordsFor80Bits = calculateWordsFor80Bits(currentConfig);

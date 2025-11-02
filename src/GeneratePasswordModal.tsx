@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { GameConfig } from './game-config';
-import { calculateEntropyPerWord } from './game-config';
+import type { GenerationConfig } from './generation-config';
+import { calculateEntropyPerWord } from './generation-config';
 import ConfigDisplay from './ConfigDisplay';
 import './GeneratePasswordModal.css';
 
 interface GeneratePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  config: GameConfig;
+  config: GenerationConfig;
   onGenerate: (numWords: number) => void;
 }
 

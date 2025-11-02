@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
-import type { GameConfig } from './game-config';
-import { getGridSize } from './game-config';
+import type { GenerationConfig } from './generation-config';
+import { getGridSize } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import './MainPage.css';
 
 interface MainPageProps {
   setPassword: (password: string) => void;
   setPasswordSource: (source: PasswordSource) => void;
-  config: GameConfig;
-  setConfig: (config: GameConfig) => void;
+  config: GenerationConfig;
+  setConfig: (config: GenerationConfig) => void;
 }
 
 export default function MainPage({ setPassword, setPasswordSource, config }: MainPageProps) {
@@ -26,7 +26,7 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
     navigate('/');
   };
 
-  const handlePlayGame = () => {
+  const handleRecover = () => {
     navigate('/');
   };
 
@@ -39,8 +39,8 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
           <button onClick={() => setGenerateModalOpen(true)} className="primary-button">
             Generate Password
           </button>
-          <button onClick={handlePlayGame} className="primary-button">
-            Play Game
+          <button onClick={handleRecover} className="primary-button">
+            Recover Password
           </button>
         </div>
       </div>

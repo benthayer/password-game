@@ -1,15 +1,15 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import MainPage from './MainPage';
-import GamePage from './GamePage';
-import { DEFAULT_CONFIG, type GameConfig } from './game-config';
+import InteractionPage from './InteractionPage';
+import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
 
 export type PasswordSource = 'auto-generated' | 'manual';
 
 function AppRouter() {
   const [password, setPassword] = useState<string>('');
   const [passwordSource, setPasswordSource] = useState<PasswordSource>('manual');
-  const [config, setConfig] = useState<GameConfig>(() => {
+  const [config, setConfig] = useState<GenerationConfig>(() => {
     // Load from localStorage if available
     const saved = localStorage.getItem('gameConfig');
     if (saved) {
@@ -23,7 +23,7 @@ function AppRouter() {
   });
 
   // Save config to localStorage whenever it changes
-  const updateConfig = (newConfig: GameConfig) => {
+  const updateConfig = (newConfig: GenerationConfig) => {
     setConfig(newConfig);
     localStorage.setItem('gameConfig', JSON.stringify(newConfig));
   };
@@ -34,7 +34,7 @@ function AppRouter() {
         <Route
           path="/"
           element={
-            <GamePage
+            <InteractionPage
               password={password}
               setPassword={setPassword}
               setPasswordSource={setPasswordSource}

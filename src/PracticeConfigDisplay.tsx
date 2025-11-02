@@ -1,4 +1,4 @@
-import type { PracticeDisplayConfig } from './game-config';
+import type { PracticeDisplayConfig } from './generation-config';
 import './PracticeConfigDisplay.css';
 
 interface PracticeConfigDisplayProps {

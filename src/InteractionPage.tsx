@@ -2,34 +2,34 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords, generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
-import type { GameConfig, PracticeDisplayConfig } from './game-config';
-import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './game-config';
+import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
+import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './generation-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import PracticeConfigDisplay from './PracticeConfigDisplay';
 import GeneratePasswordModal from './GeneratePasswordModal';
-import './GamePage.css';
+import './InteractionPage.css';
 import './PracticePage.css';
 
-type Mode = 'game' | 'practice';
+type Mode = 'recovery' | 'practice';
 
-interface GamePageProps {
+interface InteractionPageProps {
   password?: string;
   setPassword: (password: string) => void;
   setPasswordSource: (source: PasswordSource) => void;
-  config: GameConfig;
-  setConfig: (config: GameConfig) => void;
+  config: GenerationConfig;
+  setConfig: (config: GenerationConfig) => void;
 }
 
-export default function GamePage({ password, setPassword, setPasswordSource, config, setConfig }: GamePageProps) {
+export default function InteractionPage({ password, setPassword, setPasswordSource, config, setConfig }: InteractionPageProps) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('game');
+  const [mode, setMode] = useState<Mode>('recovery');
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   
-  // Game mode state
+  // Recovery mode state
   const [subpassword, setSubpassword] = useState<string[]>([]);
   const [nextWords, setNextWords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,8 +46,8 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
   const gridSize = getGridSize(config);
 
-  // Game mode: load next words for building password
-  const loadNextWordsGame = async (currentSubpassword: string[]) => {
+  // Recovery mode: load next words for building password
+  const loadNextWordsRecovery = async (currentSubpassword: string[]) => {
     setLoading(true);
     try {
       const words = await getNextWords(currentSubpassword, gridSize, config.seedPhrase);
@@ -88,8 +88,8 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
   // Initialize game mode
   useEffect(() => {
-    if (mode === 'game') {
-      loadNextWordsGame([]);
+    if (mode === 'recovery') {
+      loadNextWordsRecovery([]);
     }
   }, [mode, config]);
 
@@ -107,11 +107,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     }
   }, [password]);
 
-  // Game mode: handle word selection
-  const handleWordSelectGame = async (word: string) => {
+  // Recovery mode: handle word selection
+  const handleWordSelectRecovery = async (word: string) => {
     const newSubpassword = [...subpassword, word];
     setSubpassword(newSubpassword);
-    await loadNextWordsGame(newSubpassword);
+    await loadNextWordsRecovery(newSubpassword);
   };
 
   // Practice mode: handle word selection
@@ -206,9 +206,9 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     }
   };
 
-  // Return to game mode
-  const handleReturnToGame = () => {
-    setMode('game');
+  // Return to recovery mode
+  const handleReturnToRecovery = () => {
+    setMode('recovery');
     setSelectedWords([]);
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
@@ -266,11 +266,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     if (mode === 'practice') {
       setSelectedWords([]);
       setErrorButtonIndex(null);
-      setMode('game');
+      setMode('recovery');
     }
     
     // Reload words for the new password state
-    await loadNextWordsGame(newSubpassword);
+    await loadNextWordsRecovery(newSubpassword);
   };
 
   // Reset all words and state
@@ -278,17 +278,17 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     setSubpassword([]);
     setSelectedWords([]);
     setErrorButtonIndex(null);
-    setMode('game');
-    loadNextWordsGame([]);
+    setMode('recovery');
+    loadNextWordsRecovery([]);
   };
 
   return (
     <div className="game-page">
       <div className="game-content">
         <div className="game-header">
-          <h1>{mode === 'game' ? 'Recover Password' : 'Practice Password'}</h1>
+          <h1>{mode === 'recovery' ? 'Recover Password' : 'Practice Password'}</h1>
           <div className="header-buttons">
-            {mode === 'game' && (
+            {mode === 'recovery' && (
               <button
                 onClick={() => setConfigModalOpen(true)}
                 className="header-button config-button"
@@ -303,7 +303,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                 Config
               </button>
             )}
-            {mode === 'game' && (
+            {mode === 'recovery' && (
               <>
                 <button 
                   onClick={handlePracticePassword} 
@@ -323,7 +323,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             )}
             {mode === 'practice' && (
               <>
-                <button onClick={handleReturnToGame} className="header-button">
+                <button onClick={handleReturnToRecovery} className="header-button">
                   Back to Recovery
                 </button>
               </>
@@ -345,8 +345,8 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
         <div className="current-password-section">
           <div className="current-password-header">
-            <h2>{mode === 'game' ? 'Recovered Password' : 'Password Progress'}</h2>
-            {mode === 'game' && (
+            <h2>{mode === 'recovery' ? 'Recovered Password' : 'Password Progress'}</h2>
+            {mode === 'recovery' && (
               <div className="password-controls">
                 <button 
                   onClick={handleReset} 
@@ -428,7 +428,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               showFuture={false}
             />
           )}
-          {mode === 'game' && (
+          {mode === 'recovery' && (
             <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
               {subpassword.length} {subpassword.length === 1 ? 'word' : 'words'} selected
             </p>
@@ -461,7 +461,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           ) : (
             <WordSelectionGrid
               words={nextWords}
-              onWordClick={handleWordSelectGame}
+              onWordClick={handleWordSelectRecovery}
               loading={loading}
               gridCols={config.gridCols}
               gridRows={config.gridRows}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react';
-import type { PracticeDisplayConfig } from './game-config';
+import type { PracticeDisplayConfig } from './generation-config';
 import './PracticePage.css';
 
 interface PasswordProgressDisplayProps {
@@ -49,10 +49,10 @@ export default function PasswordProgressDisplay({
     }
   }, [words.length, showPlaceholder]);
 
-  const isGameMode = !practiceConfig;
+  const isRecoveryMode = !practiceConfig;
   
   return (
-    <div className={`password-progress-display ${words.length > 0 ? 'has-words' : ''} ${isGameMode ? 'game-mode' : ''}`} style={{ position: 'relative' }}>
+    <div className={`password-progress-display ${words.length > 0 ? 'has-words' : ''} ${isRecoveryMode ? 'game-mode' : ''}`} style={{ position: 'relative' }}>
       {showPlaceholder && (
         <div className={`placeholder-wrapper ${isFadingOut ? 'fade-out' : ''}`}>
           <span className="password-word future placeholder-text">
@@ -80,9 +80,9 @@ export default function PasswordProgressDisplay({
               // Practice completed - show all words regardless of display mode
               shouldShow = true;
             } else {
-              // Game mode or practice mode without config
+              // Recovery mode or practice mode without config
               if (index >= completedCount && !showFuture) {
-                // In game mode, don't render future words
+                // In recovery mode, don't render future words
                 shouldShow = false;
               }
             }
@@ -113,7 +113,7 @@ export default function PasswordProgressDisplay({
                 wordClass += ' future';
               }
             } else {
-              // Game mode or practice mode without config
+              // Recovery mode or practice mode without config
               if (index < completedCount) {
                 wordClass += ' completed';
               } else if (index === completedCount) {

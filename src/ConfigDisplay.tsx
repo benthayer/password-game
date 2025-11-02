@@ -1,9 +1,9 @@
-import type { GameConfig } from './game-config';
-import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './game-config';
+import type { GenerationConfig } from './generation-config';
+import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './generation-config';
 import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
-  config: GameConfig;
+  config: GenerationConfig;
 }
 
 export default function ConfigDisplay({ config }: ConfigDisplayProps) {

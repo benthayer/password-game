@@ -1,28 +1,28 @@
 /**
  * Centralized configuration for the word game grid
  */
-export interface GameConfig {
+export interface GenerationConfig {
   seedPhrase: string;
   gridRows: number;
   gridCols: number;
 }
 
-export const DEFAULT_CONFIG: GameConfig = {
+export const DEFAULT_CONFIG: GenerationConfig = {
   seedPhrase: '',
   gridRows: 3,
   gridCols: 4,
 };
 
-export function getGridSize(config: GameConfig): number {
+export function getGridSize(config: GenerationConfig): number {
   return config.gridRows * config.gridCols;
 }
 
-export function calculateEntropyPerWord(config: GameConfig): number {
+export function calculateEntropyPerWord(config: GenerationConfig): number {
   const numOptions = getGridSize(config);
   return Math.log2(numOptions);
 }
 
-export function calculateWordsFor80Bits(config: GameConfig): number {
+export function calculateWordsFor80Bits(config: GenerationConfig): number {
   const entropyPerWord = calculateEntropyPerWord(config);
   return 80 / entropyPerWord;
 }
