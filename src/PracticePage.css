@@ -8,8 +8,11 @@
   font-family: 'Courier New', monospace;
   line-height: 2;
   word-break: break-word;
-  min-height: calc(3 * 1.2rem * 3 + 40px);
   position: relative;
+}
+
+.password-progress-display.game-mode {
+  min-height: calc(3 * 1.2rem * 3 + 40px);
 }
 
 .password-word {

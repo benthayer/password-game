@@ -49,8 +49,10 @@ export default function PasswordProgressDisplay({
     }
   }, [words.length, showPlaceholder]);
 
+  const isGameMode = !practiceConfig;
+  
   return (
-    <div className={`password-progress-display ${words.length > 0 ? 'has-words' : ''}`} style={{ position: 'relative' }}>
+    <div className={`password-progress-display ${words.length > 0 ? 'has-words' : ''} ${isGameMode ? 'game-mode' : ''}`} style={{ position: 'relative' }}>
       {showPlaceholder && (
         <div className={`placeholder-wrapper ${isFadingOut ? 'fade-out' : ''}`}>
           <span className="password-word future placeholder-text">
