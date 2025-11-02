@@ -401,6 +401,13 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             )}
             {mode === 'practice' && (
               <div className="practice-controls">
+                <button 
+                  onClick={handleResetPractice} 
+                  className="header-button navigation-button"
+                  disabled={activeWordIndex === 0}
+                >
+                  &lt;&lt;
+                </button>
                 <button
                   onClick={handlePreviousWord}
                   className="header-button navigation-button"
@@ -416,13 +423,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                   title="Next word"
                 >
                   &gt;
-                </button>
-                <button 
-                  onClick={handleResetPractice} 
-                  className="header-button"
-                  disabled={activeWordIndex === 0}
-                >
-                  Beginning
                 </button>
               </div>
             )}
