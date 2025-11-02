@@ -1,0 +1,75 @@
+.password-progress-display {
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+  font-size: 1.2rem;
+  font-family: 'Courier New', monospace;
+  line-height: 2;
+  word-break: break-word;
+}
+
+.password-word {
+  display: inline-block;
+  padding: 4px 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.password-word.completed {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 500;
+}
+
+.password-word.current {
+  background-color: #f59e0b;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.password-word.future {
+  color: #9ca3af;
+  background-color: transparent;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.word-button.error {
+  background: #ef4444 !important;
+  animation: fadeError 1.5s ease-out forwards;
+}
+
+.word-button.error.correct-word {
+  animation: fadeErrorCorrect 1.5s ease-out forwards;
+}
+
+@keyframes fadeError {
+  0% {
+    background: #ef4444;
+  }
+  100% {
+    background: #6366f1;
+  }
+}
+
+@keyframes fadeErrorCorrect {
+  0% {
+    background: #ef4444;
+  }
+  100% {
+    background: #10b981;
+  }
+}
+

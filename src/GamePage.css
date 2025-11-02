@@ -1,0 +1,179 @@
+.game-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+.game-content {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 1000px;
+  width: 100%;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.game-header h1 {
+  font-size: 2rem;
+  color: #1f2937;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.header-button {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+}
+
+.current-password-section {
+  margin-bottom: 32px;
+}
+
+.current-password-section h2 {
+  font-size: 1.5rem;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.password-display {
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 1.2rem;
+  color: #1f2937;
+  font-family: 'Courier New', monospace;
+  min-height: 60px;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.empty-password {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.word-selection-section {
+  margin-bottom: 24px;
+}
+
+.word-selection-section h2 {
+  font-size: 1.5rem;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.1rem;
+  padding: 40px;
+}
+
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.word-button {
+  padding: 16px;
+  font-size: 1rem;
+  background: #6366f1;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.word-button:hover {
+  background: #4f46e5;
+}
+
+.display-password-button {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  background: #10b981;
+}
+
+.display-password-button:hover {
+  background: #059669;
+}
+
+.password-modal {
+  background: #1f2937;
+  color: white;
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.password-modal h2 {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.password-modal-content {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.modal-password {
+  font-size: 2rem;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+  line-height: 1.6;
+  color: white;
+}
+
+.close-button {
+  background: #ef4444;
+  width: 100%;
+  max-width: 200px;
+}
+
+.close-button:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 768px) {
+  .word-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .game-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+  }
+
+  .header-button {
+    width: 100%;
+  }
+
+  .modal-password {
+    font-size: 1.5rem;
+  }
+}
+
