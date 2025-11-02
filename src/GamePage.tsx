@@ -286,7 +286,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     <div className="game-page">
       <div className="game-content">
         <div className="game-header">
-          <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
+          <h1>{mode === 'game' ? 'Recover Password' : 'Practice Password'}</h1>
           <div className="header-buttons">
             {mode === 'game' && (
               <button
@@ -306,20 +306,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             {mode === 'game' && (
               <>
                 <button 
-                  onClick={() => setGenerateModalOpen(true)} 
-                  className="header-button"
-                  disabled={loading}
-                  style={{ 
-                    background: '#10b981', 
-                    color: 'white',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  Generate Password
-                </button>
-                <button 
                   onClick={handlePracticePassword} 
                   className="header-button"
                   disabled={subpassword.length === 0}
@@ -331,14 +317,14 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                     fontWeight: '500'
                   }}
                 >
-                  Practice Password
+                  Practice Recovered Password
                 </button>
               </>
             )}
             {mode === 'practice' && (
               <>
                 <button onClick={handleReturnToGame} className="header-button">
-                  Back to Game
+                  Back to Recovery
                 </button>
               </>
             )}
@@ -359,7 +345,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
 
         <div className="current-password-section">
           <div className="current-password-header">
-            <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
+            <h2>{mode === 'game' ? 'Recovered Password' : 'Password Progress'}</h2>
             {mode === 'game' && (
               <div className="password-controls">
                 <button 
