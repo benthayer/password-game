@@ -40,11 +40,13 @@
   font-size: 0.95rem;
 }
 
-.reset-button {
+.reset-button,
+.delete-button {
   transition: background-color 0.2s;
 }
 
-.reset-button:hover {
+.reset-button:hover,
+.delete-button:hover {
   background: #b91c1c !important;
 }
 

@@ -144,6 +144,25 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     setErrorButtonIndex(null);
   };
 
+  // Delete last word
+  const handleDelete = async () => {
+    if (subpassword.length === 0) return;
+    
+    const newSubpassword = subpassword.slice(0, -1);
+    setSubpassword(newSubpassword);
+    
+    // If in practice mode, reset practice state
+    if (mode === 'practice') {
+      setSelectedWords([]);
+      setCompleted(false);
+      setErrorButtonIndex(null);
+      setMode('game');
+    }
+    
+    // Reload words for the new password state
+    await loadNextWordsGame(newSubpassword);
+  };
+
   // Reset all words and state
   const handleReset = () => {
     setSubpassword([]);
@@ -196,19 +215,41 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
             {subpassword.length > 0 && (
-              <button 
-                onClick={handleReset} 
-                className="header-button reset-button"
-                style={{ 
-                  background: '#dc2626', 
-                  color: 'white',
-                  padding: '12px 24px',
-                  fontSize: '1rem',
-                  fontWeight: '500'
-                }}
-              >
-                Reset
-              </button>
+              <>
+                <button 
+                  onClick={handleReset} 
+                  className="header-button reset-button"
+                  style={{ 
+                    background: '#dc2626', 
+                    color: 'white',
+                    padding: '12px 24px',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  Reset
+                </button>
+                <button 
+                  onClick={handleDelete} 
+                  className="header-button delete-button"
+                  style={{ 
+                    background: '#dc2626', 
+                    color: 'white',
+                    padding: '12px 24px',
+                    fontSize: '1.5rem',
+                    fontWeight: '500',
+                    lineHeight: '1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingTop: '10px',
+                    paddingBottom: '14px'
+                  }}
+                  title="Delete last word"
+                >
+                  ⌫
+                </button>
+              </>
             )}
             {mode === 'practice' && (
               <>
