@@ -31,14 +31,14 @@ export function calculateWordsFor80Bits(config: GameConfig): number {
  * Configuration for practice mode display options
  */
 export interface PracticeDisplayConfig {
-  displayPreviousWord: boolean;
+  display: boolean;
   displayCurrentWord: boolean;
   highlightCurrentWord: boolean;
   displayFutureWords: boolean;
 }
 
 export const DEFAULT_PRACTICE_DISPLAY_CONFIG: PracticeDisplayConfig = {
-  displayPreviousWord: true,
+  display: true,
   displayCurrentWord: true,
   highlightCurrentWord: true,
   displayFutureWords: true,

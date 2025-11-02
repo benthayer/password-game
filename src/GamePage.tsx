@@ -423,7 +423,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             <PasswordProgressDisplay
               words={subpassword}
               completedCount={selectedWords.length}
-              showFuture={practiceDisplayConfig.displayFutureWords}
+              showFuture={practiceDisplayConfig.display && practiceDisplayConfig.displayCurrentWord && practiceDisplayConfig.displayFutureWords}
               practiceConfig={practiceDisplayConfig}
               activeWordIndex={activeWordIndex}
             />
@@ -456,7 +456,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               correctWordIndex={correctWordIndex}
               errorWordIndex={errorButtonIndex}
               gridCols={config.gridCols}
-              highlightCorrect={practiceDisplayConfig.highlightCurrentWord}
+              highlightCorrect={practiceDisplayConfig.display && practiceDisplayConfig.displayCurrentWord && practiceDisplayConfig.highlightCurrentWord}
             />
           ) : (
             <WordSelectionGrid

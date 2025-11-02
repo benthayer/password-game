@@ -60,19 +60,15 @@ export default function PasswordProgressDisplay({
         <div className="password-words-container">
           {words.map((word, index) => {
             // In practice mode with config, respect the config settings
+            // Previous words are always displayed (implied by exclusion)
             if (practiceConfig && activeWordIndex !== undefined) {
-              // Check if we should display previous word
-              if (index < activeWordIndex && !practiceConfig.displayPreviousWord) {
+              // Check if we should display current word (requires both display and displayCurrentWord)
+              if (index === activeWordIndex && !(practiceConfig.display && practiceConfig.displayCurrentWord)) {
                 return null;
               }
               
-              // Check if we should display current word
-              if (index === activeWordIndex && !practiceConfig.displayCurrentWord) {
-                return null;
-              }
-              
-              // Check if we should display future words
-              if (index > activeWordIndex && !practiceConfig.displayFutureWords) {
+              // Check if we should display future words (requires display, displayCurrentWord, and displayFutureWords)
+              if (index > activeWordIndex && !(practiceConfig.display && practiceConfig.displayCurrentWord && practiceConfig.displayFutureWords)) {
                 return null;
               }
             }
