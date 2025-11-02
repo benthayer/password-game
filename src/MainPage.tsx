@@ -9,18 +9,29 @@ import './MainPage.css';
 interface MainPageProps {
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
+  subpassword: string[];
+  setSubpassword: (subpassword: string[]) => void;
+  setSelectedWords: (selectedWords: string[]) => void;
+  setActiveWordIndex: (activeWordIndex: number) => void;
 }
 
-export default function MainPage({ config, setConfig }: MainPageProps) {
+export default function MainPage({ 
+  config, 
+  setConfig, 
+  subpassword, 
+  setSubpassword,
+  setSelectedWords,
+  setActiveWordIndex
+}: MainPageProps) {
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
   const handleGeneratePassword = async (numWords: number) => {
     const gridSize = getGridSize(config);
-    const passwordWordd = await generatePassword(numWords, gridSize, config.seedPhrase);
-    localStorage.setItem('gameSubpassword', JSON.stringify(passwordWordd));
-    localStorage.setItem('gameSelectedWords', JSON.stringify([]));
-    localStorage.setItem('gameActiveWordIndex', '0');
+    const passwordWords = await generatePassword(numWords, gridSize, config.seedPhrase);
+    setSubpassword(passwordWords);
+    setSelectedWords([]);
+    setActiveWordIndex(0);
 
     navigate('/practice');
   };

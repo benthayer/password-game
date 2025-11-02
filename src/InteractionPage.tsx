@@ -16,9 +16,24 @@ type Mode = 'recovery' | 'practice';
 interface InteractionPageProps {
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
+  subpassword: string[];
+  setSubpassword: (subpassword: string[]) => void;
+  selectedWords: string[];
+  setSelectedWords: (selectedWords: string[]) => void;
+  activeWordIndex: number;
+  setActiveWordIndex: (activeWordIndex: number) => void;
 }
 
-export default function InteractionPage({ config, setConfig }: InteractionPageProps) {
+export default function InteractionPage({ 
+  config, 
+  setConfig, 
+  subpassword, 
+  setSubpassword,
+  selectedWords,
+  setSelectedWords,
+  activeWordIndex,
+  setActiveWordIndex
+}: InteractionPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   // Determine mode from URL path
@@ -26,36 +41,10 @@ export default function InteractionPage({ config, setConfig }: InteractionPagePr
   const [configModalOpen, setConfigModalOpen] = useState(false);
   
   // Recovery mode state
-  const [subpassword, setSubpassword] = useState<string[]>(() => {
-    const saved = localStorage.getItem('gameSubpassword');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
   const [nextWords, setNextWords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Practice mode state
-  const [selectedWords, setSelectedWords] = useState<string[]>(() => {
-    const saved = localStorage.getItem('gameSelectedWords');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
-  const [activeWordIndex, setActiveWordIndex] = useState<number>(() => {
-    const saved = localStorage.getItem('gameActiveWordIndex');
-    return saved ? parseInt(saved, 10) : 0;
-  });
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
   const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(() => {
@@ -76,26 +65,6 @@ export default function InteractionPage({ config, setConfig }: InteractionPagePr
   const gridSize = getGridSize(config);
 
   // Persist state to localStorage
-  useEffect(() => {
-    if (subpassword.length > 0) {
-      localStorage.setItem('gameSubpassword', JSON.stringify(subpassword));
-    } else {
-      localStorage.removeItem('gameSubpassword');
-    }
-  }, [subpassword]);
-
-  useEffect(() => {
-    if (selectedWords.length > 0) {
-      localStorage.setItem('gameSelectedWords', JSON.stringify(selectedWords));
-    } else {
-      localStorage.removeItem('gameSelectedWords');
-    }
-  }, [selectedWords]);
-
-  useEffect(() => {
-    localStorage.setItem('gameActiveWordIndex', activeWordIndex.toString());
-  }, [activeWordIndex]);
-
   useEffect(() => {
     localStorage.setItem('gamePracticeDisplayConfig', JSON.stringify(practiceDisplayConfig));
   }, [practiceDisplayConfig]);
@@ -151,7 +120,7 @@ export default function InteractionPage({ config, setConfig }: InteractionPagePr
     } else if (mode === 'practice') {
       loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
     }
-  }, [mode, config]);
+  }, [mode, config, subpassword, selectedWords, activeWordIndex]);
 
 
   // Recovery mode: handle word selection
@@ -295,9 +264,6 @@ export default function InteractionPage({ config, setConfig }: InteractionPagePr
     setSelectedWords([]);
     setErrorButtonIndex(null);
     setActiveWordIndex(0);
-    localStorage.removeItem('gameSubpassword');
-    localStorage.removeItem('gameSelectedWords');
-    localStorage.setItem('gameActiveWordIndex', '0');
     // Navigate to recovery mode
     navigate('/recovery');
     loadNextWordsRecovery([]);
@@ -311,9 +277,6 @@ export default function InteractionPage({ config, setConfig }: InteractionPagePr
     setSelectedWords([]);
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
-    localStorage.removeItem('gameSubpassword');
-    localStorage.removeItem('gameSelectedWords');
-    localStorage.setItem('gameActiveWordIndex', '0');
     // Navigate to recovery mode
     navigate('/recovery');
     // Reload words with new config
