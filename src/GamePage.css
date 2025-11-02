@@ -22,6 +22,7 @@
   margin-bottom: 32px;
   flex-wrap: wrap;
   gap: 16px;
+  min-height: 48px;
 }
 
 .game-header h1 {
@@ -37,6 +38,14 @@
 .header-button {
   padding: 10px 20px;
   font-size: 0.95rem;
+}
+
+.reset-button {
+  transition: background-color 0.2s;
+}
+
+.reset-button:hover {
+  background: #b91c1c !important;
 }
 
 .current-password-section {

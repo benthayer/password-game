@@ -13,8 +13,8 @@ export default function PasswordProgressDisplay({
 }: PasswordProgressDisplayProps) {
   if (words.length === 0) {
     return (
-      <div className="password-progress-display">
-        <span className="password-word future">No words selected yet</span>
+      <div className="password-progress-display" style={{ textAlign: 'center' }}>
+        <span className="password-word future">Select a word to add it to your password</span>
       </div>
     );
   }

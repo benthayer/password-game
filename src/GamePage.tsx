@@ -144,6 +144,16 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     setErrorButtonIndex(null);
   };
 
+  // Reset all words and state
+  const handleReset = () => {
+    setSubpassword([]);
+    setSelectedWords([]);
+    setCompleted(false);
+    setErrorButtonIndex(null);
+    setMode('game');
+    loadNextWordsGame([]);
+  };
+
   // Practice completion screen
   if (mode === 'practice' && completed) {
     return (
@@ -185,6 +195,21 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
         <div className="game-header">
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
+            {subpassword.length > 0 && (
+              <button 
+                onClick={handleReset} 
+                className="header-button reset-button"
+                style={{ 
+                  background: '#dc2626', 
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '1rem',
+                  fontWeight: '500'
+                }}
+              >
+                Reset
+              </button>
+            )}
             {mode === 'practice' && (
               <>
                 <button onClick={handleResetPractice} className="header-button">
