@@ -37,6 +37,49 @@
   background-color: transparent;
 }
 
+.placeholder-wrapper {
+  width: 100%;
+  text-align: center;
+}
+
+.password-progress-display.has-words .placeholder-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+  pointer-events: none;
+  width: 100%;
+}
+
+.password-word.placeholder-text {
+  display: inline-block;
+  text-align: center;
+}
+
+.placeholder-wrapper.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.password-words-container {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
