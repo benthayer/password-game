@@ -144,13 +144,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     setErrorButtonIndex(null);
   };
 
-  const handleViewOnDisplayPage = () => {
-    const fullPassword = subpassword.join(' ');
-    setPassword(fullPassword);
-    setPasswordSource('manual');
-    navigate('/display');
-  };
-
   // Practice completion screen
   if (mode === 'practice' && completed) {
     return (
@@ -192,9 +185,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
         <div className="game-header">
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
-            <button onClick={() => navigate('/')} className="header-button">
-              Return to Home
-            </button>
             {mode === 'practice' && (
               <>
                 <button onClick={handleResetPractice} className="header-button">
@@ -204,11 +194,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
                   Back to Game
                 </button>
               </>
-            )}
-            {mode === 'game' && subpassword.length > 0 && (
-              <button onClick={handleViewOnDisplayPage} className="header-button">
-                View Password
-              </button>
             )}
           </div>
         </div>
