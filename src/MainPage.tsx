@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
 import type { GameConfig } from './game-config';
 import { getGridSize } from './game-config';
+import GeneratePasswordModal from './GeneratePasswordModal';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -14,10 +16,11 @@ interface MainPageProps {
 
 export default function MainPage({ setPassword, setPasswordSource, config }: MainPageProps) {
   const navigate = useNavigate();
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
-  const handleGeneratePassword = async () => {
+  const handleGeneratePassword = async (numWords: number) => {
     const gridSize = getGridSize(config);
-    const password = await generatePassword(18, gridSize, config.seedPhrase);
+    const password = await generatePassword(numWords, gridSize, config.seedPhrase);
     setPassword(password);
     setPasswordSource('auto-generated');
     navigate('/game');
@@ -33,7 +36,7 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
         <h1>Password Game</h1>
         <p className="subtitle">Generate secure passwords through word selection</p>
         <div className="button-container">
-          <button onClick={handleGeneratePassword} className="primary-button">
+          <button onClick={() => setGenerateModalOpen(true)} className="primary-button">
             Generate Password
           </button>
           <button onClick={handlePlayGame} className="primary-button">
@@ -41,6 +44,12 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
           </button>
         </div>
       </div>
+      <GeneratePasswordModal
+        isOpen={generateModalOpen}
+        onClose={() => setGenerateModalOpen(false)}
+        config={config}
+        onGenerate={handleGeneratePassword}
+      />
     </div>
   );
 }

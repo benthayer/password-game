@@ -8,6 +8,7 @@ import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
+import GeneratePasswordModal from './GeneratePasswordModal';
 import './GamePage.css';
 import './PracticePage.css';
 
@@ -25,6 +26,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('game');
   const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
   
   // Game mode state
   const [subpassword, setSubpassword] = useState<string[]>([]);
@@ -144,11 +146,11 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   };
 
   // Generate password and switch to practice mode
-  const handleGeneratePassword = async () => {
+  const handleGeneratePassword = async (numWords: number) => {
     setLoading(true);
     try {
-      // Generate a password with 18 words (same as MainPage)
-      const passwordString = await generatePassword(18, gridSize, config.seedPhrase);
+      // Generate a password with the specified number of words
+      const passwordString = await generatePassword(numWords, gridSize, config.seedPhrase);
       const passwordWords = passwordString.split(' ');
       
       // Set the password in the game state
@@ -322,7 +324,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             {mode === 'game' && (
               <>
                 <button 
-                  onClick={handleGeneratePassword} 
+                  onClick={() => setGenerateModalOpen(true)} 
                   className="header-button"
                   disabled={loading}
                   style={{ 
@@ -333,7 +335,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                     fontWeight: '500'
                   }}
                 >
-                  {loading ? 'Generating...' : 'Generate Password'}
+                  Generate Password
                 </button>
                 <button 
                   onClick={handleReset} 
@@ -458,6 +460,12 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           onClose={() => setConfigModalOpen(false)}
           config={config}
           onSave={setConfig}
+        />
+        <GeneratePasswordModal
+          isOpen={generateModalOpen}
+          onClose={() => setGenerateModalOpen(false)}
+          config={config}
+          onGenerate={handleGeneratePassword}
         />
       </div>
     </div>
