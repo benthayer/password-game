@@ -109,7 +109,9 @@
 
 .current-password-section {
   margin-bottom: 32px;
-  min-height: 280px;
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
 }
 
 .current-password-header {
@@ -125,7 +127,8 @@
   margin: 0;
 }
 
-.practice-controls {
+.practice-controls,
+.password-controls {
   display: flex;
   gap: 12px;
   align-items: center;

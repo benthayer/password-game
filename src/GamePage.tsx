@@ -320,6 +320,49 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                   Generate Password
                 </button>
                 <button 
+                  onClick={handlePracticePassword} 
+                  className="header-button"
+                  disabled={subpassword.length === 0}
+                  style={{ 
+                    background: '#6366f1', 
+                    color: 'white',
+                    padding: '12px 24px',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  Practice Password
+                </button>
+              </>
+            )}
+            {mode === 'practice' && (
+              <>
+                <button onClick={handleReturnToGame} className="header-button">
+                  Back to Game
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {mode === 'practice' ? (
+          <div className="practice-configs-container">
+            <ConfigDisplay config={config} />
+            <PracticeConfigDisplay
+              config={practiceDisplayConfig}
+              onConfigChange={setPracticeDisplayConfig}
+            />
+          </div>
+        ) : (
+          <ConfigDisplay config={config} />
+        )}
+
+        <div className="current-password-section">
+          <div className="current-password-header">
+            <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
+            {mode === 'game' && (
+              <div className="password-controls">
+                <button 
                   onClick={handleReset} 
                   className="header-button reset-button"
                   disabled={subpassword.length === 0}
@@ -354,33 +397,8 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
                 >
                   ⌫
                 </button>
-              </>
+              </div>
             )}
-            {mode === 'practice' && (
-              <>
-                <button onClick={handleReturnToGame} className="header-button">
-                  Back to Game
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {mode === 'practice' ? (
-          <div className="practice-configs-container">
-            <ConfigDisplay config={config} />
-            <PracticeConfigDisplay
-              config={practiceDisplayConfig}
-              onConfigChange={setPracticeDisplayConfig}
-            />
-          </div>
-        ) : (
-          <ConfigDisplay config={config} />
-        )}
-
-        <div className="current-password-section">
-          <div className="current-password-header">
-            <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
             {mode === 'practice' && (
               <div className="practice-controls">
                 <button
@@ -464,16 +482,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             />
           )}
         </div>
-
-        {mode === 'game' && (
-          <button 
-            onClick={handlePracticePassword} 
-            className="display-password-button"
-            disabled={subpassword.length === 0}
-          >
-            Practice Password
-          </button>
-        )}
 
         <ConfigModal
           isOpen={configModalOpen}
