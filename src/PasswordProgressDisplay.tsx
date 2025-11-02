@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react';
 import type { PracticeDisplayConfig } from './game-config';
 import './PracticePage.css';
 
@@ -63,20 +63,16 @@ export default function PasswordProgressDisplay({
             
             // In practice mode with config, respect the config settings
             if (practiceConfig && activeWordIndex !== undefined) {
-              // If display is off, hide all words
-              if (!practiceConfig.display) {
+              // Apply display mode rules
+              if (practiceConfig.displayMode === 'none') {
                 shouldShow = false;
-              } else {
-                // Check if we should display current word (requires both display and displayCurrentWord)
-                if (index === activeWordIndex && !practiceConfig.displayCurrentWord) {
-                  shouldShow = false;
-                }
-                
-                // Check if we should display future words (requires displayCurrentWord and displayFutureWords)
-                if (index > activeWordIndex && !(practiceConfig.displayCurrentWord && practiceConfig.displayFutureWords)) {
+              } else if (practiceConfig.displayMode === 'previous') {
+                // Only show words before the active word
+                if (index >= activeWordIndex) {
                   shouldShow = false;
                 }
               }
+              // displayMode === 'all' shows all words, so shouldShow stays true
             } else {
               // Game mode or practice mode without config
               if (index >= completedCount && !showFuture) {
@@ -92,8 +88,13 @@ export default function PasswordProgressDisplay({
               if (index < activeWordIndex) {
                 wordClass += ' completed';
               } else if (index === activeWordIndex) {
-                // Current word - always show as current (highlighting affects grid, not display)
-                wordClass += ' current';
+                // Current word - apply 'current' class if highlighting is enabled
+                if (practiceConfig.displayMode === 'all' && practiceConfig.highlightCurrentWord) {
+                  wordClass += ' current';
+                } else {
+                  // Current word visible but not highlighted - show as future (gray/transparent)
+                  wordClass += ' future';
+                }
               } else {
                 // Future words
                 wordClass += ' future';
@@ -111,12 +112,14 @@ export default function PasswordProgressDisplay({
               }
             }
             
+            let style: CSSProperties = { visibility: shouldShow ? 'visible' : 'hidden' };
+            
             // Always render the word but use visibility to hide it, preserving layout space
             return (
               <span 
                 key={index} 
                 className={wordClass}
-                style={{ visibility: shouldShow ? 'visible' : 'hidden' }}
+                style={style}
               >
                 {word}
               </span>

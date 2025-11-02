@@ -167,6 +167,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
       setActiveWordIndex(0);
       setCompleted(false);
       setErrorButtonIndex(null);
+      setPracticeDisplayConfig(DEFAULT_PRACTICE_DISPLAY_CONFIG);
       setMode('practice');
       
       // Load words for practice mode
@@ -425,7 +426,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             <PasswordProgressDisplay
               words={subpassword}
               completedCount={selectedWords.length}
-              showFuture={practiceDisplayConfig.display && practiceDisplayConfig.displayCurrentWord && practiceDisplayConfig.displayFutureWords}
               practiceConfig={practiceDisplayConfig}
               activeWordIndex={activeWordIndex}
             />
@@ -458,7 +458,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               correctWordIndex={correctWordIndex}
               errorWordIndex={errorButtonIndex}
               gridCols={config.gridCols}
-              highlightCorrect={practiceDisplayConfig.display && practiceDisplayConfig.displayCurrentWord && practiceDisplayConfig.highlightCurrentWord}
+              highlightCorrect={practiceDisplayConfig.hint}
             />
           ) : (
             <WordSelectionGrid
