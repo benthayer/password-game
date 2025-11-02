@@ -63,7 +63,29 @@ function AppRouter() {
           }
         />
         <Route
-          path="/recover"
+          path="/recovery"
+          element={
+            <InteractionPage
+              password={password}
+              setPassword={(pwd: string) => {
+                setPassword(pwd);
+                if (pwd) {
+                  localStorage.setItem('gamePassword', pwd);
+                } else {
+                  localStorage.removeItem('gamePassword');
+                }
+              }}
+              setPasswordSource={(source: PasswordSource) => {
+                setPasswordSource(source);
+                localStorage.setItem('gamePasswordSource', source);
+              }}
+              config={config}
+              setConfig={updateConfig}
+            />
+          }
+        />
+        <Route
+          path="/practice"
           element={
             <InteractionPage
               password={password}

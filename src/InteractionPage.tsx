@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getNextWords, generatePassword } from './crypto-utils';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { getNextWords } from './crypto-utils';
 import type { PasswordSource } from './App';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
 import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './generation-config';
@@ -9,7 +9,6 @@ import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import PracticeConfigDisplay from './PracticeConfigDisplay';
-import GeneratePasswordModal from './GeneratePasswordModal';
 import './InteractionPage.css';
 import './PracticePage.css';
 
@@ -25,12 +24,10 @@ interface InteractionPageProps {
 
 export default function InteractionPage({ password, setPassword, setPasswordSource, config, setConfig }: InteractionPageProps) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>(() => {
-    const saved = localStorage.getItem('gameMode');
-    return (saved as Mode) || 'recovery';
-  });
+  const location = useLocation();
+  // Determine mode from URL path
+  const mode: Mode = location.pathname === '/practice' ? 'practice' : 'recovery';
   const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [generateModalOpen, setGenerateModalOpen] = useState(false);
   
   // Recovery mode state
   const [subpassword, setSubpassword] = useState<string[]>(() => {
@@ -83,10 +80,6 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
   const gridSize = getGridSize(config);
 
   // Persist state to localStorage
-  useEffect(() => {
-    localStorage.setItem('gameMode', mode);
-  }, [mode]);
-
   useEffect(() => {
     if (subpassword.length > 0) {
       localStorage.setItem('gameSubpassword', JSON.stringify(subpassword));
@@ -151,7 +144,7 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     }
   };
 
-  // Initialize game mode based on saved state or defaults
+  // Initialize game mode based on route and saved state
   useEffect(() => {
     if (mode === 'recovery') {
       if (subpassword.length > 0) {
@@ -159,25 +152,22 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
       } else {
         loadNextWordsRecovery([]);
       }
-    } else if (mode === 'practice' && subpassword.length > 0) {
-      // Load words for practice mode based on saved state
-      loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
+    } else if (mode === 'practice') {
+      if (subpassword.length > 0) {
+        // Load words for practice mode based on saved state
+        loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
+      } else if (password && password.trim() !== '') {
+        // If we have a password but no subpassword, initialize from password
+        const passwordWords = password.split(' ');
+        setSubpassword(passwordWords);
+        setSelectedWords([]);
+        setActiveWordIndex(0);
+        setErrorButtonIndex(null);
+        loadNextWordsPractice([], passwordWords, 0, true);
+      }
     }
   }, [mode, config]);
 
-  // Auto-initialize practice mode if password is provided (only if no saved state)
-  useEffect(() => {
-    if (password && password.trim() !== '' && subpassword.length === 0) {
-      const passwordWords = password.split(' ');
-      setSubpassword(passwordWords);
-      // Initialize practice mode state
-      setSelectedWords([]);
-      setActiveWordIndex(0);
-      setErrorButtonIndex(null);
-      setMode('practice');
-      loadNextWordsPractice([], passwordWords, 0, true);
-    }
-  }, [password]);
 
   // Recovery mode: handle word selection
   const handleWordSelectRecovery = async (word: string) => {
@@ -224,37 +214,6 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     }
   };
 
-  // Generate password and switch to practice mode
-  const handleGeneratePassword = async (numWords: number) => {
-    setLoading(true);
-    try {
-      // Generate a password with the specified number of words
-      const passwordString = await generatePassword(numWords, gridSize, config.seedPhrase);
-      const passwordWords = passwordString.split(' ');
-      
-      // Set the password in the game state
-      setSubpassword(passwordWords);
-      
-      // Set the password in the app state
-      setPassword(passwordString);
-      setPasswordSource('auto-generated');
-      
-      // Initialize practice mode state
-      setSelectedWords([]);
-      setActiveWordIndex(0);
-      setErrorButtonIndex(null);
-      setPracticeDisplayConfig(DEFAULT_PRACTICE_DISPLAY_CONFIG);
-      setMode('practice');
-      
-      // Load words for practice mode
-      await loadNextWordsPractice([], passwordWords, 0, false);
-    } catch (error) {
-      console.error('Error generating password:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Switch to practice mode
   const handlePracticePassword = () => {
     if (subpassword.length === 0) {
@@ -264,8 +223,8 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     setSelectedWords([]);
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
-    setMode('practice');
-    loadNextWordsPractice([], subpassword, 0, true);
+    // Navigate to practice mode
+    navigate('/practice');
   };
 
   // Reset practice
@@ -280,10 +239,10 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
 
   // Return to recovery mode
   const handleReturnToRecovery = () => {
-    setMode('recovery');
     setSelectedWords([]);
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
+    navigate('/recovery');
   };
 
   // Navigate to previous word in practice mode
@@ -334,11 +293,11 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     const newSubpassword = subpassword.slice(0, -1);
     setSubpassword(newSubpassword);
     
-    // If in practice mode, reset practice state
+    // If in practice mode, navigate to recovery mode
     if (mode === 'practice') {
       setSelectedWords([]);
       setErrorButtonIndex(null);
-      setMode('recovery');
+      navigate('/recovery');
     }
     
     // Reload words for the new password state
@@ -350,11 +309,12 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     setSubpassword([]);
     setSelectedWords([]);
     setErrorButtonIndex(null);
-    setMode('recovery');
     setActiveWordIndex(0);
     localStorage.removeItem('gameSubpassword');
     localStorage.removeItem('gameSelectedWords');
     localStorage.setItem('gameActiveWordIndex', '0');
+    // Navigate to recovery mode
+    navigate('/recovery');
     loadNextWordsRecovery([]);
   };
 
@@ -366,11 +326,11 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     setSelectedWords([]);
     setActiveWordIndex(0);
     setErrorButtonIndex(null);
-    setMode('recovery');
     localStorage.removeItem('gameSubpassword');
     localStorage.removeItem('gameSelectedWords');
     localStorage.setItem('gameActiveWordIndex', '0');
-    localStorage.setItem('gameMode', 'recovery');
+    // Navigate to recovery mode
+    navigate('/recovery');
     // Reload words with new config
     loadNextWordsRecovery([]);
   };
@@ -587,13 +547,6 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
           onClose={() => setConfigModalOpen(false)}
           config={config}
           onSave={handleConfigSave}
-        />
-        <GeneratePasswordModal
-          isOpen={generateModalOpen}
-          onClose={() => setGenerateModalOpen(false)}
-          config={config}
-          setConfig={setConfig}
-          onGenerate={handleGeneratePassword}
         />
       </div>
     </div>

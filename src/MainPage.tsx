@@ -23,15 +23,15 @@ export default function MainPage({ setPassword, setPasswordSource, config, setCo
     const password = await generatePassword(numWords, gridSize, config.seedPhrase);
     setPassword(password);
     setPasswordSource('auto-generated');
-    navigate('/recover');
+    navigate('/practice');
   };
 
   const handleRecover = () => {
-    navigate('/recover');
+    navigate('/recovery');
   };
 
   const handlePractice = () => {
-    navigate('/recover');
+    navigate('/practice');
   };
 
   return (
