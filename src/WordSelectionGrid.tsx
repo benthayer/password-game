@@ -7,6 +7,7 @@ interface WordSelectionGridProps {
   loading?: boolean;
   correctWordIndex?: number;
   errorWordIndex?: number | null;
+  gridCols?: number;
 }
 
 export default function WordSelectionGrid({
@@ -15,10 +16,18 @@ export default function WordSelectionGrid({
   loading = false,
   correctWordIndex,
   errorWordIndex = null,
+  gridCols = 4,
 }: WordSelectionGridProps) {
   return (
     <>
-      <div className="word-grid" style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+      <div 
+        className="word-grid" 
+        style={{ 
+          opacity: loading ? 0.6 : 1, 
+          transition: 'opacity 0.2s',
+          gridTemplateColumns: `repeat(${gridCols}, 1fr)`
+        }}
+      >
         {words.map((word, index) => {
           const isCorrect = index === correctWordIndex;
           const isError = errorWordIndex === index;

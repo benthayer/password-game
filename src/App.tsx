@@ -3,19 +3,45 @@ import { useState } from 'react';
 import MainPage from './MainPage';
 import PasswordDisplay from './PasswordDisplay';
 import GamePage from './GamePage';
+import { DEFAULT_CONFIG, type GameConfig } from './game-config';
 
 export type PasswordSource = 'auto-generated' | 'manual';
 
 function AppRouter() {
   const [password, setPassword] = useState<string>('');
   const [passwordSource, setPasswordSource] = useState<PasswordSource>('manual');
+  const [config, setConfig] = useState<GameConfig>(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem('gameConfig');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_CONFIG;
+      }
+    }
+    return DEFAULT_CONFIG;
+  });
+
+  // Save config to localStorage whenever it changes
+  const updateConfig = (newConfig: GameConfig) => {
+    setConfig(newConfig);
+    localStorage.setItem('gameConfig', JSON.stringify(newConfig));
+  };
 
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/"
-          element={<MainPage setPassword={setPassword} setPasswordSource={setPasswordSource} />}
+          element={
+            <MainPage
+              setPassword={setPassword}
+              setPasswordSource={setPasswordSource}
+              config={config}
+              setConfig={updateConfig}
+            />
+          }
         />
         <Route
           path="/display"
@@ -23,7 +49,15 @@ function AppRouter() {
         />
         <Route
           path="/game"
-          element={<GamePage password={password} setPassword={setPassword} setPasswordSource={setPasswordSource} />}
+          element={
+            <GamePage
+              password={password}
+              setPassword={setPassword}
+              setPasswordSource={setPasswordSource}
+              config={config}
+              setConfig={updateConfig}
+            />
+          }
         />
       </Routes>
     </BrowserRouter>

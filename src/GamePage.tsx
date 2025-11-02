@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords, generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
-import { GRID_SIZE } from './game-config';
+import type { GameConfig } from './game-config';
+import { getGridSize } from './game-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
+import ConfigModal from './ConfigModal';
+import ConfigDisplay from './ConfigDisplay';
 import './GamePage.css';
 import './PracticePage.css';
 
@@ -14,11 +17,14 @@ interface GamePageProps {
   password?: string;
   setPassword: (password: string) => void;
   setPasswordSource: (source: PasswordSource) => void;
+  config: GameConfig;
+  setConfig: (config: GameConfig) => void;
 }
 
-export default function GamePage({ password, setPassword, setPasswordSource }: GamePageProps) {
+export default function GamePage({ password, setPassword, setPasswordSource, config, setConfig }: GamePageProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('game');
+  const [configModalOpen, setConfigModalOpen] = useState(false);
   
   // Game mode state
   const [subpassword, setSubpassword] = useState<string[]>([]);
@@ -32,11 +38,13 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
   const [completed, setCompleted] = useState(false);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
 
+  const gridSize = getGridSize(config);
+
   // Game mode: load next words for building password
   const loadNextWordsGame = async (currentSubpassword: string[]) => {
     setLoading(true);
     try {
-      const words = await getNextWords(currentSubpassword, GRID_SIZE);
+      const words = await getNextWords(currentSubpassword, gridSize, config.seedPhrase);
       setNextWords(words);
     } catch (error) {
       console.error('Error loading next words:', error);
@@ -54,7 +62,7 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
       // Use the full prefix up to (but not including) the active word index
       // This ensures we get the correct options for the active word
       const prefix = targetWords.slice(0, wordIndex);
-      const words = await getNextWords(prefix, GRID_SIZE);
+      const words = await getNextWords(prefix, gridSize, config.seedPhrase);
       setNextWords(words);
       
       // Find which word in the options matches the word at the active index
@@ -77,7 +85,7 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
     if (mode === 'game') {
       loadNextWordsGame([]);
     }
-  }, [mode]);
+  }, [mode, config]);
 
   // Auto-initialize practice mode if password is provided
   useEffect(() => {
@@ -140,7 +148,7 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
     setLoading(true);
     try {
       // Generate a password with 18 words (same as MainPage)
-      const passwordString = await generatePassword(18, GRID_SIZE);
+      const passwordString = await generatePassword(18, gridSize, config.seedPhrase);
       const passwordWords = passwordString.split(' ');
       
       // Set the password in the game state
@@ -298,6 +306,19 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
         <div className="game-header">
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
+            <button
+              onClick={() => setConfigModalOpen(true)}
+              className="header-button config-button"
+              style={{
+                background: '#6366f1',
+                color: 'white',
+                padding: '12px 24px',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              Config
+            </button>
             {mode === 'game' && (
               <>
                 <button 
@@ -380,6 +401,8 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
           </div>
         </div>
 
+        <ConfigDisplay config={config} />
+
         <div className="current-password-section">
           <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
           <PasswordProgressDisplay
@@ -408,12 +431,14 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
               loading={loading}
               correctWordIndex={correctWordIndex}
               errorWordIndex={errorButtonIndex}
+              gridCols={config.gridCols}
             />
           ) : (
             <WordSelectionGrid
               words={nextWords}
               onWordClick={handleWordSelectGame}
               loading={loading}
+              gridCols={config.gridCols}
             />
           )}
         </div>
@@ -427,6 +452,13 @@ export default function GamePage({ password, setPassword, setPasswordSource }: G
             Practice Password
           </button>
         )}
+
+        <ConfigModal
+          isOpen={configModalOpen}
+          onClose={() => setConfigModalOpen(false)}
+          config={config}
+          onSave={setConfig}
+        />
       </div>
     </div>
   );

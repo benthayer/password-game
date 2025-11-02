@@ -25,11 +25,11 @@ export function getWordFromHash(hash: string): string {
   return wordList[index] as string;
 }
 
-export async function hashSubpassword(subpassword: string[]): Promise<string> {
+export async function hashSubpassword(subpassword: string[], seedPhrase: string = ''): Promise<string> {
   const encoder = new TextEncoder();
-  let combined = '';
+  let combined = seedPhrase;
   for (const word of subpassword) {
-    combined += word;
+    combined += `:${word}`;
   }
   const data = encoder.encode(combined);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -37,8 +37,8 @@ export async function hashSubpassword(subpassword: string[]): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function getNextWords(subpassword: string[], numOptions: number): Promise<string[]> {
-  const baseHash = await hashSubpassword(subpassword);
+export async function getNextWords(subpassword: string[], numOptions: number, seedPhrase: string = ''): Promise<string[]> {
+  const baseHash = await hashSubpassword(subpassword, seedPhrase);
   let tempHash = baseHash;
   const words: string[] = [];
   for (let i = 0; i < numOptions; i++) {
@@ -48,16 +48,16 @@ export async function getNextWords(subpassword: string[], numOptions: number): P
   return words;
 }
 
-export async function selectRandomNextWord(subpassword: string[], numOptions: number): Promise<string[]> {
-  const nextWords = await getNextWords(subpassword, numOptions);
+export async function selectRandomNextWord(subpassword: string[], numOptions: number, seedPhrase: string = ''): Promise<string[]> {
+  const nextWords = await getNextWords(subpassword, numOptions, seedPhrase);
   const nextWord = nextWords[Math.floor(Math.random() * nextWords.length)] as string;
   return [...subpassword, nextWord];
 }
 
-export async function generatePassword(numWords: number, numOptions: number): Promise<string> {
+export async function generatePassword(numWords: number, numOptions: number, seedPhrase: string = ''): Promise<string> {
   let subpassword: string[] = [];
   for (let i = 0; i < numWords; i++) {
-    subpassword = await selectRandomNextWord(subpassword, numOptions);
+    subpassword = await selectRandomNextWord(subpassword, numOptions, seedPhrase);
   }
   return subpassword.join(' ');
 }

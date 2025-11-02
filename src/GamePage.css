@@ -132,7 +132,6 @@
 
 .word-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -171,9 +170,7 @@
 }
 
 @media (max-width: 768px) {
-  .word-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  /* Grid columns are now dynamically set via inline styles */
 
   .game-header {
     flex-direction: column;

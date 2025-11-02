@@ -1,19 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
-import { GRID_SIZE } from './game-config';
+import type { GameConfig } from './game-config';
+import { getGridSize } from './game-config';
 import './MainPage.css';
 
 interface MainPageProps {
   setPassword: (password: string) => void;
   setPasswordSource: (source: PasswordSource) => void;
+  config: GameConfig;
+  setConfig: (config: GameConfig) => void;
 }
 
-export default function MainPage({ setPassword, setPasswordSource }: MainPageProps) {
+export default function MainPage({ setPassword, setPasswordSource, config }: MainPageProps) {
   const navigate = useNavigate();
 
   const handleGeneratePassword = async () => {
-    const password = await generatePassword(18, GRID_SIZE);
+    const gridSize = getGridSize(config);
+    const password = await generatePassword(18, gridSize, config.seedPhrase);
     setPassword(password);
     setPasswordSource('auto-generated');
     navigate('/game');

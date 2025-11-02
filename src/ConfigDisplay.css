@@ -1,0 +1,40 @@
+.config-display {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0 auto 24px auto;
+  border: 1px solid #e5e7eb;
+  width: fit-content;
+  min-width: 250px;
+}
+
+.config-display-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  gap: 16px;
+}
+
+.config-display-item:last-child {
+  margin-bottom: 0;
+}
+
+.config-label {
+  color: #6b7280;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.config-value {
+  color: #1f2937;
+  font-weight: 600;
+  font-family: 'Consolas', 'Monaco', 'Menlo', 'Courier New', monospace;
+  text-align: right;
+}
+
+.config-seed-phrase {
+  white-space: nowrap;
+}
+
