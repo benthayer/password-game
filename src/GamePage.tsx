@@ -4,6 +4,7 @@ import { getNextWords } from './crypto-utils';
 import type { PasswordSource } from './App';
 import { GRID_SIZE } from './game-config';
 import './GamePage.css';
+import './PracticePage.css';
 
 interface GamePageProps {
   setPassword: (password: string) => void;
@@ -76,9 +77,22 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
 
         <div className="current-password-section">
           <h2>Current Password</h2>
-          <div className="password-display">
-            {currentPasswordText || <span className="empty-password">No words selected yet</span>}
+          <div className="password-progress-display">
+            {currentPasswordText ? (
+              currentPasswordText.split(/\s+/).filter(word => word.length > 0).map((word, index) => (
+                <span key={index} className="password-word completed">
+                  {word}
+                </span>
+              ))
+            ) : (
+              <span className="password-word future">No words selected yet</span>
+            )}
           </div>
+          {currentPasswordText && (
+            <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
+              {subpassword.length} {subpassword.length === 1 ? 'word' : 'words'} selected
+            </p>
+          )}
         </div>
 
         <div className="word-selection-section">
