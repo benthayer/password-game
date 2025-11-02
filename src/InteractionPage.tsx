@@ -335,6 +335,19 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
                 </button>
               </>
             )}
+            <button
+              onClick={() => navigate('/')}
+              className="header-button main-page-button"
+              style={{
+                background: '#6366f1',
+                color: 'white',
+                padding: '12px 24px',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              Main Page
+            </button>
           </div>
         </div>
 
