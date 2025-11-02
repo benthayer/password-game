@@ -1,28 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generatePassword } from './crypto-utils';
-import type { PasswordSource } from './App';
 import type { GenerationConfig } from './generation-config';
 import { getGridSize } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import './MainPage.css';
 
 interface MainPageProps {
-  setPassword: (password: string) => void;
-  setPasswordSource: (source: PasswordSource) => void;
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
 }
 
-export default function MainPage({ setPassword, setPasswordSource, config, setConfig }: MainPageProps) {
+export default function MainPage({ config, setConfig }: MainPageProps) {
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
   const handleGeneratePassword = async (numWords: number) => {
     const gridSize = getGridSize(config);
-    const password = await generatePassword(numWords, gridSize, config.seedPhrase);
-    setPassword(password);
-    setPasswordSource('auto-generated');
+    const passwordWordd = await generatePassword(numWords, gridSize, config.seedPhrase);
+    localStorage.setItem('gameSubpassword', JSON.stringify(passwordWordd));
+    localStorage.setItem('gameSelectedWords', JSON.stringify([]));
+    localStorage.setItem('gameActiveWordIndex', '0');
+
     navigate('/practice');
   };
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
-import type { PasswordSource } from './App';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
 import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './generation-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
@@ -15,14 +14,11 @@ import './PracticePage.css';
 type Mode = 'recovery' | 'practice';
 
 interface InteractionPageProps {
-  password?: string;
-  setPassword: (password: string) => void;
-  setPasswordSource: (source: PasswordSource) => void;
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
 }
 
-export default function InteractionPage({ password, setPassword, setPasswordSource, config, setConfig }: InteractionPageProps) {
+export default function InteractionPage({ config, setConfig }: InteractionPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   // Determine mode from URL path
@@ -153,18 +149,7 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
         loadNextWordsRecovery([]);
       }
     } else if (mode === 'practice') {
-      if (subpassword.length > 0) {
-        // Load words for practice mode based on saved state
-        loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
-      } else if (password && password.trim() !== '') {
-        // If we have a password but no subpassword, initialize from password
-        const passwordWords = password.split(' ');
-        setSubpassword(passwordWords);
-        setSelectedWords([]);
-        setActiveWordIndex(0);
-        setErrorButtonIndex(null);
-        loadNextWordsPractice([], passwordWords, 0, true);
-      }
+      loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
     }
   }, [mode, config]);
 

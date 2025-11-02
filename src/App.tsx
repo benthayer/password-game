@@ -7,14 +7,6 @@ import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
 export type PasswordSource = 'auto-generated' | 'manual';
 
 function AppRouter() {
-  const [password, setPassword] = useState<string>(() => {
-    const saved = localStorage.getItem('gamePassword');
-    return saved || '';
-  });
-  const [passwordSource, setPasswordSource] = useState<PasswordSource>(() => {
-    const saved = localStorage.getItem('gamePasswordSource');
-    return (saved as PasswordSource) || 'manual';
-  });
   const [config, setConfig] = useState<GenerationConfig>(() => {
     // Load from localStorage if available
     const saved = localStorage.getItem('gameConfig');
@@ -27,20 +19,6 @@ function AppRouter() {
     }
     return DEFAULT_CONFIG;
   });
-
-  // Save password to localStorage whenever it changes
-  useEffect(() => {
-    if (password) {
-      localStorage.setItem('gamePassword', password);
-    } else {
-      localStorage.removeItem('gamePassword');
-    }
-  }, [password]);
-
-  // Save passwordSource to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('gamePasswordSource', passwordSource);
-  }, [passwordSource]);
 
   // Save config to localStorage whenever it changes
   const updateConfig = (newConfig: GenerationConfig) => {
@@ -55,8 +33,6 @@ function AppRouter() {
           path="/"
           element={
             <MainPage
-              setPassword={setPassword}
-              setPasswordSource={setPasswordSource}
               config={config}
               setConfig={updateConfig}
             />
@@ -66,19 +42,6 @@ function AppRouter() {
           path="/recovery"
           element={
             <InteractionPage
-              password={password}
-              setPassword={(pwd: string) => {
-                setPassword(pwd);
-                if (pwd) {
-                  localStorage.setItem('gamePassword', pwd);
-                } else {
-                  localStorage.removeItem('gamePassword');
-                }
-              }}
-              setPasswordSource={(source: PasswordSource) => {
-                setPasswordSource(source);
-                localStorage.setItem('gamePasswordSource', source);
-              }}
               config={config}
               setConfig={updateConfig}
             />
@@ -88,19 +51,6 @@ function AppRouter() {
           path="/practice"
           element={
             <InteractionPage
-              password={password}
-              setPassword={(pwd: string) => {
-                setPassword(pwd);
-                if (pwd) {
-                  localStorage.setItem('gamePassword', pwd);
-                } else {
-                  localStorage.removeItem('gamePassword');
-                }
-              }}
-              setPasswordSource={(source: PasswordSource) => {
-                setPasswordSource(source);
-                localStorage.setItem('gamePasswordSource', source);
-              }}
               config={config}
               setConfig={updateConfig}
             />

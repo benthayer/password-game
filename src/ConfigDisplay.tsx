@@ -15,7 +15,7 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
     <div className="config-display">
       <h3 className="config-title">Configuration</h3>
       <div className="config-display-item">
-        <span className="config-label">Seed phrase:</span>
+        <span className="config-label">Public seed phrase:</span>
         <span className="config-value config-seed-phrase">"{config.seedPhrase || ''}"</span>
       </div>
       <div className="config-display-item">
