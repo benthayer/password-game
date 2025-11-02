@@ -214,43 +214,43 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
         <div className="game-header">
           <h1>{mode === 'game' ? 'Password Game' : 'Practice Password'}</h1>
           <div className="header-buttons">
-            {subpassword.length > 0 && (
-              <>
-                <button 
-                  onClick={handleReset} 
-                  className="header-button reset-button"
-                  style={{ 
-                    background: '#dc2626', 
-                    color: 'white',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  Reset
-                </button>
-                <button 
-                  onClick={handleDelete} 
-                  className="header-button delete-button"
-                  style={{ 
-                    background: '#dc2626', 
-                    color: 'white',
-                    padding: '12px 24px',
-                    fontSize: '1.5rem',
-                    fontWeight: '500',
-                    lineHeight: '1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingTop: '10px',
-                    paddingBottom: '14px'
-                  }}
-                  title="Delete last word"
-                >
-                  ⌫
-                </button>
-              </>
-            )}
+            <>
+              <button 
+                onClick={handleReset} 
+                className="header-button reset-button"
+                disabled={subpassword.length === 0}
+                style={{ 
+                  background: '#dc2626', 
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '1rem',
+                  fontWeight: '500'
+                }}
+              >
+                Reset
+              </button>
+              <button 
+                onClick={handleDelete} 
+                className="header-button delete-button"
+                disabled={subpassword.length === 0}
+                style={{ 
+                  background: '#dc2626', 
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '1.5rem',
+                  fontWeight: '500',
+                  lineHeight: '1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingTop: '10px',
+                  paddingBottom: '14px'
+                }}
+                title="Delete last word"
+              >
+                ⌫
+              </button>
+            </>
             {mode === 'practice' && (
               <>
                 <button onClick={handleResetPractice} className="header-button">

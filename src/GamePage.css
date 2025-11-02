@@ -45,9 +45,22 @@
   transition: background-color 0.2s;
 }
 
-.reset-button:hover,
-.delete-button:hover {
+.reset-button:hover:not(:disabled),
+.delete-button:hover:not(:disabled) {
   background: #b91c1c !important;
+}
+
+.reset-button:disabled,
+.delete-button:disabled {
+  background: #9ca3af !important;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.reset-button:disabled:hover,
+.delete-button:disabled:hover {
+  cursor: pointer;
+  background: #9ca3af !important;
 }
 
 .current-password-section {
