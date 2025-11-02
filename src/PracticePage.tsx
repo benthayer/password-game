@@ -104,29 +104,27 @@ export default function PracticePage({ password }: PracticePageProps) {
     return (
       <div className="game-page">
         <div className="game-content">
-          <div className="game-header">
-            <h1>Practice Password</h1>
-            <div className="header-buttons">
-              <button onClick={() => navigate('/')} className="header-button">
-                Return to Home
-              </button>
-              <button onClick={handleReset} className="header-button">
-                Practice Again
-              </button>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ marginBottom: '40px' }}>Practice Password</h1>
             <h2 style={{ color: '#10b981', marginBottom: '20px', fontSize: '2rem' }}>✓ Practice Complete!</h2>
             <p style={{ color: '#6b7280', fontSize: '1.2rem', marginBottom: '32px' }}>
               You've successfully practiced all words in your password.
             </p>
-            <div className="password-progress-display" style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto' }}>
+            <div className="password-progress-display" style={{ textAlign: 'center', margin: '0 auto', display: 'inline-block', padding: '16px 18px' }}>
               {passwordWords.map((word, index) => (
                 <span key={index} className="password-word completed">
                   {word}
                 </span>
               ))}
             </div>
+          </div>
+          <div className="header-buttons" style={{ marginTop: '60px', justifyContent: 'center' }}>
+            <button onClick={() => navigate('/')} className="header-button">
+              Return to Home
+            </button>
+            <button onClick={handleReset} className="header-button">
+              Practice Again
+            </button>
           </div>
         </div>
       </div>

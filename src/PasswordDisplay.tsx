@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PasswordSource } from './App';
 import './PasswordDisplay.css';
@@ -9,6 +10,12 @@ interface PasswordDisplayProps {
 
 export default function PasswordDisplay({ password, source }: PasswordDisplayProps) {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!password || password.trim() === '') {
+      navigate('/');
+    }
+  }, [password, navigate]);
 
   const message =
     source === 'auto-generated'
