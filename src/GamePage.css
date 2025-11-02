@@ -114,46 +114,6 @@
   background: #059669;
 }
 
-.password-modal {
-  background: #1f2937;
-  color: white;
-  border-radius: 16px;
-  padding: 40px;
-  margin-bottom: 32px;
-  text-align: center;
-}
-
-.password-modal h2 {
-  font-size: 1.8rem;
-  margin-bottom: 24px;
-  color: white;
-}
-
-.password-modal-content {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.modal-password {
-  font-size: 2rem;
-  font-family: 'Courier New', monospace;
-  word-break: break-all;
-  line-height: 1.6;
-  color: white;
-}
-
-.close-button {
-  background: #ef4444;
-  width: 100%;
-  max-width: 200px;
-}
-
-.close-button:hover {
-  background: #dc2626;
-}
-
 @media (max-width: 768px) {
   .word-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -170,10 +130,6 @@
 
   .header-button {
     width: 100%;
-  }
-
-  .modal-password {
-    font-size: 1.5rem;
   }
 }
 

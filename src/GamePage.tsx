@@ -15,7 +15,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
   const [subpassword, setSubpassword] = useState<string[]>([]);
   const [nextWords, setNextWords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showPasswordDisplay, setShowPasswordDisplay] = useState(false);
 
   useEffect(() => {
     loadNextWords([]);
@@ -43,7 +42,7 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
     const fullPassword = subpassword.join(' ');
     setPassword(fullPassword);
     setPasswordSource('manual');
-    setShowPasswordDisplay(true);
+    navigate('/display');
   };
 
   const handleViewOnDisplayPage = () => {
@@ -81,18 +80,6 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
             {currentPasswordText || <span className="empty-password">No words selected yet</span>}
           </div>
         </div>
-
-        {showPasswordDisplay && currentPasswordText && (
-          <div className="password-modal">
-            <h2>Your Generated Password</h2>
-            <div className="password-modal-content">
-              <p className="modal-password">{currentPasswordText}</p>
-            </div>
-            <button onClick={() => setShowPasswordDisplay(false)} className="close-button">
-              Close
-            </button>
-          </div>
-        )}
 
         <div className="word-selection-section">
           <h2>Select Next Word</h2>
