@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
+import { GRID_SIZE } from './game-config';
 import './GamePage.css';
 import './PracticePage.css';
 
@@ -23,7 +24,7 @@ export default function PracticePage({ password }: PracticePageProps) {
       setLoading(true);
     }
     try {
-      const words = await getNextWords(currentSelected, 20);
+      const words = await getNextWords(currentSelected, GRID_SIZE);
       setNextWords(words);
       
       // Find which word in the options matches the next word in the password
@@ -44,15 +45,19 @@ export default function PracticePage({ password }: PracticePageProps) {
   };
 
   useEffect(() => {
-    if (password) {
-      const words = password.trim().split(/\s+/).filter(word => word.length > 0);
-      setPasswordWords(words);
-      if (words.length > 0) {
-        loadNextWords([], words, true); // Show loading on initial load only
-      }
+    if (!password) {
+      navigate('/');
+      return;
     }
+    const words = password.trim().split(/\s+/).filter(word => word.length > 0);
+    setPasswordWords(words);
+    if (words.length === 0) {
+      navigate('/');
+      return;
+    }
+    loadNextWords([], words, true); // Show loading on initial load only
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [password]);
+  }, [password, navigate]);
 
   const handleWordSelect = async (word: string) => {
     const nextWordIndex = selectedWords.length;
@@ -94,25 +99,6 @@ export default function PracticePage({ password }: PracticePageProps) {
   };
 
   const currentProgressText = selectedWords.join(' ');
-
-  if (!password || passwordWords.length === 0) {
-    return (
-      <div className="game-page">
-        <div className="game-content">
-          <div className="game-header">
-            <h1>Practice Password</h1>
-            <button onClick={() => navigate('/')} className="header-button">
-              Return to Home
-            </button>
-          </div>
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            <p>No password available to practice.</p>
-            <p>Please generate a password first.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (completed) {
     return (
@@ -196,6 +182,9 @@ export default function PracticePage({ password }: PracticePageProps) {
               const isCorrect = index === correctWordIndex;
               const isError = errorButtonIndex === index;
               let buttonClasses = 'word-button';
+              if (isCorrect && !isError) {
+                buttonClasses += ' correct';
+              }
               if (isError) {
                 buttonClasses += ' error';
                 if (isCorrect) {
@@ -210,11 +199,11 @@ export default function PracticePage({ password }: PracticePageProps) {
                   className={buttonClasses}
                   style={{
                     background: isCorrect && !isError ? '#10b981' : undefined,
-                    border: isCorrect && !isError ? '3px solid #059669' : 'none',
+                    border: isCorrect && !isError ? '3px solid #059669' : '3px solid transparent',
                     boxShadow: isCorrect && !isError ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
-                    transform: isCorrect && !isError ? 'scale(1.05)' : undefined,
                     fontWeight: isCorrect ? 'bold' : 'normal',
                     cursor: loading ? 'wait' : 'pointer',
+                    boxSizing: 'border-box',
                   }}
                 >
                   {word}

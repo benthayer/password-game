@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
+import { GRID_SIZE } from './game-config';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -12,7 +13,7 @@ export default function MainPage({ setPassword, setPasswordSource }: MainPagePro
   const navigate = useNavigate();
 
   const handleGeneratePassword = async () => {
-    const password = await generatePassword(18, 20);
+    const password = await generatePassword(18, GRID_SIZE);
     setPassword(password);
     setPasswordSource('auto-generated');
     navigate('/display');
@@ -33,9 +34,6 @@ export default function MainPage({ setPassword, setPasswordSource }: MainPagePro
           </button>
           <button onClick={handlePlayGame} className="primary-button">
             Play Game
-          </button>
-          <button onClick={() => navigate('/practice')} className="primary-button">
-            Practice Password
           </button>
         </div>
       </div>

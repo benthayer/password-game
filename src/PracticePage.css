@@ -55,6 +55,11 @@
   animation: fadeErrorCorrect 1.5s ease-out forwards;
 }
 
+.word-button.correct:hover {
+  background: #047857 !important;
+  border-color: #065f46 !important;
+}
+
 @keyframes fadeError {
   0% {
     background: #ef4444;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
 import type { PasswordSource } from './App';
+import { GRID_SIZE } from './game-config';
 import './GamePage.css';
 
 interface GamePageProps {
@@ -23,7 +24,7 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
   const loadNextWords = async (currentSubpassword: string[]) => {
     setLoading(true);
     try {
-      const words = await getNextWords(currentSubpassword, 20);
+      const words = await getNextWords(currentSubpassword, GRID_SIZE);
       setNextWords(words);
     } catch (error) {
       console.error('Error loading next words:', error);
@@ -95,20 +96,23 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
 
         <div className="word-selection-section">
           <h2>Select Next Word</h2>
-          {loading ? (
+          <div className="word-grid" style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+            {nextWords.map((word, index) => (
+              <button
+                key={`${word}-${index}`}
+                onClick={() => !loading && handleWordSelect(word)}
+                disabled={loading}
+                className="word-button"
+                style={{
+                  cursor: loading ? 'wait' : 'pointer',
+                }}
+              >
+                {word}
+              </button>
+            ))}
+          </div>
+          {loading && nextWords.length === 0 && (
             <div className="loading">Loading options...</div>
-          ) : (
-            <div className="word-grid">
-              {nextWords.map((word, index) => (
-                <button
-                  key={`${word}-${index}`}
-                  onClick={() => handleWordSelect(word)}
-                  className="word-button"
-                >
-                  {word}
-                </button>
-              ))}
-            </div>
           )}
         </div>
 

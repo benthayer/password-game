@@ -38,12 +38,11 @@ button {
 
 button:hover {
   background: #4338ca;
-  transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 button:active {
-  transform: translateY(0);
+  transform: none;
 }
 
 button:disabled {
