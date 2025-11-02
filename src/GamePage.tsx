@@ -270,41 +270,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
     loadNextWordsGame([]);
   };
 
-  // Practice completion screen
-  if (mode === 'practice' && completed) {
-    return (
-      <div className="game-page">
-        <div className="game-content">
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ marginBottom: '40px' }}>Practice Password</h1>
-            <h2 style={{ color: '#10b981', marginBottom: '20px', fontSize: '2rem' }}>✓ Practice Complete!</h2>
-            <p style={{ color: '#6b7280', fontSize: '1.2rem', marginBottom: '32px' }}>
-              You've successfully practiced all words in your password.
-            </p>
-            <div style={{ textAlign: 'center', margin: '0 auto', marginBottom: '0', display: 'inline-block' }}>
-              <PasswordProgressDisplay
-                words={subpassword}
-                completedCount={subpassword.length}
-                showFuture={false}
-              />
-            </div>
-          </div>
-          <div className="header-buttons" style={{ marginTop: '26px', justifyContent: 'center' }}>
-            <button onClick={() => navigate('/')} className="header-button">
-              Return to Home
-            </button>
-            <button onClick={handleResetPractice} className="header-button">
-              Practice Again
-            </button>
-            <button onClick={handleReturnToGame} className="header-button">
-              Back to Game
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="game-page">
       <div className="game-content">
@@ -381,25 +346,6 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
             )}
             {mode === 'practice' && (
               <>
-                <button
-                  onClick={handlePreviousWord}
-                  className="header-button navigation-button"
-                  disabled={activeWordIndex === 0 || completed}
-                  title="Previous word"
-                >
-                  &lt;
-                </button>
-                <button
-                  onClick={handleNextWord}
-                  className="header-button navigation-button"
-                  disabled={activeWordIndex >= subpassword.length - 1 || completed}
-                  title="Next word"
-                >
-                  &gt;
-                </button>
-                <button onClick={handleResetPractice} className="header-button">
-                  Reset Practice
-                </button>
                 <button onClick={handleReturnToGame} className="header-button">
                   Back to Game
                 </button>
@@ -421,7 +367,32 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
         )}
 
         <div className="current-password-section">
-          <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
+          <div className="current-password-header">
+            <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
+            {mode === 'practice' && (
+              <div className="practice-controls">
+                <button
+                  onClick={handlePreviousWord}
+                  className="header-button navigation-button"
+                  disabled={activeWordIndex === 0 || completed}
+                  title="Previous word"
+                >
+                  &lt;
+                </button>
+                <button
+                  onClick={handleNextWord}
+                  className="header-button navigation-button"
+                  disabled={activeWordIndex >= subpassword.length - 1 || completed}
+                  title="Next word"
+                >
+                  &gt;
+                </button>
+                <button onClick={handleResetPractice} className="header-button">
+                  Reset Practice
+                </button>
+              </div>
+            )}
+          </div>
           {mode === 'practice' ? (
             <PasswordProgressDisplay
               words={subpassword}
