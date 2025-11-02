@@ -85,6 +85,14 @@
   cursor: not-allowed;
 }
 
+.practice-configs-container {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .current-password-section {
   margin-bottom: 32px;
 }
@@ -183,6 +191,11 @@
 
   .header-button {
     width: 100%;
+  }
+
+  .practice-configs-container {
+    flex-direction: column;
+    align-items: center;
   }
 }
 

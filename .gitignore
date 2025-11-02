@@ -1,1 +1,8 @@
 node_modules/
+dist/
+
+# TypeScript compiled output (shouldn't exist with noEmit, but just in case)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map

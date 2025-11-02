@@ -27,6 +27,23 @@ export function calculateWordsFor80Bits(config: GameConfig): number {
   return 80 / entropyPerWord;
 }
 
+/**
+ * Configuration for practice mode display options
+ */
+export interface PracticeDisplayConfig {
+  displayPreviousWord: boolean;
+  displayCurrentWord: boolean;
+  highlightCurrentWord: boolean;
+  displayFutureWords: boolean;
+}
+
+export const DEFAULT_PRACTICE_DISPLAY_CONFIG: PracticeDisplayConfig = {
+  displayPreviousWord: true,
+  displayCurrentWord: true,
+  highlightCurrentWord: true,
+  displayFutureWords: true,
+};
+
 // Legacy exports for backwards compatibility
 export const GRID_COLUMNS = DEFAULT_CONFIG.gridCols;
 export const GRID_ROWS = DEFAULT_CONFIG.gridRows;

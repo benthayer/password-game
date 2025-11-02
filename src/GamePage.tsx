@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNextWords, generatePassword } from './crypto-utils';
 import type { PasswordSource } from './App';
-import type { GameConfig } from './game-config';
-import { getGridSize } from './game-config';
+import type { GameConfig, PracticeDisplayConfig } from './game-config';
+import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './game-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
+import PracticeConfigDisplay from './PracticeConfigDisplay';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import './GamePage.css';
 import './PracticePage.css';
@@ -39,6 +40,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
   const [completed, setCompleted] = useState(false);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
+  const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(DEFAULT_PRACTICE_DISPLAY_CONFIG);
 
   const gridSize = getGridSize(config);
 
@@ -403,15 +405,35 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
           </div>
         </div>
 
-        <ConfigDisplay config={config} />
+        {mode === 'practice' ? (
+          <div className="practice-configs-container">
+            <ConfigDisplay config={config} />
+            <PracticeConfigDisplay
+              config={practiceDisplayConfig}
+              onConfigChange={setPracticeDisplayConfig}
+            />
+          </div>
+        ) : (
+          <ConfigDisplay config={config} />
+        )}
 
         <div className="current-password-section">
           <h2>{mode === 'game' ? 'Current Password' : 'Password Progress'}</h2>
-          <PasswordProgressDisplay
-            words={mode === 'game' ? subpassword : subpassword}
-            completedCount={mode === 'game' ? subpassword.length : selectedWords.length}
-            showFuture={mode === 'practice'}
-          />
+          {mode === 'practice' ? (
+            <PasswordProgressDisplay
+              words={subpassword}
+              completedCount={selectedWords.length}
+              showFuture={practiceDisplayConfig.displayFutureWords}
+              practiceConfig={practiceDisplayConfig}
+              activeWordIndex={activeWordIndex}
+            />
+          ) : (
+            <PasswordProgressDisplay
+              words={subpassword}
+              completedCount={subpassword.length}
+              showFuture={false}
+            />
+          )}
           {mode === 'game' && (
             <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
               {subpassword.length} {subpassword.length === 1 ? 'word' : 'words'} selected
@@ -434,6 +456,7 @@ export default function GamePage({ password, setPassword, setPasswordSource, con
               correctWordIndex={correctWordIndex}
               errorWordIndex={errorButtonIndex}
               gridCols={config.gridCols}
+              highlightCorrect={practiceDisplayConfig.highlightCurrentWord}
             />
           ) : (
             <WordSelectionGrid

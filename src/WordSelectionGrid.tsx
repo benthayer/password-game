@@ -8,6 +8,7 @@ interface WordSelectionGridProps {
   correctWordIndex?: number;
   errorWordIndex?: number | null;
   gridCols?: number;
+  highlightCorrect?: boolean;
 }
 
 export default function WordSelectionGrid({
@@ -17,6 +18,7 @@ export default function WordSelectionGrid({
   correctWordIndex,
   errorWordIndex = null,
   gridCols = 4,
+  highlightCorrect = true,
 }: WordSelectionGridProps) {
   return (
     <>
@@ -31,8 +33,9 @@ export default function WordSelectionGrid({
         {words.map((word, index) => {
           const isCorrect = index === correctWordIndex;
           const isError = errorWordIndex === index;
+          const shouldHighlight = highlightCorrect && isCorrect && !isError;
           let buttonClasses = 'word-button';
-          if (isCorrect && !isError) {
+          if (shouldHighlight) {
             buttonClasses += ' correct';
           }
           if (isError) {
@@ -48,10 +51,10 @@ export default function WordSelectionGrid({
               disabled={loading}
               className={buttonClasses}
               style={{
-                background: isCorrect && !isError ? '#10b981' : undefined,
-                border: isCorrect && !isError ? '3px solid #059669' : '3px solid transparent',
-                boxShadow: isCorrect && !isError ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
-                fontWeight: isCorrect ? 'bold' : 'normal',
+                background: shouldHighlight ? '#10b981' : undefined,
+                border: shouldHighlight ? '3px solid #059669' : '3px solid transparent',
+                boxShadow: shouldHighlight ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
+                fontWeight: shouldHighlight ? 'bold' : 'normal',
                 cursor: loading ? 'wait' : 'pointer',
                 boxSizing: 'border-box',
               }}
