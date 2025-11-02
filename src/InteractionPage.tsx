@@ -25,26 +25,91 @@ interface InteractionPageProps {
 
 export default function InteractionPage({ password, setPassword, setPasswordSource, config, setConfig }: InteractionPageProps) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('recovery');
+  const [mode, setMode] = useState<Mode>(() => {
+    const saved = localStorage.getItem('gameMode');
+    return (saved as Mode) || 'recovery';
+  });
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   
   // Recovery mode state
-  const [subpassword, setSubpassword] = useState<string[]>([]);
+  const [subpassword, setSubpassword] = useState<string[]>(() => {
+    const saved = localStorage.getItem('gameSubpassword');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [nextWords, setNextWords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Practice mode state
-  const [selectedWords, setSelectedWords] = useState<string[]>([]);
-  const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
+  const [selectedWords, setSelectedWords] = useState<string[]>(() => {
+    const saved = localStorage.getItem('gameSelectedWords');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [activeWordIndex, setActiveWordIndex] = useState<number>(() => {
+    const saved = localStorage.getItem('gameActiveWordIndex');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
-  const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(DEFAULT_PRACTICE_DISPLAY_CONFIG);
+  const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(() => {
+    const saved = localStorage.getItem('gamePracticeDisplayConfig');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_PRACTICE_DISPLAY_CONFIG;
+      }
+    }
+    return DEFAULT_PRACTICE_DISPLAY_CONFIG;
+  });
   
   // Check if practice is completed (activeWordIndex is out of range)
   const isCompleted = activeWordIndex >= subpassword.length;
 
   const gridSize = getGridSize(config);
+
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem('gameMode', mode);
+  }, [mode]);
+
+  useEffect(() => {
+    if (subpassword.length > 0) {
+      localStorage.setItem('gameSubpassword', JSON.stringify(subpassword));
+    } else {
+      localStorage.removeItem('gameSubpassword');
+    }
+  }, [subpassword]);
+
+  useEffect(() => {
+    if (selectedWords.length > 0) {
+      localStorage.setItem('gameSelectedWords', JSON.stringify(selectedWords));
+    } else {
+      localStorage.removeItem('gameSelectedWords');
+    }
+  }, [selectedWords]);
+
+  useEffect(() => {
+    localStorage.setItem('gameActiveWordIndex', activeWordIndex.toString());
+  }, [activeWordIndex]);
+
+  useEffect(() => {
+    localStorage.setItem('gamePracticeDisplayConfig', JSON.stringify(practiceDisplayConfig));
+  }, [practiceDisplayConfig]);
 
   // Recovery mode: load next words for building password
   const loadNextWordsRecovery = async (currentSubpassword: string[]) => {
@@ -86,14 +151,21 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     }
   };
 
-  // Initialize game mode
+  // Initialize game mode based on saved state or defaults
   useEffect(() => {
     if (mode === 'recovery') {
-      loadNextWordsRecovery([]);
+      if (subpassword.length > 0) {
+        loadNextWordsRecovery(subpassword);
+      } else {
+        loadNextWordsRecovery([]);
+      }
+    } else if (mode === 'practice' && subpassword.length > 0) {
+      // Load words for practice mode based on saved state
+      loadNextWordsPractice(selectedWords, subpassword, activeWordIndex, true);
     }
   }, [mode, config]);
 
-  // Auto-initialize practice mode if password is provided
+  // Auto-initialize practice mode if password is provided (only if no saved state)
   useEffect(() => {
     if (password && password.trim() !== '' && subpassword.length === 0) {
       const passwordWords = password.split(' ');
@@ -279,6 +351,27 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
     setSelectedWords([]);
     setErrorButtonIndex(null);
     setMode('recovery');
+    setActiveWordIndex(0);
+    localStorage.removeItem('gameSubpassword');
+    localStorage.removeItem('gameSelectedWords');
+    localStorage.setItem('gameActiveWordIndex', '0');
+    loadNextWordsRecovery([]);
+  };
+
+  // Handle config save - reset password progress when config changes
+  const handleConfigSave = (newConfig: GenerationConfig) => {
+    setConfig(newConfig);
+    // Reset password progress
+    setSubpassword([]);
+    setSelectedWords([]);
+    setActiveWordIndex(0);
+    setErrorButtonIndex(null);
+    setMode('recovery');
+    localStorage.removeItem('gameSubpassword');
+    localStorage.removeItem('gameSelectedWords');
+    localStorage.setItem('gameActiveWordIndex', '0');
+    localStorage.setItem('gameMode', 'recovery');
+    // Reload words with new config
     loadNextWordsRecovery([]);
   };
 
@@ -493,7 +586,7 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
           isOpen={configModalOpen}
           onClose={() => setConfigModalOpen(false)}
           config={config}
-          onSave={setConfig}
+          onSave={handleConfigSave}
         />
         <GeneratePasswordModal
           isOpen={generateModalOpen}
