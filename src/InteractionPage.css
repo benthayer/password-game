@@ -105,6 +105,7 @@
   margin-bottom: 24px;
   justify-content: space-between;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .current-password-section {
