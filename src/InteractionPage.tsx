@@ -300,7 +300,7 @@ export default function InteractionPage({ password, setPassword, setPasswordSour
                   fontWeight: '500'
                 }}
               >
-                Config
+                Edit Config
               </button>
             )}
             {mode === 'recovery' && (
