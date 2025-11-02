@@ -110,7 +110,7 @@ export default function PracticePage({ password }: PracticePageProps) {
             <p style={{ color: '#6b7280', fontSize: '1.2rem', marginBottom: '32px' }}>
               You've successfully practiced all words in your password.
             </p>
-            <div className="password-progress-display" style={{ textAlign: 'center', margin: '0 auto', display: 'inline-block', padding: '16px 18px' }}>
+            <div className="password-progress-display" style={{ textAlign: 'center', margin: '0 auto', marginBottom: '0', display: 'inline-block', padding: '16px 18px' }}>
               {passwordWords.map((word, index) => (
                 <span key={index} className="password-word completed">
                   {word}
@@ -118,7 +118,7 @@ export default function PracticePage({ password }: PracticePageProps) {
               ))}
             </div>
           </div>
-          <div className="header-buttons" style={{ marginTop: '60px', justifyContent: 'center' }}>
+          <div className="header-buttons" style={{ marginTop: '26px', justifyContent: 'center' }}>
             <button onClick={() => navigate('/')} className="header-button">
               Return to Home
             </button>
