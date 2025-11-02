@@ -271,7 +271,7 @@ export default function GamePage({ setPassword, setPasswordSource }: GamePagePro
             completedCount={mode === 'game' ? subpassword.length : selectedWords.length}
             showFuture={mode === 'practice'}
           />
-          {mode === 'game' && subpassword.length > 0 && (
+          {mode === 'game' && (
             <p style={{ marginTop: '12px', color: '#6b7280', fontSize: '0.95rem' }}>
               {subpassword.length} {subpassword.length === 1 ? 'word' : 'words'} selected
             </p>
