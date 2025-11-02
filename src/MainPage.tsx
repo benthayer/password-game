@@ -23,11 +23,11 @@ export default function MainPage({ setPassword, setPasswordSource, config }: Mai
     const password = await generatePassword(numWords, gridSize, config.seedPhrase);
     setPassword(password);
     setPasswordSource('auto-generated');
-    navigate('/game');
+    navigate('/');
   };
 
   const handlePlayGame = () => {
-    navigate('/game');
+    navigate('/');
   };
 
   return (

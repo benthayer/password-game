@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import MainPage from './MainPage';
-import PasswordDisplay from './PasswordDisplay';
 import GamePage from './GamePage';
 import { DEFAULT_CONFIG, type GameConfig } from './game-config';
 
@@ -35,7 +34,8 @@ function AppRouter() {
         <Route
           path="/"
           element={
-            <MainPage
+            <GamePage
+              password={password}
               setPassword={setPassword}
               setPasswordSource={setPasswordSource}
               config={config}
@@ -44,14 +44,9 @@ function AppRouter() {
           }
         />
         <Route
-          path="/display"
-          element={<PasswordDisplay password={password} source={passwordSource} />}
-        />
-        <Route
-          path="/game"
+          path="/main"
           element={
-            <GamePage
-              password={password}
+            <MainPage
               setPassword={setPassword}
               setPasswordSource={setPasswordSource}
               config={config}
