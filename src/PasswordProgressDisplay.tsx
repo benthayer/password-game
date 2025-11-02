@@ -58,8 +58,7 @@ export default function PasswordProgressDisplay({
           </span>
         </div>
       )}
-      {words.length > 0 && (
-        <div className="password-words-container">
+      <div className="password-words-container">
           {words.map((word, index) => {
             let shouldShow = true;
             
@@ -146,8 +145,7 @@ export default function PasswordProgressDisplay({
               </span>
             );
           })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
