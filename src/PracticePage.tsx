@@ -18,8 +18,10 @@ export default function PracticePage({ password }: PracticePageProps) {
   const [completed, setCompleted] = useState(false);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
 
-  const loadNextWords = async (currentSelected: string[], targetWords?: string[]) => {
-    setLoading(true);
+  const loadNextWords = async (currentSelected: string[], targetWords?: string[], showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     try {
       const words = await getNextWords(currentSelected, 20);
       setNextWords(words);
@@ -35,7 +37,9 @@ export default function PracticePage({ password }: PracticePageProps) {
     } catch (error) {
       console.error('Error loading next words:', error);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -44,7 +48,7 @@ export default function PracticePage({ password }: PracticePageProps) {
       const words = password.trim().split(/\s+/).filter(word => word.length > 0);
       setPasswordWords(words);
       if (words.length > 0) {
-        loadNextWords([], words);
+        loadNextWords([], words, true); // Show loading on initial load only
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,8 +68,8 @@ export default function PracticePage({ password }: PracticePageProps) {
         // All words have been selected
         setCompleted(true);
       } else {
-        // Load next words for the next step
-        await loadNextWords(newSelected, passwordWords);
+        // Load next words for the next step without showing loading state
+        await loadNextWords(newSelected, passwordWords, false);
       }
     } else {
       // Wrong word selected - show error animation
@@ -85,7 +89,7 @@ export default function PracticePage({ password }: PracticePageProps) {
     setCompleted(false);
     setErrorButtonIndex(null);
     if (passwordWords.length > 0) {
-      loadNextWords([], passwordWords);
+      loadNextWords([], passwordWords, false);
     }
   };
 
@@ -187,38 +191,39 @@ export default function PracticePage({ password }: PracticePageProps) {
           <p style={{ marginBottom: '20px', color: '#6b7280', fontSize: '0.95rem' }}>
             Click the highlighted word to continue
           </p>
-          {loading ? (
-            <div className="loading">Loading options...</div>
-          ) : (
-            <div className="word-grid">
-              {nextWords.map((word, index) => {
-                const isCorrect = index === correctWordIndex;
-                const isError = errorButtonIndex === index;
-                let buttonClasses = 'word-button';
-                if (isError) {
-                  buttonClasses += ' error';
-                  if (isCorrect) {
-                    buttonClasses += ' correct-word';
-                  }
+          <div className="word-grid" style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+            {nextWords.map((word, index) => {
+              const isCorrect = index === correctWordIndex;
+              const isError = errorButtonIndex === index;
+              let buttonClasses = 'word-button';
+              if (isError) {
+                buttonClasses += ' error';
+                if (isCorrect) {
+                  buttonClasses += ' correct-word';
                 }
-                return (
-                  <button
-                    key={`${word}-${index}`}
-                    onClick={() => handleWordSelect(word)}
-                    className={buttonClasses}
-                    style={{
-                      background: isCorrect && !isError ? '#10b981' : undefined,
-                      border: isCorrect && !isError ? '3px solid #059669' : 'none',
-                      boxShadow: isCorrect && !isError ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
-                      transform: isCorrect && !isError ? 'scale(1.05)' : undefined,
-                      fontWeight: isCorrect ? 'bold' : 'normal',
-                    }}
-                  >
-                    {word}
-                  </button>
-                );
-              })}
-            </div>
+              }
+              return (
+                <button
+                  key={`${word}-${index}`}
+                  onClick={() => !loading && handleWordSelect(word)}
+                  disabled={loading}
+                  className={buttonClasses}
+                  style={{
+                    background: isCorrect && !isError ? '#10b981' : undefined,
+                    border: isCorrect && !isError ? '3px solid #059669' : 'none',
+                    boxShadow: isCorrect && !isError ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
+                    transform: isCorrect && !isError ? 'scale(1.05)' : undefined,
+                    fontWeight: isCorrect ? 'bold' : 'normal',
+                    cursor: loading ? 'wait' : 'pointer',
+                  }}
+                >
+                  {word}
+                </button>
+              );
+            })}
+          </div>
+          {loading && nextWords.length === 0 && (
+            <div className="loading">Loading options...</div>
           )}
         </div>
       </div>
