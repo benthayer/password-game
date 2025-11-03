@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { generatePassword } from './crypto-utils';
 import type { GenerationConfig } from './generation-config';
-import { getGridSize } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
+import RecoveryModal from './RecoveryModal';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -21,10 +20,7 @@ export default function MainPage({
 }: MainPageProps) {
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
-
-  const handleRecover = () => {
-    navigate('/recovery');
-  };
+  const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
 
   const handlePractice = () => {
     navigate('/practice');
@@ -38,7 +34,7 @@ export default function MainPage({
           <button onClick={() => setGenerateModalOpen(true)} className="primary-button generate-button">
             Generate
           </button>
-          <button onClick={handleRecover} className="primary-button recover-button">
+          <button onClick={() => setRecoveryModalOpen(true)} className="primary-button recover-button">
             Recover
           </button>
           <button onClick={handlePractice} className="primary-button practice-button">
@@ -49,6 +45,13 @@ export default function MainPage({
       <GeneratePasswordModal
         isOpen={generateModalOpen}
         onClose={() => setGenerateModalOpen(false)}
+        config={config}
+        setConfig={setConfig}
+        setSubpassword={setSubpassword}
+      />
+      <RecoveryModal
+        isOpen={recoveryModalOpen}
+        onClose={() => setRecoveryModalOpen(false)}
         config={config}
         setConfig={setConfig}
         setSubpassword={setSubpassword}
