@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import RecoveryModal from './RecoveryModal';
+import PracticeModal from './PracticeModal';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -21,9 +22,10 @@ export default function MainPage({
   const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
+  const [practiceModalOpen, setPracticeModalOpen] = useState(false);
 
   const handlePractice = () => {
-    navigate('/practice');
+    setPracticeModalOpen(true);
   };
 
   return (
@@ -55,6 +57,10 @@ export default function MainPage({
         config={config}
         setConfig={setConfig}
         setSubpassword={setSubpassword}
+      />
+      <PracticeModal
+        isOpen={practiceModalOpen}
+        onClose={() => setPracticeModalOpen(false)}
       />
     </div>
   );
