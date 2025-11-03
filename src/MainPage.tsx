@@ -10,8 +10,6 @@ interface MainPageProps {
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
   setSubpassword: (subpassword: string[]) => void;
-  setSelectedWords: (selectedWords: string[]) => void;
-  setActiveWordIndex: (activeWordIndex: number) => void;
 }
 
 export default function MainPage({ 
@@ -19,7 +17,6 @@ export default function MainPage({
   setConfig, 
   setSubpassword,
 }: MainPageProps) {
-  const navigate = useNavigate();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);

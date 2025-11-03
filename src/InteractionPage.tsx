@@ -38,27 +38,12 @@ export default function InteractionPage({
   const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
   const [correctWordIndex, setCorrectWordIndex] = useState<number>(-1);
   const [errorButtonIndex, setErrorButtonIndex] = useState<number | null>(null);
-  const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(() => {
-    const saved = localStorage.getItem('gamePracticeDisplayConfig');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return DEFAULT_PRACTICE_DISPLAY_CONFIG;
-      }
-    }
-    return DEFAULT_PRACTICE_DISPLAY_CONFIG;
-  });
+  const [practiceDisplayConfig, setPracticeDisplayConfig] = useState<PracticeDisplayConfig>(DEFAULT_PRACTICE_DISPLAY_CONFIG);
   
   // Check if practice is completed (activeWordIndex is out of range)
   const isCompleted = activeWordIndex >= subpassword.length;
 
   const gridSize = getGridSize(config);
-
-  // Persist state to localStorage
-  useEffect(() => {
-    localStorage.setItem('gamePracticeDisplayConfig', JSON.stringify(practiceDisplayConfig));
-  }, [practiceDisplayConfig]);
 
   // Recovery mode: load next words for building password
   const loadNextWordsRecovery = (currentSubpassword: string[]) => {
