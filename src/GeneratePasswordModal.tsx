@@ -44,7 +44,7 @@ export default function GeneratePasswordModal({
   }, [seedPhrase, gridRows, gridCols]);
 
   const handleGenerate = () => {
-    setSubpassword(generatePassword(Math.ceil(numWords), numOptions, seedPhrase));
+    setSubpassword(generatePassword(Math.ceil(numWords), config));
     navigate('/practice');
     onClose();
   };

@@ -22,7 +22,7 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
       </div>
       <div className="config-display-item">
         <span className="config-label">Grid:</span>
-        <span className="config-value">{config.gridCols} × {config.gridRows}</span>
+        <span className="config-value">{config.gridRows} × {config.gridCols}</span>
       </div>
       <h3 className="config-title">Calculations</h3>
       <div className="config-display-item">

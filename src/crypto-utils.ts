@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js';
 import * as corpus from '../corpus.json';
+import type { GenerationConfig } from './generation-config';
 
 const wordList: string[] = corpus.words;
 
@@ -22,36 +23,37 @@ export function getWordFromHash(hash: string): string {
   return wordList[index] as string;
 }
 
-export function hashSubpassword(subpassword: string[], seedPhrase: string = ''): string {
+export function hashSubpassword(subpassword: string[], config: GenerationConfig): string {
   // Hash so that we have the conceptual cleanness of delimited strings
-  let combined = hash(seedPhrase);
+  let combined = `${config.gridRows}x${config.gridCols}:${hash(config.seedPhrase)}`;
   for (const word of subpassword) {
     combined += `:${word}`;
   }
   return hash(combined);
 }
 
-export function getNextWords(subpassword: string[], numOptions: number, seedPhrase: string = ''): string[] {
-  const baseHash = hashSubpassword(subpassword, seedPhrase);
+export function getNextWords(subpassword: string[], config: GenerationConfig): string[] {
+  const baseHash = hashSubpassword(subpassword, config);
   let tempHash = baseHash;
   const words: string[] = [];
-  for (let i = 0; i < numOptions; i++) {
+  const numWords = config.gridRows * config.gridCols
+  for (let i = 0; i < numWords; i++) {
     words.push(getWordFromHash(tempHash));
     tempHash = hash(tempHash);
   }
   return words;
 }
 
-export function selectRandomNextWord(subpassword: string[], numOptions: number, seedPhrase: string = ''): string[] {
-  const nextWords = getNextWords(subpassword, numOptions, seedPhrase);
+export function selectRandomNextWord(subpassword: string[], config: GenerationConfig): string[] {
+  const nextWords = getNextWords(subpassword, config);
   const nextWord = nextWords[Math.floor(Math.random() * nextWords.length)] as string;
   return [...subpassword, nextWord];
 }
 
-export function generatePassword(numWords: number, numOptions: number, seedPhrase: string = ''): string[] {
+export function generatePassword(numWords: number, config: GenerationConfig): string[] {
   let subpassword: string[] = [];
   for (let i = 0; i < numWords; i++) {
-    subpassword = selectRandomNextWord(subpassword, numOptions, seedPhrase);
+    subpassword = selectRandomNextWord(subpassword, config);
   }
   return subpassword;
 }

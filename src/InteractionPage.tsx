@@ -43,11 +43,9 @@ export default function InteractionPage({
   // Check if practice is completed (activeWordIndex is out of range)
   const isCompleted = activeWordIndex >= subpassword.length;
 
-  const gridSize = getGridSize(config);
-
   // Recovery mode: load next words for building password
   const loadNextWordsRecovery = (currentSubpassword: string[]) => {
-    setNextWords(getNextWords(currentSubpassword, gridSize, config.seedPhrase));
+    setNextWords(getNextWords(currentSubpassword, config));
   };
 
   // Practice mode: load next words with correct word highlighting
@@ -56,9 +54,7 @@ export default function InteractionPage({
       // Use the full prefix up to (but not including) the active word index
       // This ensures we get the correct options for the active word
       const prefix = targetWords.slice(0, wordIndex);
-      console.log('loadNextWordsPractice', prefix, gridSize, config.seedPhrase, config.seedPhrase.length);
-      const words = getNextWords(prefix, gridSize, config.seedPhrase);
-      console.log('words', words);
+      const words = getNextWords(prefix, config);
       setNextWords(words);
       
       // Find which word in the options matches the word at the active index
