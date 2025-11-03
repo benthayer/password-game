@@ -6,6 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "48607:80"
+      - "127.0.0.148607:80"
     restart: unless-stopped
     container_name: password-game
