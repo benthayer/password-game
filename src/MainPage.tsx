@@ -42,6 +42,9 @@ export default function MainPage({
           <button onClick={handlePractice} className="primary-button practice-button">
             Practice
           </button>
+          <button className="primary-button">
+            View Generated Passwords
+          </button>
         </div>
       </div>
       <GeneratePasswordModal
