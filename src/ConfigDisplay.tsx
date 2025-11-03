@@ -24,6 +24,7 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
         <span className="config-label">Grid:</span>
         <span className="config-value">{config.gridCols} × {config.gridRows}</span>
       </div>
+      <h3 className="config-title">Calculations</h3>
       <div className="config-display-item">
         <span className="config-label">Entropy per word:</span>
         <span className="config-value">{entropyPerWord.toFixed(2)} bits</span>
