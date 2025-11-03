@@ -20,6 +20,9 @@ function AppRouter() {
   // Shared subpassword state between MainPage and InteractionPage
   const [subpassword, setSubpassword] = useState<string[]>([]);
   return (
+    <>
+    <meta name="viewport" content="width=650, initial-scale=1.0">
+    </meta>
     <BrowserRouter>
       <Routes>
         <Route
@@ -61,6 +64,7 @@ function AppRouter() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </>
   );
 }
 
