@@ -21,30 +21,29 @@ export default function GeneratePasswordModal({
   setSubpassword,
 }: GeneratePasswordModalProps) {
   const navigate = useNavigate();
-  const [desiredBits, setDesiredBits] = useState<number>(80);
+  const [desiredSecurityBits, setDesiredSecurityBits] = useState<number>(() => {
+    const saved = localStorage.getItem('desiredSecurityBits');
+    if (saved) {
+      return parseInt(saved);
+    }
+    return 80;
+  });
+  useEffect(() => {
+    localStorage.setItem('desiredSecurityBits', desiredSecurityBits.toString());
+  }, [desiredSecurityBits]);
+
+  const entropyPerWord = calculateEntropyPerWord(config);
+  const numWords = desiredSecurityBits / entropyPerWord;
+  const numOptions = getGridSize(config);
   const [seedPhrase, setSeedPhrase] = useState(config.seedPhrase);
   const [gridRows, setGridRows] = useState(config.gridRows);
   const [gridCols, setGridCols] = useState(config.gridCols);
 
   useEffect(() => {
-    if (isOpen) {
-      // Default to 80 bits if modal is newly opened
-      setDesiredBits(80);
-      // Reset config fields to current config
-      setSeedPhrase(config.seedPhrase);
-      setGridRows(config.gridRows);
-      setGridCols(config.gridCols);
-    }
-  }, [isOpen, config]);
-
-  const currentConfig: GenerationConfig = { seedPhrase, gridRows, gridCols };
-  const entropyPerWord = calculateEntropyPerWord(currentConfig);
-  const numWords = desiredBits / entropyPerWord;
-  const numOptions = getGridSize(currentConfig);
+    setConfig({ seedPhrase, gridRows, gridCols });
+  }, [seedPhrase, gridRows, gridCols]);
 
   const handleGenerate = () => {
-    // Save config before generating
-    setConfig(currentConfig);
     setSubpassword(generatePassword(Math.ceil(numWords), numOptions, seedPhrase));
     navigate('/practice');
     onClose();
@@ -115,11 +114,11 @@ export default function GeneratePasswordModal({
               <input
                 id="desired-bits"
                 type="number"
-                value={desiredBits}
+                value={desiredSecurityBits}
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   if (!isNaN(value) && value > 0) {
-                    setDesiredBits(value);
+                    setDesiredSecurityBits(value);
                   }
                 }}
                 min="1"
@@ -140,7 +139,7 @@ export default function GeneratePasswordModal({
               </div>
               <div className="conversion-display">
                 <span className="conversion-text">
-                  {desiredBits} bits ≈ {numWords.toFixed(2)} words
+                  {desiredSecurityBits} bits ≈ {numWords.toFixed(2)} words
                 </span>
               </div>
             </div>
