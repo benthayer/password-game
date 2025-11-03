@@ -46,12 +46,16 @@ function AppRouter() {
         <Route
           path="/practice"
           element={
-            <InteractionPage
-              config={config}
-              setConfig={setConfig}
-              subpassword={subpassword}
-              setSubpassword={setSubpassword}
-            />
+            subpassword.length === 0 ? (
+              <Navigate to="/recovery" replace />
+            ) : (
+              <InteractionPage
+                config={config}
+                setConfig={setConfig}
+                subpassword={subpassword}
+                setSubpassword={setSubpassword}
+              />
+            )
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
