@@ -317,14 +317,14 @@ export default function InteractionPage({
 
         {mode === 'practice' ? (
           <div className="practice-configs-container">
-            <ConfigDisplay config={config} />
+            <ConfigDisplay config={config} numWords={subpassword.length} />
             <PracticeConfigDisplay
               config={practiceDisplayConfig}
               onConfigChange={setPracticeDisplayConfig}
             />
           </div>
         ) : (
-          <ConfigDisplay config={config} />
+          <ConfigDisplay config={config} numWords={subpassword.length} />
         )}
 
         <div className="current-password-section">
