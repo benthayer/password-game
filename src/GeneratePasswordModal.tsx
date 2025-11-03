@@ -79,7 +79,7 @@ export default function GeneratePasswordModal({
             <div className="config-section">
               <h3>Configuration</h3>
               <div className="config-field">
-                <label htmlFor="seed-phrase">Public Seed Phrase</label>
+                <label htmlFor="seed-phrase">Public Seed Phrase<br/>Optionally used to randomize the grid. Does not affect security.</label>
                 <input
                   id="seed-phrase"
                   type="text"

@@ -38,7 +38,7 @@ export interface PracticeDisplayConfig {
 
 export const DEFAULT_PRACTICE_DISPLAY_CONFIG: PracticeDisplayConfig = {
   displayMode: 'all',
-  highlightCurrentWord: false,
+  highlightCurrentWord: true,
   hint: true,
 };
 
