@@ -8,6 +8,7 @@ import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import PracticeConfigDisplay from './PracticeConfigDisplay';
+import VaultCard from './vault/VaultCard';
 import './InteractionPage.css';
 import './PracticePage.css';
 
@@ -454,6 +455,7 @@ export default function InteractionPage({
           onSave={handleConfigSave}
         />
       </div>
+      <VaultCard password={subpassword} />
     </div>
   );
 }
