@@ -29,6 +29,11 @@ blobRoutes.get('/:addressHash', async (req, res) => {
 blobRoutes.put('/:addressHash', async (req, res) => {
   const { addressHash } = req.params;
   
+  const canUpload = await creditService.canUpload(addressHash);
+  if (!canUpload) {
+    return res.status(402).json({ error: 'Insufficient credits' });
+  }
+  
   if (await blobService.exists(addressHash)) {
     return res.status(409).json({ error: 'File already exists at this address' });
   }

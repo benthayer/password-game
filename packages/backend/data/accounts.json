@@ -47,6 +47,14 @@
       "fileSize": 88,
       "createdAt": "2026-01-08T00:39:04.164Z",
       "updatedAt": "2026-01-08T00:39:04.164Z"
+    },
+    "724922d70c0f5875ca2a5870b3a4335a53a1c99c73b47376bc898736c4b79952": {
+      "addressHash": "724922d70c0f5875ca2a5870b3a4335a53a1c99c73b47376bc898736c4b79952",
+      "initialCredits": 0,
+      "spentCredits": 0,
+      "fileSize": null,
+      "createdAt": "2026-01-08T00:43:50.364Z",
+      "updatedAt": "2026-01-08T00:43:55.396Z"
     }
   }
 }

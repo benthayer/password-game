@@ -30,6 +30,7 @@ export async function setBlob(addressHash: string, data: Uint8Array): Promise<vo
       'Content-Type': 'application/octet-stream',
     },
   });
+  if (res.status === 402) throw new Error('Insufficient credits');
   if (res.status === 409) throw new Error('File already exists');
   if (!res.ok) throw new Error('Upload failed');
 }
