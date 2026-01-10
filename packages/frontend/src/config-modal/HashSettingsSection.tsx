@@ -12,24 +12,67 @@ interface HashSettingsSectionProps {
   algorithm: HashAlgorithmConfig;
   onAlgorithmChange: (algorithm: HashAlgorithm) => void;
   onConfigChange: (config: HashAlgorithmConfig) => void;
+  useRecommended: boolean;
+  onUseRecommendedChange: (value: boolean) => void;
 }
 
 export default function HashSettingsSection({
   algorithm,
   onAlgorithmChange,
   onConfigChange,
+  useRecommended,
+  onUseRecommendedChange,
 }: HashSettingsSectionProps) {
   return (
     <div className="config-section">
       <h3>Hash Settings</h3>
       
-      <AlgorithmSelector
-        selected={algorithm.algorithm}
-        onChange={onAlgorithmChange}
+      <UseRecommendedCheckbox
+        checked={useRecommended}
+        onChange={onUseRecommendedChange}
       />
       
-      <div className="algorithm-params">
-        <AlgorithmParams algorithm={algorithm} onChange={onConfigChange} />
+      {!useRecommended && (
+        <>
+          <AlgorithmSelector
+            selected={algorithm.algorithm}
+            onChange={onAlgorithmChange}
+          />
+          
+          <div className="algorithm-params">
+            <AlgorithmParams algorithm={algorithm} onChange={onConfigChange} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Use Recommended Checkbox
+// ============================================================
+
+function UseRecommendedCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="config-field">
+      <label className="checkbox-label" onClick={() => onChange(!checked)}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        Use Recommended (Argon2id)
+      </label>
+      <div className="field-hint">
+        {checked 
+          ? 'Using Argon2id with secure defaults (64MB memory, 3 iterations).'
+          : 'Uncheck to customize the hash algorithm and parameters.'}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { GenerationConfig, HashAlgorithm, HashAlgorithmConfig } from '../generation-config';
-import { getGridSize, getDefaultConfigForAlgorithm } from '../generation-config';
+import { getGridSize, getDefaultConfigForAlgorithm, DEFAULT_ARGON2ID_CONFIG } from '../generation-config';
 
 export interface UseConfigFormResult {
   // Grid fields
@@ -22,6 +22,8 @@ export interface UseConfigFormResult {
   hashAlgorithm: HashAlgorithmConfig;
   setHashAlgorithm: (config: HashAlgorithmConfig) => void;
   changeAlgorithm: (algorithm: HashAlgorithm) => void;
+  useRecommendedHash: boolean;
+  setUseRecommendedHash: (value: boolean) => void;
   
   // Salt fields
   includeSalt: boolean;
@@ -47,6 +49,17 @@ export function useConfigForm(
   
   // Hash state
   const [hashAlgorithm, setHashAlgorithm] = useState<HashAlgorithmConfig>(initialConfig.hashAlgorithm);
+  const [useRecommendedHash, setUseRecommendedHashState] = useState(
+    initialConfig.hashAlgorithm.algorithm === 'argon2id'
+  );
+  
+  // When useRecommended is toggled on, reset to default Argon2id
+  const setUseRecommendedHash = (value: boolean) => {
+    setUseRecommendedHashState(value);
+    if (value) {
+      setHashAlgorithm(DEFAULT_ARGON2ID_CONFIG);
+    }
+  };
   
   // Salt state
   const [includeSalt, setIncludeSalt] = useState(initialConfig.includeSalt);
@@ -59,6 +72,7 @@ export function useConfigForm(
       setGridRows(initialConfig.gridRows);
       setGridCols(initialConfig.gridCols);
       setHashAlgorithm(initialConfig.hashAlgorithm);
+      setUseRecommendedHashState(initialConfig.hashAlgorithm.algorithm === 'argon2id');
       setIncludeSalt(initialConfig.includeSalt);
       setSalt(initialConfig.salt);
     }
@@ -103,6 +117,8 @@ export function useConfigForm(
     hashAlgorithm,
     setHashAlgorithm,
     changeAlgorithm,
+    useRecommendedHash,
+    setUseRecommendedHash,
     
     // Salt
     includeSalt,

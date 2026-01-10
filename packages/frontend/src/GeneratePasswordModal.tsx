@@ -79,6 +79,8 @@ export default function GeneratePasswordModal({
             algorithm={form.hashAlgorithm}
             onAlgorithmChange={form.changeAlgorithm}
             onConfigChange={form.setHashAlgorithm}
+            useRecommended={form.useRecommendedHash}
+            onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
           <SaltSection

@@ -62,6 +62,8 @@ export default function RecoveryModal({
             algorithm={form.hashAlgorithm}
             onAlgorithmChange={form.changeAlgorithm}
             onConfigChange={form.setHashAlgorithm}
+            useRecommended={form.useRecommendedHash}
+            onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
           <SaltSection

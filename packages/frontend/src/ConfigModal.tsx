@@ -59,6 +59,8 @@ export default function ConfigModal({
             algorithm={form.hashAlgorithm}
             onAlgorithmChange={form.changeAlgorithm}
             onConfigChange={form.setHashAlgorithm}
+            useRecommended={form.useRecommendedHash}
+            onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
           <SaltSection
