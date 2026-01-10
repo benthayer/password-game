@@ -9,12 +9,12 @@
 - [ ] Add simple text file support
 - [ ] Deploy
 - [ ] Upload 1Password recovery details + Google recovery account details
+- [ ] Update interface to include estimated cost to crack in dollars (right now, 5 years, 10 years, 30 years, 50 years, 100 years)
 
 ---
 
 ## CYA
 
-- [ ] Update interface to include estimated cost to crack in dollars (right now, 5 years, 10 years, 30 years, 50 years, 100 years)
 - [ ] Verify file encryption (randomness + other checks)
 - [ ] Have client send over secondary encryption key
 - [ ] Verify randomness of secondary encryption key
