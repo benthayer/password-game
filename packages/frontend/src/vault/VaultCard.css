@@ -1,9 +1,10 @@
 .vault-card {
-  /* Match game-content exactly */
-  background: white;
-  border-radius: 16px;
+  /* Match game-content */
+  background: #12121a;
+  border-radius: 12px;
   padding: 20px 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #1e2a3a;
   max-width: 1000px;
   width: 100%;
   box-sizing: border-box;
@@ -17,23 +18,33 @@
 }
 
 .vault-button {
-  background: #6366f1;
-  color: white;
-  border: none;
+  background: #1e3a4c;
+  color: #67e8f9;
+  border: 1px solid #155e75;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .vault-button:hover {
-  background: #4f46e5;
+  background: #164e63;
+  border-color: #22d3ee;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+}
+
+.vault-button:disabled {
+  background: #1a1a24;
+  border-color: #2d2d3d;
+  color: #4b5563;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .vault-status {
-  color: #6b7280;
+  color: #64748b;
   font-size: 0.9rem;
   margin-left: 8px;
 }
