@@ -3,39 +3,32 @@ import { useState, useEffect } from 'react';
 import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
 import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
-import { DEFAULT_FULL_HASH_CONFIG, type FullHashConfig } from './hash-config';
 
 function AppRouter() {
   const [config, setConfig] = useState<GenerationConfig>(() => {
     const saved = localStorage.getItem('config');
     if (saved) {
-      return JSON.parse(saved);
-    }
-    return DEFAULT_CONFIG;
-  });
-
-  const [hashConfig, setHashConfig] = useState<FullHashConfig>(() => {
-    const saved = localStorage.getItem('hashConfig');
-    if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Migrate old config format if needed
+        return {
+          ...DEFAULT_CONFIG,
+          ...parsed,
+        };
       } catch {
-        return DEFAULT_FULL_HASH_CONFIG;
+        return DEFAULT_CONFIG;
       }
     }
-    return DEFAULT_FULL_HASH_CONFIG;
+    return DEFAULT_CONFIG;
   });
 
   useEffect(() => {
     localStorage.setItem('config', JSON.stringify(config));
   }, [config]);
 
-  useEffect(() => {
-    localStorage.setItem('hashConfig', JSON.stringify(hashConfig));
-  }, [hashConfig]);
-
   // Shared subpassword state between MainPage and InteractionPage
   const [subpassword, setSubpassword] = useState<string[]>([]);
+  
   return (
     <>
     <meta name="viewport" content="width=650, initial-scale=1.0">
@@ -48,8 +41,6 @@ function AppRouter() {
             <MainPage
               config={config}
               setConfig={setConfig}
-              hashConfig={hashConfig}
-              setHashConfig={setHashConfig}
               setSubpassword={setSubpassword}
             />
           }
@@ -60,8 +51,6 @@ function AppRouter() {
             <InteractionPage
               config={config}
               setConfig={setConfig}
-              hashConfig={hashConfig}
-              setHashConfig={setHashConfig}
               subpassword={subpassword}
               setSubpassword={setSubpassword}
             />
@@ -76,8 +65,6 @@ function AppRouter() {
               <InteractionPage
                 config={config}
                 setConfig={setConfig}
-                hashConfig={hashConfig}
-                setHashConfig={setHashConfig}
                 subpassword={subpassword}
                 setSubpassword={setSubpassword}
               />

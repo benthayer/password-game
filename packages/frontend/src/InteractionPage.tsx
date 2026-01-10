@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getNextWords } from './crypto-utils';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
-import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG } from './generation-config';
-import type { FullHashConfig } from './hash-config';
+import { getGridSize, DEFAULT_PRACTICE_DISPLAY_CONFIG, getHashConfig } from './generation-config';
 import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
-import HashConfigModal from './HashConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import PracticeConfigDisplay from './PracticeConfigDisplay';
 import VaultCard from './vault/VaultCard';
@@ -19,8 +17,6 @@ type Mode = 'recovery' | 'practice';
 interface InteractionPageProps {
   config: GenerationConfig;
   setConfig: (config: GenerationConfig) => void;
-  hashConfig: FullHashConfig;
-  setHashConfig: (config: FullHashConfig) => void;
   subpassword: string[];
   setSubpassword: (subpassword: string[]) => void;
 }
@@ -28,8 +24,6 @@ interface InteractionPageProps {
 export default function InteractionPage({ 
   config, 
   setConfig, 
-  hashConfig,
-  setHashConfig,
   subpassword, 
   setSubpassword,
 }: InteractionPageProps) {
@@ -38,7 +32,6 @@ export default function InteractionPage({
   // Determine mode from URL path
   const mode: Mode = location.pathname === '/practice' ? 'practice' : 'recovery';
   const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [hashConfigModalOpen, setHashConfigModalOpen] = useState(false);
   
   // State
   const [nextWords, setNextWords] = useState<string[]>([]);
@@ -257,34 +250,19 @@ export default function InteractionPage({
           <h1>{mode === 'recovery' ? 'Recover Password' : 'Practice Password'}</h1>
           <div className="header-buttons">
             {mode === 'recovery' && (
-              <>
-                <button
-                  onClick={() => setConfigModalOpen(true)}
-                  className="header-button config-button"
-                  style={{
-                    background: '#6366f1',
-                    color: 'white',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  Grid Config
-                </button>
-                <button
-                  onClick={() => setHashConfigModalOpen(true)}
-                  className="header-button hash-config-button"
-                  style={{
-                    background: '#059669',
-                    color: 'white',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  Hash Config
-                </button>
-              </>
+              <button
+                onClick={() => setConfigModalOpen(true)}
+                className="header-button config-button"
+                style={{
+                  background: '#6366f1',
+                  color: 'white',
+                  padding: '12px 24px',
+                  fontSize: '1rem',
+                  fontWeight: '500'
+                }}
+              >
+                Config
+              </button>
             )}
             {mode === 'recovery' && (
               <>
@@ -475,17 +453,10 @@ export default function InteractionPage({
           onClose={() => setConfigModalOpen(false)}
           config={config}
           onSave={handleConfigSave}
-        />
-        <HashConfigModal
-          isOpen={hashConfigModalOpen}
-          onClose={() => setHashConfigModalOpen(false)}
-          config={hashConfig}
-          onSave={setHashConfig}
-          gridSize={getGridSize(config)}
           wordCount={subpassword.length || 8}
         />
       </div>
-      <VaultCard password={subpassword} hashConfig={hashConfig} />
+      <VaultCard password={subpassword} hashConfig={getHashConfig(config)} />
     </div>
   );
 }

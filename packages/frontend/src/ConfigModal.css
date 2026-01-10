@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -12,14 +12,37 @@
 }
 
 .config-modal-content {
-  background: white;
+  background: #1a1a2e;
   border-radius: 16px;
   padding: 0;
-  max-width: 500px;
+  max-width: 560px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2d2d44;
+  
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #3d3d54 transparent;
+}
+
+.config-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.config-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 16px 0;
+}
+
+.config-modal-content::-webkit-scrollbar-thumb {
+  background: #3d3d54;
+  border-radius: 4px;
+}
+
+.config-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #4d4d64;
 }
 
 .config-modal-header {
@@ -27,20 +50,21 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #2d2d44;
 }
 
 .config-modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #1f2937;
+  color: #e0e0e0;
+  font-weight: 600;
 }
 
 .config-modal-close {
   background: none;
   border: none;
   font-size: 2rem;
-  color: #6b7280;
+  color: #888;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -50,47 +74,94 @@
   justify-content: center;
   line-height: 1;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .config-modal-close:hover {
-  background: #f3f4f6;
+  background: #2d2d44;
+  color: #e0e0e0;
 }
 
 .config-modal-body {
   padding: 24px;
 }
 
+/* Sections */
+.config-section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.config-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.config-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+/* Fields */
 .config-field {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+.config-field:last-child {
+  margin-bottom: 0;
 }
 
 .config-field label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #374151;
-  font-size: 0.95rem;
+  color: #b0b0b0;
+  font-size: 0.9rem;
 }
 
-.config-field input[type="text"] {
+.config-field input[type="text"],
+.config-field input[type="number"],
+.config-field select {
   width: 100%;
   padding: 12px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #2d2d44;
   border-radius: 8px;
   font-size: 1rem;
   box-sizing: border-box;
+  background: #0f0f1a;
+  color: #e0e0e0;
+  transition: border-color 0.2s;
 }
 
-.config-field input[type="text"]:focus {
+.config-field input:focus,
+.config-field select:focus {
   outline: none;
   border-color: #6366f1;
 }
 
+.config-field select {
+  cursor: pointer;
+}
+
+.field-hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.algorithm-description {
+  font-style: italic;
+}
+
+/* Grid controls */
 .grid-fields-container {
   display: flex;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .grid-fields-container .config-field {
@@ -107,9 +178,9 @@
 .grid-button {
   width: 44px;
   height: 44px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  color: #1f2937;
+  border: 2px solid #2d2d44;
+  background: #0f0f1a;
+  color: #e0e0e0;
   border-radius: 8px;
   font-size: 1.5rem;
   font-weight: 600;
@@ -122,7 +193,7 @@
 }
 
 .grid-button:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: #2d2d44;
   border-color: #6366f1;
 }
 
@@ -136,64 +207,172 @@
   text-align: center;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #e0e0e0;
 }
 
-.config-calculated {
-  margin-top: 32px;
+/* Stats */
+.config-stats {
   padding: 16px;
-  background: #f3f4f6;
+  background: #0f0f1a;
   border-radius: 8px;
+  border: 1px solid #2d2d44;
 }
 
-.config-calculated h3 {
-  margin: 0 0 16px 0;
-  font-size: 1.1rem;
-  color: #374151;
-}
-
-.calculated-item {
+.stat-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-  color: #6b7280;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #94a3b8;
 }
 
-.calculated-item:last-child {
+.stat-item:last-child {
   margin-bottom: 0;
 }
 
-.calculated-value {
+.stat-value {
   font-weight: 600;
-  color: #1f2937;
+  color: #e0e0e0;
+  font-family: 'SF Mono', 'Consolas', monospace;
 }
 
+/* Algorithm params */
+.algorithm-params {
+  margin-top: 16px;
+  padding: 20px;
+  background: #0f0f1a;
+  border-radius: 12px;
+  border: 1px solid #2d2d44;
+}
+
+.algorithm-warning {
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.9rem;
+}
+
+/* Memory input with unit dropdown */
+.memory-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.memory-input-group input {
+  flex: 1;
+  border-radius: 8px 0 0 8px;
+}
+
+.memory-input-group .memory-unit-select {
+  width: 80px;
+  flex-shrink: 0;
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+  text-align: center;
+}
+
+/* Checkbox field */
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #e0e0e0;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #6366f1;
+}
+
+/* Cost display */
+.cost-display {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #1a1a2e 100%);
+  border-radius: 12px;
+  border: 1px solid #2d4a6f;
+}
+
+.cost-display h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.cost-item:last-child {
+  margin-bottom: 0;
+}
+
+.cost-item.highlight {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #2d4a6f;
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.cost-value {
+  font-weight: 600;
+  color: #e0e0e0;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.cost-item.highlight .cost-value {
+  color: #4ade80;
+  font-size: 1.1rem;
+}
+
+.cost-warning {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+
+/* Footer */
 .config-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   padding: 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #2d2d44;
 }
 
 .config-button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   font-size: 0.95rem;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .cancel-button {
-  background: #f3f4f6;
-  color: #374151;
+  background: #2d2d44;
+  color: #b0b0b0;
 }
 
 .cancel-button:hover {
-  background: #e5e7eb;
+  background: #3d3d54;
+  color: #e0e0e0;
 }
 
 .save-button {
@@ -204,4 +383,3 @@
 .save-button:hover {
   background: #4f46e5;
 }
-
