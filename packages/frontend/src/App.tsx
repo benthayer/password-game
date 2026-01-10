@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
 import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
+import { DEFAULT_FULL_HASH_CONFIG, type FullHashConfig } from './hash-config';
 
 function AppRouter() {
   const [config, setConfig] = useState<GenerationConfig>(() => {
@@ -13,9 +14,25 @@ function AppRouter() {
     return DEFAULT_CONFIG;
   });
 
+  const [hashConfig, setHashConfig] = useState<FullHashConfig>(() => {
+    const saved = localStorage.getItem('hashConfig');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_FULL_HASH_CONFIG;
+      }
+    }
+    return DEFAULT_FULL_HASH_CONFIG;
+  });
+
   useEffect(() => {
     localStorage.setItem('config', JSON.stringify(config));
   }, [config]);
+
+  useEffect(() => {
+    localStorage.setItem('hashConfig', JSON.stringify(hashConfig));
+  }, [hashConfig]);
 
   // Shared subpassword state between MainPage and InteractionPage
   const [subpassword, setSubpassword] = useState<string[]>([]);
@@ -31,6 +48,8 @@ function AppRouter() {
             <MainPage
               config={config}
               setConfig={setConfig}
+              hashConfig={hashConfig}
+              setHashConfig={setHashConfig}
               setSubpassword={setSubpassword}
             />
           }
@@ -41,6 +60,8 @@ function AppRouter() {
             <InteractionPage
               config={config}
               setConfig={setConfig}
+              hashConfig={hashConfig}
+              setHashConfig={setHashConfig}
               subpassword={subpassword}
               setSubpassword={setSubpassword}
             />
@@ -55,6 +76,8 @@ function AppRouter() {
               <InteractionPage
                 config={config}
                 setConfig={setConfig}
+                hashConfig={hashConfig}
+                setHashConfig={setHashConfig}
                 subpassword={subpassword}
                 setSubpassword={setSubpassword}
               />
@@ -69,5 +92,3 @@ function AppRouter() {
 }
 
 export default AppRouter;
-
-
