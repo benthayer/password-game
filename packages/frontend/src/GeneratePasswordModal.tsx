@@ -35,24 +35,24 @@ export default function GeneratePasswordModal({
   const navigate = useNavigate();
   const form = useConfigForm(config, isOpen);
 
-  const [desiredSecurityBits, setDesiredSecurityBits] = useState<number>(() => {
-    const saved = localStorage.getItem('desiredSecurityBits');
-    return saved ? parseInt(saved) : 80;
+  const [desiredNumWords, setDesiredNumWords] = useState<number>(() => {
+    const saved = localStorage.getItem('desiredNumWords');
+    return saved ? parseInt(saved) : 20;
   });
 
   useEffect(() => {
-    localStorage.setItem('desiredSecurityBits', desiredSecurityBits.toString());
-  }, [desiredSecurityBits]);
+    localStorage.setItem('desiredNumWords', desiredNumWords.toString());
+  }, [desiredNumWords]);
 
   if (!isOpen) return null;
 
   const entropyPerWord = calculateEntropyPerWord(form.toConfig());
-  const numWords = desiredSecurityBits / entropyPerWord;
+  const totalBits = desiredNumWords * entropyPerWord;
 
   const handleGenerate = () => {
     const newConfig = form.toConfig();
     setConfig(newConfig);
-    setSubpassword(generatePassword(Math.ceil(numWords), newConfig));
+    setSubpassword(generatePassword(desiredNumWords, newConfig));
     navigate('/practice');
     onClose();
   };
@@ -90,15 +90,15 @@ export default function GeneratePasswordModal({
             onSaltChange={form.setSalt}
           />
 
-          <SecurityBitsInput
-            value={desiredSecurityBits}
-            onChange={setDesiredSecurityBits}
-            numWords={numWords}
+          <WordCountInput
+            value={desiredNumWords}
+            onChange={setDesiredNumWords}
+            totalBits={totalBits}
           />
 
           <SecurityEstimate
             gridSize={form.gridSize}
-            wordCount={Math.ceil(numWords)}
+            wordCount={desiredNumWords}
             hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
           />
@@ -107,7 +107,7 @@ export default function GeneratePasswordModal({
         <ModalFooter
           onCancel={onClose}
           onGenerate={handleGenerate}
-          numWords={Math.ceil(numWords)}
+          numWords={desiredNumWords}
         />
       </div>
     </div>
@@ -127,20 +127,20 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
   );
 }
 
-function SecurityBitsInput({
+function WordCountInput({
   value,
   onChange,
-  numWords,
+  totalBits,
 }: {
   value: number;
   onChange: (value: number) => void;
-  numWords: number;
+  totalBits: number;
 }) {
   return (
     <div className="bits-input-section">
-      <label htmlFor="desired-bits">Desired Bits of Security:</label>
+      <label htmlFor="desired-words">Number of Words:</label>
       <input
-        id="desired-bits"
+        id="desired-words"
         type="number"
         value={value}
         onChange={(e) => {
@@ -151,9 +151,9 @@ function SecurityBitsInput({
         }}
         min="1"
         step="1"
-        placeholder="Enter bits"
+        placeholder="Enter word count"
       />
-      <span className="bits-conversion">≈ {numWords.toFixed(1)} words</span>
+      <span className="bits-conversion">≈ {totalBits.toFixed(1)} bits of entropy</span>
     </div>
   );
 }
