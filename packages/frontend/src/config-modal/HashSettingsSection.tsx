@@ -60,8 +60,8 @@ function UseRecommendedCheckbox({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <div className="config-field">
-      <label className="checkbox-label" onClick={() => onChange(!checked)}>
+    <div className="config-field checkbox-field">
+      <label onClick={() => onChange(!checked)}>
         <input
           type="checkbox"
           checked={checked}
