@@ -9,7 +9,12 @@ import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord, getGridSize } from './generation-config';
 import { generatePassword } from './crypto-utils';
 import { useConfigForm } from './hooks/useConfigForm';
-import { GridSettingsSection } from './config-modal';
+import {
+  GridSettingsSection,
+  HashSettingsSection,
+  SaltSection,
+  SecurityEstimate,
+} from './config-modal';
 import './GeneratePasswordModal.css';
 
 interface GeneratePasswordModalProps {
@@ -70,6 +75,19 @@ export default function GeneratePasswordModal({
             gridSize={form.gridSize}
           />
 
+          <HashSettingsSection
+            algorithm={form.hashAlgorithm}
+            onAlgorithmChange={form.changeAlgorithm}
+            onConfigChange={form.setHashAlgorithm}
+          />
+
+          <SaltSection
+            includeSalt={form.includeSalt}
+            onIncludeSaltChange={form.setIncludeSalt}
+            salt={form.salt}
+            onSaltChange={form.setSalt}
+          />
+
           <SecurityBitsInput
             value={desiredSecurityBits}
             onChange={setDesiredSecurityBits}
@@ -80,6 +98,13 @@ export default function GeneratePasswordModal({
             entropyPerWord={entropyPerWord}
             desiredBits={desiredSecurityBits}
             numWords={numWords}
+          />
+
+          <SecurityEstimate
+            gridSize={form.gridSize}
+            wordCount={Math.ceil(numWords)}
+            hashConfig={form.hashAlgorithm}
+            includeSalt={form.includeSalt}
           />
         </div>
 

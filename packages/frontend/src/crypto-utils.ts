@@ -33,7 +33,6 @@ export function hashSubpassword(subpassword: string[], config: GenerationConfig)
 }
 
 export function getNextWords(subpassword: string[], config: GenerationConfig): string[] {
-  console.log('[getNextWords] CALLED', { subpasswordLength: subpassword.length, gridSize: `${config.gridRows}x${config.gridCols}` });
   const baseHash = hashSubpassword(subpassword, config);
   let tempHash = baseHash;
   const words: string[] = [];

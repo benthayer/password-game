@@ -6,7 +6,11 @@
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
-import { GridSettingsSection } from './config-modal';
+import {
+  GridSettingsSection,
+  HashSettingsSection,
+  SaltSection,
+} from './config-modal';
 import './RecoveryModal.css';
 
 interface RecoveryModalProps {
@@ -52,6 +56,19 @@ export default function RecoveryModal({
             onIncrementCols={form.incrementCols}
             onDecrementCols={form.decrementCols}
             gridSize={form.gridSize}
+          />
+
+          <HashSettingsSection
+            algorithm={form.hashAlgorithm}
+            onAlgorithmChange={form.changeAlgorithm}
+            onConfigChange={form.setHashAlgorithm}
+          />
+
+          <SaltSection
+            includeSalt={form.includeSalt}
+            onIncludeSaltChange={form.setIncludeSalt}
+            salt={form.salt}
+            onSaltChange={form.setSalt}
           />
         </div>
 
