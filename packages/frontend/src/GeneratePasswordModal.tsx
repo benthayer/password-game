@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
-import { calculateEntropyPerWord, getGridSize } from './generation-config';
+import { calculateEntropyPerWord } from './generation-config';
 import { generatePassword } from './crypto-utils';
 import { useConfigForm } from './hooks/useConfigForm';
 import {
@@ -91,12 +91,6 @@ export default function GeneratePasswordModal({
           <SecurityBitsInput
             value={desiredSecurityBits}
             onChange={setDesiredSecurityBits}
-          />
-
-          <EntropyCalculation
-            gridSize={form.gridSize}
-            entropyPerWord={entropyPerWord}
-            desiredBits={desiredSecurityBits}
             numWords={numWords}
           />
 
@@ -134,9 +128,11 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
 function SecurityBitsInput({
   value,
   onChange,
+  numWords,
 }: {
   value: number;
   onChange: (value: number) => void;
+  numWords: number;
 }) {
   return (
     <div className="bits-input-section">
@@ -155,37 +151,7 @@ function SecurityBitsInput({
         step="1"
         placeholder="Enter bits"
       />
-    </div>
-  );
-}
-
-function EntropyCalculation({
-  gridSize,
-  entropyPerWord,
-  desiredBits,
-  numWords,
-}: {
-  gridSize: number;
-  entropyPerWord: number;
-  desiredBits: number;
-  numWords: number;
-}) {
-  return (
-    <div className="config-calculated">
-      <h3>Calculated numbers:</h3>
-      <div className="calculated-item">
-        <span>Number of words:</span>
-        <span className="calculated-value">{gridSize}</span>
-      </div>
-      <div className="calculated-item">
-        <span>Entropy per word:</span>
-        <span className="calculated-value">{entropyPerWord.toFixed(2)}</span>
-      </div>
-      <div className="conversion-display">
-        <span className="conversion-text">
-          {desiredBits} bits ≈ {numWords.toFixed(2)} words
-        </span>
-      </div>
+      <span className="bits-conversion">≈ {numWords.toFixed(1)} words</span>
     </div>
   );
 }
