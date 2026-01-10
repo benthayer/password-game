@@ -27,6 +27,7 @@ export interface UsePracticeModeResult {
 export function usePracticeMode(
   config: GenerationConfig,
   targetPassword: string[],
+  enabled: boolean = true,
 ): UsePracticeModeResult {
   const [activeWordIndex, setActiveWordIndex] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
@@ -38,6 +39,8 @@ export function usePracticeMode(
 
   // Load words for current position
   const loadWordsForIndex = useCallback((index: number) => {
+    if (!enabled) return; // Skip expensive computation when not in practice mode
+    
     if (index >= targetPassword.length) {
       setNextWords([]);
       setCorrectWordIndex(-1);
@@ -51,19 +54,21 @@ export function usePracticeMode(
     // Find correct word index for highlighting
     const correctWord = targetPassword[index];
     setCorrectWordIndex(words.findIndex(w => w === correctWord));
-  }, [targetPassword, config]);
+  }, [targetPassword, config, enabled]);
 
-  // Load words when active index changes
+  // Load words when active index changes (only when enabled)
   useEffect(() => {
+    if (!enabled) return;
     loadWordsForIndex(activeWordIndex);
-  }, [activeWordIndex, loadWordsForIndex]);
+  }, [activeWordIndex, loadWordsForIndex, enabled]);
 
   // Reset when target password changes
   useEffect(() => {
+    if (!enabled) return;
     setActiveWordIndex(0);
     setCompletedCount(0);
     setErrorWordIndex(null);
-  }, [targetPassword]);
+  }, [targetPassword, enabled]);
 
   const selectWord = useCallback((word: string) => {
     if (isCompleted) return;

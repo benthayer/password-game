@@ -54,7 +54,7 @@ export default function InteractionPage({
 
   // Mode-specific hooks
   const recovery = useRecoveryMode(config, subpassword, setSubpassword);
-  const practice = usePracticeMode(config, subpassword);
+  const practice = usePracticeMode(config, subpassword, mode === 'practice');
 
   // Navigation handlers
   const goToMainPage = () => navigate('/');

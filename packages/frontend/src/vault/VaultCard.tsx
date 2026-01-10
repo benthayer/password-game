@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import VaultModal from './VaultModal';
 import ErrorModal from './ErrorModal';
 import StatusModal from './StatusModal';
@@ -13,37 +13,35 @@ interface VaultCardProps {
   hashConfig?: FullHashConfig;
 }
 
+/**
+ * Vault card for upload/download operations.
+ * 
+ * Key optimization: Address hash is computed LAZILY when needed,
+ * not on every password change. This avoids running expensive
+ * Argon2id (~2.5s) on every word selection.
+ */
 export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CONFIG }: VaultCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [addressHash, setAddressHash] = useState<string | null>(null);
+  const [cachedAddressHash, setCachedAddressHash] = useState<string | null>(null);
 
-  // Compute address hash when password or config changes
-  useEffect(() => {
-    if (password.length === 0) {
-      setAddressHash(null);
-      return;
-    }
-    
-    let cancelled = false;
-    getAddressHash(password, hashConfig).then((hash) => {
-      if (!cancelled) {
-        setAddressHash(hash);
-      }
-    });
-    
-    return () => { cancelled = true; };
-  }, [password, hashConfig]);
+  // Compute address hash lazily - only when user triggers an action
+  const computeAddressHash = async (): Promise<string> => {
+    setStatusMessage('Computing address...');
+    const hash = await getAddressHash(password, hashConfig);
+    setCachedAddressHash(hash);
+    return hash;
+  };
 
   const handleUpload = async () => {
-    if (!addressHash) return;
-    
     const input = document.createElement('input');
     input.type = 'file';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+      
+      const addressHash = await computeAddressHash();
       
       setStatusMessage('Encrypting...');
       const text = await file.text();
@@ -62,7 +60,7 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
   };
 
   const handleDownload = async () => {
-    if (!addressHash) return;
+    const addressHash = await computeAddressHash();
     
     setStatusMessage('Downloading...');
     try {
@@ -92,6 +90,13 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
     }
   };
 
+  const handleInfoClick = async () => {
+    // Compute address hash when user wants to see info
+    await computeAddressHash();
+    setModalOpen(true);
+    setStatusMessage(null);
+  };
+
   if (password.length === 0) {
     return null;
   }
@@ -99,14 +104,14 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
   return (
     <>
       <div className="vault-card">
-        <button onClick={() => setModalOpen(true)} className="vault-button">Info</button>
-        <button onClick={handleUpload} className="vault-button" disabled={!addressHash}>Upload</button>
-        <button onClick={handleDownload} className="vault-button" disabled={!addressHash}>Download</button>
+        <button onClick={handleInfoClick} className="vault-button">Info</button>
+        <button onClick={handleUpload} className="vault-button">Upload</button>
+        <button onClick={handleDownload} className="vault-button">Download</button>
       </div>
       <VaultModal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        addressHash={addressHash}
+        addressHash={cachedAddressHash}
       />
       <ErrorModal
         isOpen={!!errorMessage}
