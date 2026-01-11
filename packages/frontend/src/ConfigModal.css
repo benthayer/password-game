@@ -568,6 +568,22 @@
   border-top: 1px solid #1e2a3a;
 }
 
+.cost-subsection-title {
+  margin: 16px 0 8px 0;
+  padding-top: 16px;
+  border-top: 1px solid #1e2a3a;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cost-highlight-value {
+  font-size: 1.1rem;
+  color: #22d3ee;
+  font-weight: 500;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
 /* Footer */
 .config-modal-footer {
   display: flex;

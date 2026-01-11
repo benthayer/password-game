@@ -41,18 +41,15 @@ export default function SecurityEstimate({
           totalBits={totalBits}
         />
       )}
-      <h3>Security Estimate</h3>
+      <h3>Security Information</h3>
       
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
         <CostItem label="Password space" value={result.formatted.passwordSpace} />
-        <CostItem label="Hash algorithm" value={result.costPerHashDescription} />
-        <CostItem 
-          label="Estimated cost to crack" 
-          value={result.formatted.singleTarget}
-          highlight
-        />
       </div>
+
+      <h4 className="cost-subsection-title">Estimated Cost to Crack</h4>
+      <div className="cost-highlight-value">{result.formatted.singleTarget}</div>
     </div>
   );
 }
