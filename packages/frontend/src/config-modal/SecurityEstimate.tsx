@@ -36,7 +36,7 @@ export default function SecurityEstimate({
       
       <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
       
-      {!includeSalt && <BirthdayWarning />}
+      <SaltStatus enabled={includeSalt} />
       
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
@@ -90,10 +90,17 @@ function CostItem({
   );
 }
 
-function BirthdayWarning() {
+function SaltStatus({ enabled }: { enabled: boolean }) {
+  if (enabled) {
+    return (
+      <div className="salt-status salt-status-enabled">
+        ✓ Salt enabled — cost is per-user
+      </div>
+    );
+  }
   return (
-    <div className="cost-warning">
-      ⚠️ Without salt, multiple users share this cost (birthday attack).
+    <div className="salt-status salt-status-warning">
+      ⚠️ Without salt, multiple users share this cost (birthday attack)
     </div>
   );
 }

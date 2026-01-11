@@ -367,14 +367,23 @@
   font-size: 1rem;
 }
 
-.cost-warning {
+.salt-status {
   margin-top: 16px;
   padding: 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.salt-status-warning {
   background: rgba(127, 29, 29, 0.2);
   border: 1px solid #7f1d1d;
-  border-radius: 6px;
   color: #fca5a5;
-  font-size: 0.8rem;
+}
+
+.salt-status-enabled {
+  background: rgba(20, 83, 45, 0.2);
+  border: 1px solid #166534;
+  color: #86efac;
 }
 
 /* Footer */
