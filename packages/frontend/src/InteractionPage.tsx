@@ -177,7 +177,7 @@ function ConfigSection({
     const entropyPerWord = calculateEntropyPerWord(config);
     
     return (
-      <div className="practice-configs-container">
+      <div className="config-section-container practice-configs-container">
         <ConfigDisplay config={config} />
         <SecurityEstimate
           gridSize={gridSize}
@@ -192,7 +192,11 @@ function ConfigSection({
       </div>
     );
   }
-  return <ConfigDisplay config={config} />;
+  return (
+    <div className="config-section-container">
+      <ConfigDisplay config={config} />
+    </div>
+  );
 }
 
 function PasswordSection({

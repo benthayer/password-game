@@ -133,13 +133,23 @@
   box-shadow: none;
 }
 
+.config-section-container {
+  min-height: 240px;
+  margin-bottom: 24px;
+}
+
 .practice-configs-container {
   display: flex;
   gap: 24px;
-  margin-bottom: 24px;
   justify-content: space-between;
-  flex-wrap: wrap;
   align-items: flex-start;
+}
+
+.practice-configs-container .cost-display {
+  margin-top: 0;
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px;
 }
 
 .current-password-section {
