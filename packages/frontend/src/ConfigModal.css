@@ -377,10 +377,6 @@
   font-size: 0.8rem;
 }
 
-.cost-warning.hidden {
-  visibility: hidden;
-}
-
 /* Footer */
 .config-modal-footer {
   display: flex;

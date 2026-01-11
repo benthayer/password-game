@@ -36,6 +36,8 @@ export default function SecurityEstimate({
       
       <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
       
+      {!includeSalt && <BirthdayWarning />}
+      
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
         <CostItem label="Password space" value={result.formatted.passwordSpace} />
@@ -46,8 +48,6 @@ export default function SecurityEstimate({
           highlight
         />
       </div>
-      
-      <BirthdayWarning visible={!includeSalt} />
     </div>
   );
 }
@@ -90,9 +90,9 @@ function CostItem({
   );
 }
 
-function BirthdayWarning({ visible }: { visible: boolean }) {
+function BirthdayWarning() {
   return (
-    <div className={`cost-warning${visible ? '' : ' hidden'}`}>
+    <div className="cost-warning">
       ⚠️ Without salt, multiple users share this cost (birthday attack).
     </div>
   );
