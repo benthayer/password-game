@@ -1,0 +1,200 @@
+---
+description: USDC payment integration architecture using Coinbase Commerce
+globs:
+  - packages/backend/src/routes/webhooks*
+  - packages/backend/src/storage/payments*
+---
+
+# USDC Payment Integration
+
+## Overview
+
+Accept USDC payments via Coinbase Commerce with instant (zero-confirmation) detection.
+
+## Fee Structure
+
+| Component | Cost | Who Pays |
+|-----------|------|----------|
+| Network fees (Solana) | ~$0.001 | Sender |
+| Coinbase Commerce | Free | - |
+| Webhooks | Free | - |
+| Your infrastructure | Existing | Already running |
+
+**Total cost to you: $0**
+
+## Architecture
+
+```
+User                    Coinbase Commerce           Password Game Backend
+  |                            |                            |
+  |  1. Clicks "Pay"           |                            |
+  |--------------------------->|                            |
+  |                            |  2. Create charge w/       |
+  |                            |     metadata (address_hash)|
+  |                            |<---------------------------|
+  |  3. Payment page           |                            |
+  |<---------------------------|                            |
+  |                            |                            |
+  |  4. Sends USDC (Solana)    |                            |
+  |--------------------------->|                            |
+  |                            |  5. charge:pending webhook |
+  |                            |     (2-10 seconds)         |
+  |                            |--------------------------->|
+  |                            |                            |  6. Record payment
+  |                            |                            |  7. Grant credits
+  |                            |                            |
+```
+
+## Coinbase Commerce Setup
+
+### 1. Create Account
+- Go to https://commerce.coinbase.com
+- Sign up / connect existing Coinbase account
+
+### 2. Get API Key
+- Settings → API Keys → Create new key
+- Store securely (will go in .env)
+
+### 3. Configure Webhook
+- Settings → Webhook subscriptions → Add endpoint
+- URL: `https://api.passwordgame.apps.benthayer.com/webhooks/coinbase`
+- Events: `charge:pending`, `charge:confirmed`, `charge:failed`
+- Copy the shared secret (for signature verification)
+
+### 4. Environment Variables
+```bash
+COINBASE_COMMERCE_API_KEY=your_api_key
+COINBASE_COMMERCE_WEBHOOK_SECRET=your_webhook_secret
+```
+
+## Webhook Events
+
+| Event | When | Action |
+|-------|------|--------|
+| `charge:pending` | Transaction detected (~2-10s) | Record payment, grant credits |
+| `charge:confirmed` | Transaction confirmed | Update status (optional) |
+| `charge:failed` | Payment failed/expired | Log for debugging |
+
+**Safe to act on `charge:pending`** - Coinbase says failure rate after pending is <1 in a million.
+
+## Database Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  
+  -- Coinbase identifiers
+  charge_id TEXT UNIQUE NOT NULL,
+  charge_code TEXT,
+  
+  -- Payment details
+  amount_usdc REAL NOT NULL,
+  chain TEXT NOT NULL,
+  tx_hash TEXT,
+  sender_address TEXT,
+  
+  -- Status tracking
+  status TEXT DEFAULT 'pending',  -- pending, confirmed, failed
+  
+  -- Link to account (via charge metadata)
+  account_address_hash TEXT,
+  
+  -- Credits granted
+  credits_granted INTEGER DEFAULT 0,
+  
+  -- Debugging
+  raw_webhook_payload TEXT,
+  
+  -- Timestamps
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_payments_account ON payments(account_address_hash);
+CREATE INDEX idx_payments_status ON payments(status);
+```
+
+## API Endpoints
+
+### Create Charge (Frontend → Backend → Coinbase)
+
+```
+POST /api/payments/create-charge
+Body: { addressHash: string, amountUsd: number }
+Response: { chargeUrl: string, chargeId: string }
+```
+
+Backend creates a Coinbase Commerce charge with metadata:
+```json
+{
+  "name": "Password Game Credits",
+  "description": "Storage credits",
+  "pricing_type": "fixed_price",
+  "local_price": { "amount": "5.00", "currency": "USD" },
+  "metadata": {
+    "address_hash": "user's_address_hash"
+  }
+}
+```
+
+### Webhook Receiver
+
+```
+POST /webhooks/coinbase
+Headers: X-CC-Webhook-Signature
+Body: Coinbase webhook payload
+```
+
+1. Verify signature using shared secret
+2. Parse event type and charge data
+3. Extract metadata (address_hash)
+4. Record to payments table
+5. If `charge:pending` → grant credits to account
+
+## Chain Selection
+
+**Recommended: Solana**
+- ~$0.001 fees (basically free for sender)
+- ~400ms finality (instant)
+- Coinbase Commerce supports it
+
+Alternative chains if needed:
+- Base L2: ~$0.01 fees, Coinbase ecosystem
+- Polygon: ~$0.01 fees
+
+## Implementation Phases
+
+### V1: Basic Payment Tracking
+- [ ] Add payments table to db.ts
+- [ ] Create webhook endpoint with signature verification
+- [ ] Record all incoming payments
+- [ ] No auto-linking yet (manual credit grants)
+
+### V2: Auto Credit Granting
+- [ ] Create charge endpoint (with address_hash in metadata)
+- [ ] Auto-grant credits on charge:pending
+- [ ] Frontend payment flow
+
+### V3: Payment UI
+- [ ] Show payment history
+- [ ] Credit balance display
+- [ ] Purchase flow in app
+
+## Security Considerations
+
+1. **Webhook Signature Verification** - Always verify X-CC-Webhook-Signature
+2. **Idempotency** - charge_id is unique, don't double-grant credits
+3. **HTTPS Only** - Webhook endpoint must be HTTPS
+4. **Rate Limiting** - Consider rate limiting the webhook endpoint
+
+## Testing
+
+1. Coinbase Commerce has a test mode
+2. Create test charges with small amounts
+3. Verify webhook fires and payment records correctly
+
+## Links
+
+- [Coinbase Commerce Docs](https://docs.cdp.coinbase.com/commerce/)
+- [Webhook Overview](https://docs.cdp.coinbase.com/commerce/api-arcitecture/webhooks-overview)
+- [Payment Status](https://docs.cdp.coinbase.com/commerce/introduction/payment-status)

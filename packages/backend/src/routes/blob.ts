@@ -1,6 +1,7 @@
 import { Router, Request } from 'express';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
+import { hasSpaceForUpload } from '../services/disk-space.js';
 
 export const blobRoutes = Router();
 
@@ -77,6 +78,10 @@ blobRoutes.put('/:addressHash', async (req, res) => {
   const contentLength = getContentLength(req);
   if (!contentLength) {
     return res.status(400).json({ error: 'Content-Length header required' });
+  }
+  
+  if (!await hasSpaceForUpload(contentLength)) {
+    return res.status(507).json({ error: 'Insufficient storage space' });
   }
   
   const secondaryKey = getSecondaryKey(req);

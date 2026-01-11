@@ -38,7 +38,7 @@ export const DEFAULT_CONFIG: GenerationConfig = {
   gridCols: 4,
   hashAlgorithm: DEFAULT_ARGON2ID_CONFIG,
   useRecommendedHash: true,
-  includeSalt: true,
+  includeSalt: false,
   salt: '',
 };
 

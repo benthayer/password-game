@@ -322,9 +322,9 @@
 }
 
 .salt-status-inline.salt-warning {
-  background: rgba(127, 29, 29, 0.2);
-  border: 1px solid #7f1d1d;
-  color: #fca5a5;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid #ca8a04;
+  color: #fde047;
 }
 
 .salt-status-inline .salt-status-icon {
