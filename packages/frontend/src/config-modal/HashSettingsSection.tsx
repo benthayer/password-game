@@ -85,8 +85,8 @@ function SaltSettings({
   mode: SaltMode;
   includeSalt: boolean;
   onIncludeSaltChange: (value: boolean) => void;
-  salt?: string;
-  onSaltChange?: (value: string) => void;
+  salt: string | undefined;
+  onSaltChange: ((value: string) => void) | undefined;
 }) {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
