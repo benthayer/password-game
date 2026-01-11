@@ -31,7 +31,7 @@ function ResetButton({ onClick, disabled }: { onClick: () => void; disabled: boo
       style={{
         background: '#dc2626',
         color: 'white',
-        padding: '12px 24px',
+        padding: '10px 16px',
         fontSize: '1rem',
         fontWeight: '500',
       }}
@@ -50,15 +50,9 @@ function DeleteButton({ onClick, disabled }: { onClick: () => void; disabled: bo
       style={{
         background: '#dc2626',
         color: 'white',
-        padding: '12px 24px',
-        fontSize: '1.5rem',
+        padding: '10px 16px',
+        fontSize: '1rem',
         fontWeight: '500',
-        lineHeight: '1',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: '10px',
-        paddingBottom: '14px',
       }}
       title="Delete last word"
     >
