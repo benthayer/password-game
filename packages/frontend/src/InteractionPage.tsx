@@ -179,15 +179,15 @@ function ConfigSection({
     return (
       <div className="practice-configs-container">
         <ConfigDisplay config={config} />
-        <PracticeConfigDisplay
-          config={practiceDisplayConfig}
-          onConfigChange={onPracticeConfigChange}
-        />
         <SecurityEstimate
           gridSize={gridSize}
           wordCount={wordCount}
           entropyPerWord={entropyPerWord}
           hashConfig={config.hashAlgorithm}
+        />
+        <PracticeConfigDisplay
+          config={practiceDisplayConfig}
+          onConfigChange={onPracticeConfigChange}
         />
       </div>
     );
