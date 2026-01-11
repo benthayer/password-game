@@ -164,7 +164,7 @@ function SaltStatus({ enabled, onLearnMore }: { enabled: boolean; onLearnMore: (
       <span className="salt-status-icon">{enabled ? '✓' : '⚠️'}</span>
       <span className="salt-status-text">
         {enabled 
-          ? 'Salt enabled — attacker must attack you' 
+          ? 'Salt enabled — you cannot be compromised in a multi-target attack' 
           : 'Salt disabled — you might be compromised in a multi-target attack'}
       </span>
       <button className="salt-status-learn-more" onClick={onLearnMore}>

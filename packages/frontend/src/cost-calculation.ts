@@ -203,7 +203,7 @@ export function calculateCostToCrack(params: CostToCrackParams): CostToCrackResu
 
 function formatCurrency(usd: number): string {
   if (!isFinite(usd) || usd > 1e30) {
-    return '∞ (effectively uncrackable)';
+    return 'a lot';
   }
   
   if (usd < 0.01) {
