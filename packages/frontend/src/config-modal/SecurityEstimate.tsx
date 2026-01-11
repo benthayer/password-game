@@ -94,13 +94,15 @@ function SaltStatus({ enabled }: { enabled: boolean }) {
   if (enabled) {
     return (
       <div className="salt-status salt-status-enabled">
-        ✓ Salt enabled — cost is per-user
+        <span className="salt-status-icon">✓</span>
+        Salt enabled — cost is per-user
       </div>
     );
   }
   return (
     <div className="salt-status salt-status-warning">
-      ⚠️ Without salt, multiple users share this cost (birthday attack)
+      <span className="salt-status-icon">⚠️</span>
+      Without salt, multiple users share this cost (birthday attack)
     </div>
   );
 }

@@ -367,13 +367,17 @@
 .salt-status {
   margin: 12px 0 16px 0;
   padding: 12px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
   border-radius: 6px;
-  border-bottom: 1px solid #1e2a3a;
   font-size: 0.8rem;
-  min-height: 48px;
+  min-height: 20px;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.salt-status-icon {
+  width: 24px;
+  flex-shrink: 0;
 }
 
 .salt-status-warning {
@@ -386,6 +390,11 @@
   background: rgba(20, 83, 45, 0.2);
   border: 1px solid #166534;
   color: #86efac;
+}
+
+.cost-items {
+  padding-top: 16px;
+  border-top: 1px solid #1e2a3a;
 }
 
 /* Footer */
