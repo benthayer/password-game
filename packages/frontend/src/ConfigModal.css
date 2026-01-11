@@ -367,19 +367,24 @@
 .salt-status {
   margin: 12px 0 16px 0;
   padding: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-radius: 6px;
   border-bottom: 1px solid #1e2a3a;
   font-size: 0.8rem;
-  min-height: 44px;
+  min-height: 48px;
   box-sizing: border-box;
 }
 
 .salt-status-warning {
   background: rgba(127, 29, 29, 0.2);
+  border: 1px solid #7f1d1d;
   color: #fca5a5;
 }
 
 .salt-status-enabled {
   background: rgba(20, 83, 45, 0.2);
+  border: 1px solid #166534;
   color: #86efac;
 }
 
