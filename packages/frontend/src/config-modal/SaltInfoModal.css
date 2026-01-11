@@ -1,0 +1,132 @@
+/* Salt Info Modal */
+
+.salt-info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.salt-info-modal {
+  background: #0d1117;
+  border: 1px solid #155e75;
+  border-radius: 12px;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.salt-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #1e2a3a;
+}
+
+.salt-info-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #67e8f9;
+  font-weight: 500;
+}
+
+.salt-info-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.salt-info-close:hover {
+  color: #94a3b8;
+}
+
+.salt-info-content {
+  padding: 24px;
+  overflow-y: auto;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.salt-info-content section {
+  margin-bottom: 24px;
+}
+
+.salt-info-content section:last-child {
+  margin-bottom: 0;
+}
+
+.salt-info-content h3 {
+  color: #67e8f9;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+}
+
+.salt-info-content p {
+  margin: 0 0 12px 0;
+}
+
+.salt-info-content p:last-child {
+  margin-bottom: 0;
+}
+
+.salt-info-content ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.salt-info-content li {
+  margin-bottom: 8px;
+}
+
+.salt-info-content strong {
+  color: #e2e8f0;
+}
+
+.salt-info-content em {
+  color: #22d3ee;
+  font-style: normal;
+}
+
+.salt-info-recommendation {
+  background: rgba(20, 83, 45, 0.2);
+  border: 1px solid #166534;
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: #86efac;
+}
+
+.salt-info-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #1e2a3a;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.salt-info-button {
+  background: #0891b2;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.salt-info-button:hover {
+  background: #0e7490;
+}
+

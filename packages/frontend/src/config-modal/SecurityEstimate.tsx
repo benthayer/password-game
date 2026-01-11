@@ -3,8 +3,10 @@
  * Shows cost-to-crack calculations with salt toggle.
  */
 
+import { useState } from 'react';
 import { calculateCostToCrack, type CostToCrackResult } from '../cost-calculation';
 import type { HashAlgorithmConfig } from '../generation-config';
+import SaltInfoModal from './SaltInfoModal';
 
 interface SecurityEstimateProps {
   gridSize: number;
@@ -21,6 +23,8 @@ export default function SecurityEstimate({
   includeSalt,
   onIncludeSaltChange,
 }: SecurityEstimateProps) {
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
   if (wordCount <= 0) return null;
 
   const result = calculateCostToCrack({
@@ -36,7 +40,7 @@ export default function SecurityEstimate({
       
       <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
       
-      <SaltStatus enabled={includeSalt} />
+      <SaltStatus enabled={includeSalt} onLearnMore={() => setInfoModalOpen(true)} />
       
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
@@ -48,6 +52,8 @@ export default function SecurityEstimate({
           highlight
         />
       </div>
+
+      <SaltInfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
     </div>
   );
 }
@@ -90,19 +96,18 @@ function CostItem({
   );
 }
 
-function SaltStatus({ enabled }: { enabled: boolean }) {
-  if (enabled) {
-    return (
-      <div className="salt-status salt-status-enabled">
-        <span className="salt-status-icon">✓</span>
-        Salt enabled — cost is per-user
-      </div>
-    );
-  }
+function SaltStatus({ enabled, onLearnMore }: { enabled: boolean; onLearnMore: () => void }) {
   return (
-    <div className="salt-status salt-status-warning">
-      <span className="salt-status-icon">⚠️</span>
-      Without salt, multiple users share this cost (birthday attack)
+    <div className={`salt-status ${enabled ? 'salt-status-enabled' : 'salt-status-warning'}`}>
+      <span className="salt-status-icon">{enabled ? '✓' : '⚠️'}</span>
+      <span className="salt-status-text">
+        {enabled 
+          ? 'Salt enabled — cost is per-user' 
+          : 'Without salt, attack cost is shared across users'}
+      </span>
+      <button className="salt-status-learn-more" onClick={onLearnMore}>
+        Learn more
+      </button>
     </div>
   );
 }
