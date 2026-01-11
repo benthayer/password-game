@@ -6,7 +6,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
-import { DEFAULT_PRACTICE_DISPLAY_CONFIG, getHashConfig } from './generation-config';
+import { DEFAULT_PRACTICE_DISPLAY_CONFIG, getHashConfig, getGridSize, calculateEntropyPerWord } from './generation-config';
+import { SecurityEstimate } from './config-modal';
 import { useRecoveryMode } from './hooks/useRecoveryMode';
 import { usePracticeMode } from './hooks/usePracticeMode';
 import {
@@ -172,17 +173,26 @@ function ConfigSection({
   onPracticeConfigChange: (config: PracticeDisplayConfig) => void;
 }) {
   if (mode === 'practice') {
+    const gridSize = getGridSize(config);
+    const entropyPerWord = calculateEntropyPerWord(config);
+    
     return (
       <div className="practice-configs-container">
-        <ConfigDisplay config={config} numWords={wordCount} />
+        <ConfigDisplay config={config} />
         <PracticeConfigDisplay
           config={practiceDisplayConfig}
           onConfigChange={onPracticeConfigChange}
         />
+        <SecurityEstimate
+          gridSize={gridSize}
+          wordCount={wordCount}
+          entropyPerWord={entropyPerWord}
+          hashConfig={config.hashAlgorithm}
+        />
       </div>
     );
   }
-  return <ConfigDisplay config={config} numWords={wordCount} />;
+  return <ConfigDisplay config={config} />;
 }
 
 function PasswordSection({
