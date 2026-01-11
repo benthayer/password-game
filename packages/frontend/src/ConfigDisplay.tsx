@@ -1,5 +1,5 @@
-import type { GenerationConfig } from './generation-config';
-import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits, ALGORITHM_META } from './generation-config';
+import type { GenerationConfig, HashAlgorithmConfig } from './generation-config';
+import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './generation-config';
 import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
@@ -8,11 +8,8 @@ interface ConfigDisplayProps {
 }
 
 export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) {
-  const numOptions = getGridSize(config);
   const entropyPerWord = calculateEntropyPerWord(config);
-  const wordsFor80Bits = calculateWordsFor80Bits(config);
   const totalEntropy = numWords !== undefined ? entropyPerWord * numWords : undefined;
-  const algorithmMeta = ALGORITHM_META[config.hashAlgorithm.algorithm];
 
   return (
     <div className="config-display">
@@ -27,7 +24,7 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
       </div>
       <div className="config-display-item">
         <span className="config-label">Hash:</span>
-        <span className="config-value">{algorithmMeta.name}</span>
+        <span className="config-value">{formatHashConfig(config.hashAlgorithm)}</span>
       </div>
       <div className="config-display-item">
         <span className="config-label">Salt:</span>
@@ -48,4 +45,19 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
       )}
     </div>
   );
+}
+
+function formatHashConfig(config: HashAlgorithmConfig): string {
+  switch (config.algorithm) {
+    case 'argon2id':
+      return `Argon2id (${config.memoryCost / 1024}MB, ${config.timeCost} iter, p=${config.parallelism})`;
+    case 'scrypt':
+      return `scrypt (N=2^${Math.log2(config.N).toFixed(0)}, r=${config.r}, p=${config.p})`;
+    case 'bcrypt':
+      return `bcrypt (cost=${config.cost})`;
+    case 'pbkdf2':
+      return `PBKDF2-${config.hash.toUpperCase()} (${config.iterations.toLocaleString()} iter)`;
+    case 'sha256':
+      return 'SHA-256 (raw)';
+  }
 }
