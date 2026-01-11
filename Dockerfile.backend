@@ -1,0 +1,43 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install build deps for better-sqlite3
+RUN apk add --no-cache python3 make g++
+
+# Copy root package files for workspace setup
+COPY package*.json ./
+COPY packages/backend/package*.json ./packages/backend/
+
+# Install dependencies
+RUN npm ci -w packages/backend
+
+# Copy backend source
+COPY packages/backend/ ./packages/backend/
+
+# Build
+RUN npm run build:backend
+
+# Stage 2: Production
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install runtime deps for better-sqlite3
+RUN apk add --no-cache python3 make g++
+
+# Copy root package files
+COPY package*.json ./
+COPY packages/backend/package*.json ./packages/backend/
+
+# Install production deps only
+RUN npm ci -w packages/backend --omit=dev
+
+# Copy built files
+COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+
+WORKDIR /app/packages/backend
+
+EXPOSE 3001
+CMD ["node", "dist/index.js"]

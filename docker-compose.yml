@@ -1,9 +1,26 @@
 services:
-  web:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://api.passwordgame.apps.benthayer.com
     ports:
       - "127.0.0.1:48607:80"
     restart: unless-stopped
-    container_name: password-game
+    container_name: password-game-frontend
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "127.0.0.1:48608:3001"
+    restart: unless-stopped
+    container_name: password-game-backend
+    volumes:
+      - ./data:/app/packages/backend/data
+    env_file:
+      - .env.production
