@@ -108,14 +108,30 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <section>
             <h3>Security Model</h3>
             <p>
-              Your data is protected by cryptographic hashing (Argon2id by default) and AES-GCM encryption. 
-              The cost to crack your password depends on its length and the hash function parameters — 
-              this is displayed as an estimated dollar cost in the configuration.
+              Your password is hashed (Argon2id by default) to derive three values:
+            </p>
+            <ul>
+              <li><strong>Address Hash:</strong> An identifier used to locate your data on the server.</li>
+              <li><strong>Primary Encryption Key:</strong> Used to encrypt your data client-side before upload.</li>
+              <li><strong>Secondary Encryption Key:</strong> Used to encrypt your data again server-side (See below)</li>
+            </ul>
+            <p>
+              <strong>Why double encryption?</strong> Essentially, the server does not trust the client
+              to send it unencrypted data. The server requires the client to send it a separate encryption key
+              which will be used to encrypt the data again. The server encrypts your 
+              already-encrypted data with the secondary key, then throws the key away. This is an added layer of security such that the 
+              server is confident that it is not saving unencrypted information. The key is validated 
+              to ensure that it is different from the original key by attempting to decrypt the file and rejecting the
+              upload if the decryption works.
             </p>
             <p>
-              There are no accounts, no rate limits, and no gatekeepers. Anyone can attempt to access 
-              any data, but <em>without your password, they cannot find or decrypt it</em>. 
-              With a strong password, your data is safe.
+              <strong>What the server knows:</strong> The address hash, and the size of your encrypted data.
+            </p>
+            <p>
+              <strong>What the server never knows:</strong> Your password, your primary encryption key, the contents of your data.
+            </p>
+            <p>
+              <strong>What the server knows temporarily:</strong> Your secondary encryption key
             </p>
           </section>
         </div>
