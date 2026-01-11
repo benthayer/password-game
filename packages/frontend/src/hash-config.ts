@@ -93,7 +93,7 @@ export const DEFAULT_SHA256_CONFIG: Sha256Config = {
 
 export const DEFAULT_FULL_HASH_CONFIG: FullHashConfig = {
   algorithmConfig: DEFAULT_ARGON2ID_CONFIG,
-  includeSalt: false,
+  includeSalt: true,
   salt: '',
 };
 

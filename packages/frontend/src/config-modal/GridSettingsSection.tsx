@@ -35,7 +35,7 @@ export default function GridSettingsSection({
     gridCols,
     // These don't affect entropy calculation
     hashAlgorithm: { algorithm: 'sha256' },
-    includeSalt: false,
+    includeSalt: true,
     salt: '',
   } as GenerationConfig);
 

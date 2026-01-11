@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG: GenerationConfig = {
   gridRows: 3,
   gridCols: 4,
   hashAlgorithm: DEFAULT_ARGON2ID_CONFIG,
-  includeSalt: false,
+  includeSalt: true,
   salt: '',
 };
 
