@@ -23,12 +23,21 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
         <div className="salt-info-content">
           <section className="salt-info-recommendation">
             <p>
-              <strong>Recommendation:</strong> Either use a very strong password without salt, 
-              or use a salt with a password strong enough for your use case.
+              <strong>Recommendation:</strong>
+            </p>
+            <p>
+              Use a very strong password without salt. Salt offers the strongest
+              cryptographic protection, but the risk of 
+              losing your salt (and permanently losing access to your data) is higher than the risk of a dragnet attack if your password is strong enough.
             </p>
             <p>
               In all cases, write down your configuration (seed phrase, grid dimensions, and salt if enabled). 
-              The salt isn't secret—it just makes your configuration unique to prevent dragnet attacks.
+              This information needs to be accessible to you when you're looking to recover your information.
+              The risk of making it private is that you will not be able to access it when you need it.
+              The risk of making it public is that other people may know you have data stored on this system.
+            </p>
+            <p>
+                The ideal is to write down information in a way that's minimally publicly visible while still being accessible to you.
             </p>
           </section>
 
@@ -60,16 +69,33 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
           <section>
             
             <h3>How To Protect Yourself</h3>
-            <p>There are three ways to protect yourself, in order of reliability:</p>
+            <p>There are three ways to protect yourself against a dragnet attack:</p>
             <ol>
+              <li>Use a longer password or more expensive hash function</li>
               <li>Use a salt</li>
-              <li>Use a unique seed phrase</li>
-              <li>Use a longer password</li>
+              <li>Use a unique seed phrase or configuration (sorta)</li>
             </ol>
           </section>
 
+            <section>
+            <h3>Why Using A Longer Password Or More Expensive Hash Function Works</h3>
+            <p>
+                Password length and hash function type and parameters are both ways to tune how costly it is to crack
+            your password.
+                A sufficiently long password or computationally expensive hash function can make dragnet
+                attacks uneconomical. 
+                
+            </p>
+            <p>
+                For example, a 17-word password with the default hash 
+                function (argon2id) currently costs roughly the same amount of money to crack as the entire world economy - $100 trillion.
+                At that price, there is no way for it to be economically feasible to decrypt your data, even in a dragnet.
+                
+            </p>
+            </section>
+
           <section>
-            <h3>Why Salt Works</h3>
+            <h3>Why Using A Salt Works</h3>
             <p>
               If you use a salt, dragnet attacks cannot affect you. Your salt is guaranteed to be unique to you, 
               which means an attacker would need to use <em>your specific salt</em> and attack you specifically.
@@ -81,24 +107,25 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
               number — making it exceedingly unlikely that cracking your password will <em>ever</em> be 
               economically feasible.
             </p>
-          </section>
-
-          <section>
-            <h3>Why Unique Seed Phrases Help</h3>
             <p>
-              Similar logic applies to unique seed phrases and grid configurations. However, unlike salt, 
-              you cannot <em>guarantee</em> uniqueness — you can only estimate how unique it is. An attacker 
-              could still run a dragnet against all users sharing your configuration, but the payoff is 
-              limited by how many targets exist and the value of their data.
+                It makes sense to use a salt when you want your password to be shorter and you will reliably 
+                be able to store the salt and access it when you need it. 
+            </p>
+            <p>
+              Remember - if you lose the salt (or any other configuration details), you lose your data.
             </p>
           </section>
 
           <section>
-            <h3>Why Long Passwords Help</h3>
+            <h3>Why Using A Unique Seed Phrase Or Configuration Helps</h3>
             <p>
-              A sufficiently long password can make even dragnet attacks uneconomical. For example, the 
-              global economy is ~$100 trillion. A 17-word password currently costs roughly that much to crack.
-              At that price, there is no way for it to be economically feasible to decrypt your data, even in a dragnet.
+              A dragnet attack is all about the total value of the data with the same configuration. 
+              By using a unique or uncommon seed phrase or other configuration values (like grid dimensions or hash function),
+              there will be fewer people who share that same configuration.
+              However, this option is worse because you cannot <em>guarantee</em> how many other people will share
+              your configuration. The value of the attack is proportional to the number of people using the 
+              shared configuration. This is not recommended to be your primary defense.
+              It is better to just use a salt or a stronger password.
             </p>
           </section>
         </div>
