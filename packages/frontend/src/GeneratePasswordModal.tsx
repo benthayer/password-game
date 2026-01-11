@@ -46,7 +46,6 @@ export default function GeneratePasswordModal({
   if (!isOpen) return null;
 
   const entropyPerWord = calculateEntropyPerWord(form.toConfig());
-  const totalBits = desiredNumWords * entropyPerWord;
 
   const handleGenerate = () => {
     const newConfig = form.toConfig();
@@ -82,15 +81,11 @@ export default function GeneratePasswordModal({
             onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
-          <WordCountInput
-            value={desiredNumWords}
-            onChange={setDesiredNumWords}
-            totalBits={totalBits}
-          />
-
           <SecurityEstimate
             gridSize={form.gridSize}
             wordCount={desiredNumWords}
+            onWordCountChange={setDesiredNumWords}
+            entropyPerWord={entropyPerWord}
             hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
             onIncludeSaltChange={form.setIncludeSalt}
@@ -116,37 +111,6 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
     <div className="generate-modal-header">
       <h2>Generate Password</h2>
       <button className="generate-modal-close" onClick={onClose}>×</button>
-    </div>
-  );
-}
-
-function WordCountInput({
-  value,
-  onChange,
-  totalBits,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-  totalBits: number;
-}) {
-  return (
-    <div className="bits-input-section">
-      <label htmlFor="desired-words">Number of Words:</label>
-      <input
-        id="desired-words"
-        type="number"
-        value={value}
-        onChange={(e) => {
-          const parsed = parseInt(e.target.value);
-          if (!isNaN(parsed) && parsed > 0) {
-            onChange(parsed);
-          }
-        }}
-        min="1"
-        step="1"
-        placeholder="Enter word count"
-      />
-      <span className="bits-conversion">≈ {totalBits.toFixed(1)} bits of entropy</span>
     </div>
   );
 }

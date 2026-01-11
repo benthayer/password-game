@@ -11,6 +11,8 @@ import SaltInfoModal from './SaltInfoModal';
 interface SecurityEstimateProps {
   gridSize: number;
   wordCount: number;
+  onWordCountChange?: (count: number) => void;
+  entropyPerWord?: number;
   hashConfig: HashAlgorithmConfig;
   includeSalt: boolean;
   onIncludeSaltChange: (include: boolean) => void;
@@ -19,6 +21,8 @@ interface SecurityEstimateProps {
 export default function SecurityEstimate({
   gridSize,
   wordCount,
+  onWordCountChange,
+  entropyPerWord,
   hashConfig,
   includeSalt,
   onIncludeSaltChange,
@@ -34,6 +38,8 @@ export default function SecurityEstimate({
     userCount: 1,
   });
 
+  const totalBits = entropyPerWord ? wordCount * entropyPerWord : null;
+
   return (
     <div className="cost-display">
       <h3>Security Estimate</h3>
@@ -41,6 +47,14 @@ export default function SecurityEstimate({
       <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
       
       <SaltStatus enabled={includeSalt} onLearnMore={() => setInfoModalOpen(true)} />
+
+      {onWordCountChange && (
+        <WordCountInput 
+          value={wordCount} 
+          onChange={onWordCountChange} 
+          totalBits={totalBits}
+        />
+      )}
       
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
@@ -54,6 +68,39 @@ export default function SecurityEstimate({
       </div>
 
       <SaltInfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+    </div>
+  );
+}
+
+function WordCountInput({
+  value,
+  onChange,
+  totalBits,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  totalBits: number | null;
+}) {
+  return (
+    <div className="word-count-input">
+      <label>
+        <span>Number of words</span>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => {
+            const parsed = parseInt(e.target.value);
+            if (!isNaN(parsed) && parsed > 0) {
+              onChange(parsed);
+            }
+          }}
+          min="1"
+          step="1"
+        />
+      </label>
+      {totalBits !== null && (
+        <span className="word-count-bits">≈ {totalBits.toFixed(1)} bits</span>
+      )}
     </div>
   );
 }
