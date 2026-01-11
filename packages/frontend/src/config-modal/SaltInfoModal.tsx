@@ -27,17 +27,31 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
           </section>
 
           <section>
+            <h3>Why This Matters</h3>
+            <p>
+              This system's API is publicly accessible. Anyone can attempt to access any data — the 
+              only barrier is encryption. There are no accounts, no rate limits, no gatekeepers. 
+              Your password's strength <em>is</em> your security.
+            </p>
+          </section>
+
+          <section>
             <h3>Understanding Dragnet Attacks</h3>
             <p>
               In this system, hashes are used to locate and encrypt your data. In a <strong>dragnet 
               (multi-target) attack</strong>, an attacker picks a seed phrase and grid configuration, 
-              then tries random passwords until they find a combination that unlocks <em>someone's</em> data. 
+              then tries random passwords until they find a combination that unlocks someone's data. 
               They're not targeting you specifically — they're fishing for anyone.
             </p>
+            <p>
+                The value of a dragnet attack depends on how much data is stored with the targeted configuration. 
+                Attackers will target popular configs and if you're using a common config 
+                without a salt, then you'll be in the net and might get caught.
+            </p>
             
-            <p><strong>Three ways to protect yourself (in order of reliability):</strong></p>
+            <p><strong>Three ways to protect yourself, in order of reliability:</strong></p>
             <ol>
-              <li><strong>Use a salt</strong> (strongest)</li>
+              <li><strong>Use a salt</strong></li>
               <li><strong>Use a unique seed phrase</strong></li>
               <li><strong>Use a longer password</strong></li>
             </ol>
@@ -46,13 +60,12 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
           <section>
             <h3>Why Salt Works</h3>
             <p>
-              If you use a salt, dragnet attacks cannot affect you. Your salt is guaranteed to be unique, 
-              which means an attacker would need to use <em>your specific salt</em> — making it a targeted 
-              attack, not a dragnet.
+              If you use a salt, dragnet attacks cannot affect you. Your salt is guaranteed to be unique to you, 
+              which means an attacker would need to use <em>your specific salt</em> and attack you specifically.
             </p>
             <p>
-              A targeted attack is still theoretically possible, but the cost makes it economically impossible. 
-              We estimate this cost based on current hardware and electricity prices. The larger the number, 
+              A targeted attack is still possible, but the cost (if you have a good password) makes it economically impossible. 
+              We estimate this cost based on current hardware and electricity prices. The larger the cost, 
               the better. Since costs may decrease over time as technology improves, aim for an absurdly large 
               estimate — making it exceedingly unlikely that cracking your password will <em>ever</em> be 
               economically feasible.
@@ -73,9 +86,7 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
             <h3>Why Long Passwords Help</h3>
             <p>
               A sufficiently long password can make even dragnet attacks uneconomical. For example, the 
-              global economy is ~$100 trillion. A 17-word password costs roughly that much to crack. Unless 
-              the combined value of all data caught in a dragnet exceeds the global economy, no rational 
-              attacker would attempt it.
+              global economy is ~$100 trillion. A 17-word password currently costs roughly that much to crack.
             </p>
           </section>
         </div>
