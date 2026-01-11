@@ -62,12 +62,12 @@ function SaltToggle({
   return (
     <div className="salt-toggle">
       <label>
+        <span>Include salt</span>
         <input
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
-        Include salt
       </label>
     </div>
   );
