@@ -8,3 +8,6 @@ src/**/*.js.map
 src/**/*.d.ts
 src/**/*.d.ts.map
 SECRETS.txt
+packages/backend/data/*.db
+packages/backend/data/*.db-shm
+packages/backend/data/*.db-wal
