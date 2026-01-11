@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { GenerationConfig, HashAlgorithmConfig } from './generation-config';
 import './ConfigDisplay.css';
 
@@ -9,6 +10,7 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
   return (
     <div className="config-display">
       <h3 className="config-title">Configuration</h3>
+      <h3 className="config-title">Write this down! You need it for recovery! It does not need to be private!</h3>
       <div className="config-display-item">
         <span className="config-label">Public seed phrase:</span>
         <span className="config-value config-seed-phrase">"{config.seedPhrase || ''}"</span>
@@ -21,11 +23,41 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
         <span className="config-label">Hash:</span>
         <span className="config-value">{formatHashConfig(config.hashAlgorithm)}</span>
       </div>
+      <SaltDisplay includeSalt={config.includeSalt} salt={config.salt} />
+    </div>
+  );
+}
+
+function SaltDisplay({ includeSalt, salt }: { includeSalt: boolean; salt: string }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!includeSalt) {
+    return (
       <div className="config-display-item">
         <span className="config-label">Salt:</span>
-        <span className={`config-value config-salt ${config.includeSalt ? 'salt-enabled' : 'salt-disabled'}`}>
-          {config.includeSalt ? '✓ Enabled' : '⚠ Disabled'}
-        </span>
+        <span className="config-value config-salt salt-disabled">⚠ Disabled</span>
+      </div>
+    );
+  }
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(salt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="config-display-item salt-item">
+      <span className="config-label">Salt:</span>
+      <div className="salt-value-container">
+        <span className="config-value config-salt salt-enabled salt-value">{salt}</span>
+        <button 
+          className="salt-copy-button" 
+          onClick={handleCopy}
+          title="Copy salt"
+        >
+          {copied ? '✓' : '⧉'}
+        </button>
       </div>
     </div>
   );

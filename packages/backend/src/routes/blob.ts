@@ -1,4 +1,6 @@
-import { Router, Request } from 'express';
+import { Router } from 'express';
+import multer from 'multer';
+import { Readable } from 'stream';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
 
@@ -6,6 +8,7 @@ export const blobRoutes = Router();
 
 const blobService = new BlobService();
 const creditService = new CreditService();
+const upload = multer({ storage: multer.memoryStorage() });
 
 blobRoutes.get('/:addressHash', async (req, res) => {
   const { addressHash } = req.params;
@@ -26,7 +29,7 @@ blobRoutes.get('/:addressHash', async (req, res) => {
   stream.pipe(res);
 });
 
-blobRoutes.put('/:addressHash', async (req, res) => {
+blobRoutes.put('/:addressHash', upload.single('file'), async (req, res) => {
   const { addressHash } = req.params;
   
   const canUpload = await creditService.canUpload(addressHash);
@@ -38,18 +41,18 @@ blobRoutes.put('/:addressHash', async (req, res) => {
     return res.status(409).json({ error: 'File already exists at this address' });
   }
   
-  const contentLength = getContentLength(req);
-  if (!contentLength) {
-    return res.status(400).json({ error: 'Content-Length header required' });
+  if (!req.file) {
+    return res.status(400).json({ error: 'File required' });
   }
   
-  const secondaryKey = req.headers['x-secondary-key'];
+  const secondaryKey = req.body.secondaryKey;
   if (!secondaryKey || typeof secondaryKey !== 'string') {
-    return res.status(400).json({ error: 'X-Secondary-Key header required' });
+    return res.status(400).json({ error: 'secondaryKey field required' });
   }
   
   try {
-    const validation = await blobService.upload(addressHash, req, contentLength, secondaryKey);
+    const stream = Readable.from(req.file.buffer);
+    const validation = await blobService.upload(addressHash, stream, req.file.size, secondaryKey);
     // Don't send dataToStore buffer in response
     const { dataToStore, ...validationResponse } = validation;
     res.json({ 
@@ -76,8 +79,3 @@ blobRoutes.delete('/:addressHash', async (req, res) => {
   await blobService.delete(addressHash);
   res.json({ success: true });
 });
-
-function getContentLength(req: Request): number | null {
-  const value = parseInt(req.headers['content-length'] || '', 10);
-  return value > 0 ? value : null;
-}

@@ -19,20 +19,25 @@ export async function getBlob(addressHash: string): Promise<ArrayBuffer | null> 
   return res.arrayBuffer();
 }
 
-export async function setBlob(addressHash: string, data: Uint8Array): Promise<void> {
-  // Create a proper Blob from the data
-  const blob = new Blob([data], { type: 'application/octet-stream' });
+export async function setBlob(
+  addressHash: string, 
+  data: Uint8Array, 
+  secondaryKeyHex: string
+): Promise<void> {
+  const formData = new FormData();
+  formData.append('secondaryKey', secondaryKeyHex);
+  formData.append('file', new Blob([data], { type: 'application/octet-stream' }));
   
   const res = await fetch(`${API_URL}/blob/${addressHash}`, {
     method: 'PUT',
-    body: blob,
-    headers: {
-      'Content-Type': 'application/octet-stream',
-    },
+    body: formData,
   });
   if (res.status === 402) throw new Error('Insufficient credits');
   if (res.status === 409) throw new Error('File already exists');
-  if (!res.ok) throw new Error('Upload failed');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Upload failed');
+  }
 }
 
 export async function deleteBlob(addressHash: string): Promise<void> {

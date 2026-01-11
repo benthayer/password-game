@@ -353,6 +353,38 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Salt input for recovery mode */
+.salt-input-field {
+  margin-top: 12px;
+}
+
+.salt-input-field label {
+  display: block;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.salt-input-field input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0a0a0f;
+  border: 1px solid #1e2a3a;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.salt-input-field input[type="text"]:focus {
+  outline: none;
+  border-color: #0891b2;
+}
+
+.salt-input-field input[type="text"]::placeholder {
+  color: #475569;
+}
+
 /* Cost display */
 .cost-display {
   margin-top: 24px;

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord } from './generation-config';
-import { generatePassword } from './crypto-utils';
+import { generatePassword, generateSalt } from './crypto-utils';
 import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
@@ -49,6 +49,10 @@ export default function GeneratePasswordModal({
 
   const handleGenerate = () => {
     const newConfig = form.toConfig();
+    // Generate salt if enabled
+    if (newConfig.includeSalt) {
+      newConfig.salt = generateSalt();
+    }
     setConfig(newConfig);
     setSubpassword(generatePassword(desiredNumWords, newConfig));
     navigate('/practice');

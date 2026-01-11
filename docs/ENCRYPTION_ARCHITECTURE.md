@@ -1,0 +1,141 @@
+# Encryption Architecture
+
+This document describes the cryptographic design of the password-based storage system.
+
+## Overview
+
+The system allows users to store encrypted data using only a memorable password. The design ensures:
+
+1. **Server never sees plaintext** — data is always encrypted before reaching the server
+2. **Server cannot decrypt** — server never has access to decryption keys
+3. **Server-side validation** — server can verify data is actually encrypted without seeing contents
+4. **Deterministic key derivation** — all keys derived from password, nothing to store separately
+
+## Key Derivation
+
+All keys are derived from the password using a configurable hash function (default: Argon2id).
+
+The password is formatted as words joined by colons, with a purpose suffix:
+
+```
+word1:word2:word3:...:+<purpose>
+```
+
+Three keys are derived:
+
+| Purpose | Suffix | Usage |
+|---------|--------|-------|
+| Address | `:+address` | Identifies storage slot on server |
+| Primary Encryption | `:+primary-encryption-key` | Encrypts user data (never sent to server) |
+| Secondary Encryption | `:+secondary-encryption-key` | Server-side validation layer |
+
+### Why Three Keys?
+
+- **Address Hash**: Public identifier. Server uses this to look up your data. Anyone who knows your password can compute this, but it reveals nothing about the encryption keys.
+
+- **Primary Key**: The "real" encryption key. Data encrypted with this is what you actually care about protecting. This key **never leaves the client**.
+
+- **Secondary Key**: Sent to server for validation. Allows server to add an encryption layer it can verify, proving server definitely cannot read the data.
+
+## Upload Flow
+
+```
+┌────────┐                                    ┌────────┐
+│ Client │                                    │ Server │
+└───┬────┘                                    └───┬────┘
+    │                                             │
+    │  1. Derive keys from password               │
+    │     - addressHash                           │
+    │     - primaryKey                            │
+    │     - secondaryKey                          │
+    │                                             │
+    │  2. Encrypt data with primaryKey            │
+    │     encrypted = AES(data, primaryKey)       │
+    │                                             │
+    │  3. Send encrypted + secondaryKey           │
+    │────────────────────────────────────────────>│
+    │                                             │
+    │                    4. Validate secondaryKey is high-entropy
+    │                       (confirms strong password derivation)
+    │                                             │
+    │                    5. Attempt decrypt with secondaryKey
+    │                       → MUST FAIL (proves different key used)
+    │                                             │
+    │                    6. Encrypt with secondaryKey
+    │                       stored = AES(encrypted, secondaryKey)
+    │                                             │
+    │                    7. Throw away secondaryKey
+    │                                             │
+    │                    8. Store doubly-encrypted data
+    │                                             │
+```
+
+### Why Server Encrypts Again?
+
+This is paranoia-driven security:
+
+1. Even if server had a bug that logged incoming data, the stored data is wrapped in another layer
+2. Server can prove to itself it has no access — it encrypted with a key it immediately discarded
+3. The validation step (attempting decrypt with secondaryKey fails) proves client used a different key
+
+## Download Flow
+
+```
+┌────────┐                                    ┌────────┐
+│ Client │                                    │ Server │
+└───┬────┘                                    └───┬────┘
+    │                                             │
+    │  1. Derive addressHash from password        │
+    │                                             │
+    │  2. Request data by addressHash             │
+    │────────────────────────────────────────────>│
+    │                                             │
+    │                    3. Look up doubly-encrypted data
+    │                                             │
+    │  4. Receive doubly-encrypted data           │
+    │<────────────────────────────────────────────│
+    │                                             │
+    │  5. Derive secondaryKey from password       │
+    │                                             │
+    │  6. Decrypt outer layer                     │
+    │     encrypted = AES_decrypt(stored, secondaryKey)
+    │                                             │
+    │  7. Derive primaryKey from password         │
+    │                                             │
+    │  8. Decrypt inner layer                     │
+    │     data = AES_decrypt(encrypted, primaryKey)
+    │                                             │
+```
+
+## Security Properties
+
+### What the server knows:
+- Address hash (public identifier)
+- That the data is encrypted (validated on upload)
+- Size of encrypted data
+
+### What the server cannot know:
+- The password
+- Primary encryption key
+- Secondary encryption key (discarded after use)
+- Plaintext data
+
+### Threat model:
+- **Compromised server**: Cannot decrypt data (no keys)
+- **Database leak**: Doubly-encrypted blobs are useless without keys
+- **Malicious server operator**: Cannot read user data, cannot even prove what users have stored
+
+## Implementation Notes
+
+### Hash Function Configuration
+
+The hash function is configurable (stored alongside the password config). Default is Argon2id with parameters tuned for ~2.5 seconds on typical hardware.
+
+### Encryption Algorithm
+
+AES is used for symmetric encryption. CryptoJS handles the primary encryption, Web Crypto API can be used for secondary.
+
+### Key Format
+
+Keys are represented as hex strings when transmitted. The secondary key sent to server should be 32 bytes (256 bits) as hex = 64 characters.
+

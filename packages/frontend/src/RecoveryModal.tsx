@@ -65,6 +65,9 @@ export default function RecoveryModal({
             onUseRecommendedChange={form.setUseRecommendedHash}
             includeSalt={form.includeSalt}
             onIncludeSaltChange={form.setIncludeSalt}
+            saltMode="recovery"
+            salt={form.salt}
+            onSaltChange={form.setSalt}
           />
         </div>
 

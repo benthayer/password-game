@@ -5,6 +5,15 @@ import type { GenerationConfig } from './generation-config';
 const wordList: string[] = corpus.words;
 
 /**
+ * Generate a 256-bit random salt encoded as base64
+ */
+export function generateSalt(): string {
+  const bytes = new Uint8Array(32); // 256 bits = 32 bytes
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes));
+}
+
+/**
  * Secure hash function using SHA-256
  * @param {string} string - The string to hash
  * @returns {string} - The hexadecimal hash of the input string

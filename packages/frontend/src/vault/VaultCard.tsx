@@ -4,6 +4,7 @@ import ErrorModal from './ErrorModal';
 import StatusModal from './StatusModal';
 import { getAddressHash, encrypt, decrypt } from './vault-crypto';
 import { getBlob, setBlob } from './vault-api';
+import { generateSecondaryKey, encryptWithSecondaryKey } from './secondary-encryption';
 import type { FullHashConfig } from '../hash-config';
 import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
 import './VaultCard.css';
@@ -45,11 +46,17 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
       
       setStatusMessage('Encrypting...');
       const text = await file.text();
-      const encrypted = await encrypt(text, password, hashConfig);
+      // First layer: encrypt with password-derived key
+      const primaryEncrypted = await encrypt(text, password, hashConfig);
+      
+      // Second layer: wrap with secondary key (for server validation)
+      const { keyHex, encrypted: doublyEncrypted } = await encryptWithSecondaryKey(
+        new TextEncoder().encode(primaryEncrypted)
+      );
       
       setStatusMessage('Uploading...');
       try {
-        await setBlob(addressHash, new TextEncoder().encode(encrypted));
+        await setBlob(addressHash, doublyEncrypted, keyHex);
         setStatusMessage(null);
       } catch (err: any) {
         setStatusMessage(null);

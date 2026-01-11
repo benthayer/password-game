@@ -10,6 +10,8 @@ import type { Argon2idConfig, ScryptConfig, BcryptConfig, Pbkdf2Config } from '.
 import { kbToUnit, unitToKb, inferUnit, type MemoryUnit } from '../memory-units';
 import SaltInfoModal from './SaltInfoModal';
 
+type SaltMode = 'generation' | 'recovery';
+
 interface HashSettingsSectionProps {
   algorithm: HashAlgorithmConfig;
   onAlgorithmChange: (algorithm: HashAlgorithm) => void;
@@ -18,6 +20,10 @@ interface HashSettingsSectionProps {
   onUseRecommendedChange: (value: boolean) => void;
   includeSalt: boolean;
   onIncludeSaltChange: (value: boolean) => void;
+  // Recovery mode props
+  saltMode?: SaltMode;
+  salt?: string;
+  onSaltChange?: (value: string) => void;
 }
 
 export default function HashSettingsSection({
@@ -28,6 +34,9 @@ export default function HashSettingsSection({
   onUseRecommendedChange,
   includeSalt,
   onIncludeSaltChange,
+  saltMode = 'generation',
+  salt,
+  onSaltChange,
 }: HashSettingsSectionProps) {
   return (
     <div className="config-section">
@@ -51,7 +60,13 @@ export default function HashSettingsSection({
         </>
       )}
 
-      <SaltSettings includeSalt={includeSalt} onIncludeSaltChange={onIncludeSaltChange} />
+      <SaltSettings
+        mode={saltMode}
+        includeSalt={includeSalt}
+        onIncludeSaltChange={onIncludeSaltChange}
+        salt={salt}
+        onSaltChange={onSaltChange}
+      />
     </div>
   );
 }
@@ -61,14 +76,48 @@ export default function HashSettingsSection({
 // ============================================================
 
 function SaltSettings({
+  mode,
   includeSalt,
   onIncludeSaltChange,
+  salt,
+  onSaltChange,
 }: {
+  mode: SaltMode;
   includeSalt: boolean;
   onIncludeSaltChange: (value: boolean) => void;
+  salt?: string;
+  onSaltChange?: (value: string) => void;
 }) {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
+  if (mode === 'recovery') {
+    return (
+      <div className="config-field checkbox-field salt-field">
+        <label onClick={() => onIncludeSaltChange(!includeSalt)}>
+          <input
+            type="checkbox"
+            checked={includeSalt}
+            onChange={(e) => onIncludeSaltChange(e.target.checked)}
+          />
+          Include Salt
+        </label>
+        {includeSalt && onSaltChange && (
+          <div className="salt-input-field">
+            <label htmlFor="salt-value">Salt Value</label>
+            <input
+              id="salt-value"
+              type="text"
+              value={salt ?? ''}
+              onChange={(e) => onSaltChange(e.target.value)}
+              placeholder="Enter the salt from your configuration"
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Generation mode - show dragnet warning
   return (
     <>
       <div className="config-field checkbox-field salt-field">

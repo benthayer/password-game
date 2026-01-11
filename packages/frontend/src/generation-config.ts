@@ -33,7 +33,7 @@ export interface GenerationConfig {
 
 export const DEFAULT_CONFIG: GenerationConfig = {
   seedPhrase: '',
-  gridRows: 3,
+  gridRows: 4,
   gridCols: 4,
   hashAlgorithm: DEFAULT_ARGON2ID_CONFIG,
   includeSalt: true,
