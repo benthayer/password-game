@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
-config({ path: '.env.local' });
+config(); // Load .env
+config({ path: '.env.local', override: true }); // Optional local overrides
 
 import express from 'express';
 import cors from 'cors';
