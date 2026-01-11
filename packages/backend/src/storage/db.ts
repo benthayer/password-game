@@ -1,8 +1,8 @@
-import fs from 'fs/promises';
+import Database from 'better-sqlite3';
 import path from 'path';
 
 const DATA_DIR = process.env.DATA_DIR || './data';
-const DB_FILE = path.join(DATA_DIR, 'accounts.json');
+const DB_FILE = path.join(DATA_DIR, 'accounts.db');
 
 // =============================================================================
 // TYPES
@@ -17,31 +17,40 @@ export interface Account {
   updatedAt: string;
 }
 
-interface Database {
-  accounts: Record<string, Account>;
-}
-
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
 
-async function ensureDataDir(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-}
+import fs from 'fs';
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
-async function loadDb(): Promise<Database> {
-  await ensureDataDir();
-  try {
-    const data = await fs.readFile(DB_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return { accounts: {} };
-  }
-}
+const db = new Database(DB_FILE);
+db.pragma('journal_mode = WAL');
 
-async function saveDb(db: Database): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2));
+db.exec(`
+  CREATE TABLE IF NOT EXISTS accounts (
+    address_hash TEXT PRIMARY KEY,
+    initial_credits INTEGER DEFAULT 0,
+    spent_credits INTEGER DEFAULT 0,
+    file_size INTEGER,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`);
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function rowToAccount(row: any): Account {
+  return {
+    addressHash: row.address_hash,
+    initialCredits: row.initial_credits,
+    spentCredits: row.spent_credits,
+    fileSize: row.file_size,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 // =============================================================================
@@ -49,71 +58,61 @@ async function saveDb(db: Database): Promise<void> {
 // =============================================================================
 
 export async function getAccount(addressHash: string): Promise<Account | null> {
-  const db = await loadDb();
-  return db.accounts[addressHash] || null;
+  const row = db.prepare('SELECT * FROM accounts WHERE address_hash = ?').get(addressHash);
+  return row ? rowToAccount(row) : null;
 }
 
 export async function getAllAccounts(): Promise<Account[]> {
-  const db = await loadDb();
-  return Object.values(db.accounts);
+  const rows = db.prepare('SELECT * FROM accounts').all();
+  return rows.map(rowToAccount);
 }
 
 export async function addCredits(addressHash: string, amount: number): Promise<Account> {
-  const db = await loadDb();
-  let account = db.accounts[addressHash];
   const now = new Date().toISOString();
   
-  if (!account) {
-    account = {
-      addressHash,
-      initialCredits: 0,
-      spentCredits: 0,
-      fileSize: null,
-      createdAt: now,
-      updatedAt: now,
-    };
+  const existing = db.prepare('SELECT * FROM accounts WHERE address_hash = ?').get(addressHash);
+  
+  if (existing) {
+    db.prepare(`
+      UPDATE accounts 
+      SET initial_credits = initial_credits + ?, updated_at = ?
+      WHERE address_hash = ?
+    `).run(amount, now, addressHash);
+  } else {
+    db.prepare(`
+      INSERT INTO accounts (address_hash, initial_credits, spent_credits, file_size, created_at, updated_at)
+      VALUES (?, ?, 0, NULL, ?, ?)
+    `).run(addressHash, amount, now, now);
   }
   
-  account.initialCredits += amount;
-  account.updatedAt = now;
-  db.accounts[addressHash] = account;
-  await saveDb(db);
-  return account;
+  return (await getAccount(addressHash))!;
 }
 
 export async function spendCredits(addressHash: string, amount: number): Promise<boolean> {
-  const db = await loadDb();
-  const account = db.accounts[addressHash];
+  const result = db.prepare(`
+    UPDATE accounts 
+    SET spent_credits = spent_credits + ?, updated_at = ?
+    WHERE address_hash = ?
+  `).run(amount, new Date().toISOString(), addressHash);
   
-  if (!account) return false;
-  
-  account.spentCredits += amount;
-  account.updatedAt = new Date().toISOString();
-  db.accounts[addressHash] = account;
-  await saveDb(db);
-  return true;
+  return result.changes > 0;
 }
 
 export async function setFileSize(addressHash: string, size: number | null): Promise<void> {
-  const db = await loadDb();
-  let account = db.accounts[addressHash];
   const now = new Date().toISOString();
   
-  if (!account) {
-    account = {
-      addressHash,
-      initialCredits: 0,
-      spentCredits: 0,
-      fileSize: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-  }
+  const existing = db.prepare('SELECT * FROM accounts WHERE address_hash = ?').get(addressHash);
   
-  account.fileSize = size;
-  account.updatedAt = now;
-  db.accounts[addressHash] = account;
-  await saveDb(db);
+  if (existing) {
+    db.prepare(`
+      UPDATE accounts SET file_size = ?, updated_at = ? WHERE address_hash = ?
+    `).run(size, now, addressHash);
+  } else {
+    db.prepare(`
+      INSERT INTO accounts (address_hash, initial_credits, spent_credits, file_size, created_at, updated_at)
+      VALUES (?, 0, 0, ?, ?, ?)
+    `).run(addressHash, size, now, now);
+  }
 }
 
 export async function getCurrentCredits(addressHash: string): Promise<number> {
