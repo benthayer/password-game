@@ -28,13 +28,6 @@ function ResetButton({ onClick, disabled }: { onClick: () => void; disabled: boo
       onClick={onClick}
       className="header-button reset-button"
       disabled={disabled}
-      style={{
-        background: '#dc2626',
-        color: 'white',
-        padding: '10px 16px',
-        fontSize: '1rem',
-        fontWeight: '500',
-      }}
     >
       Reset
     </button>
@@ -47,13 +40,6 @@ function DeleteButton({ onClick, disabled }: { onClick: () => void; disabled: bo
       onClick={onClick}
       className="header-button delete-button"
       disabled={disabled}
-      style={{
-        background: '#dc2626',
-        color: 'white',
-        padding: '10px 16px',
-        fontSize: '1rem',
-        fontWeight: '500',
-      }}
       title="Delete last word"
     >
       ⌫
