@@ -55,6 +55,22 @@
       "fileSize": null,
       "createdAt": "2026-01-08T00:43:50.364Z",
       "updatedAt": "2026-01-08T00:43:55.396Z"
+    },
+    "test-sha256-hash": {
+      "addressHash": "test-sha256-hash",
+      "initialCredits": 100,
+      "spentCredits": 0,
+      "fileSize": null,
+      "createdAt": "2026-01-11T08:09:10.247Z",
+      "updatedAt": "2026-01-11T08:09:10.247Z"
+    },
+    "a80eafd1e210aa69e6e7a74fd8bf4739e08fe49352625cbef73789bc5eed47d1": {
+      "addressHash": "a80eafd1e210aa69e6e7a74fd8bf4739e08fe49352625cbef73789bc5eed47d1",
+      "initialCredits": 100,
+      "spentCredits": 1,
+      "fileSize": 96,
+      "createdAt": "2026-01-11T08:09:26.374Z",
+      "updatedAt": "2026-01-11T08:17:22.528Z"
     }
   }
 }

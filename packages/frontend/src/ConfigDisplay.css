@@ -55,6 +55,11 @@
 
 .config-seed-phrase {
   white-space: nowrap;
+  color: #34d399;
+}
+
+.config-seed-phrase.seed-not-set {
+  color: #94a3b8;
 }
 
 .config-salt.salt-enabled {
@@ -65,31 +70,18 @@
   color: #fbbf24;
 }
 
-/* Salt display with copy button */
-.salt-item {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.salt-value-container {
+/* Copyable values with copy button */
+.copyable-value-container {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  width: 100%;
 }
 
-.salt-value {
-  word-break: break-all;
-  line-height: 1.4;
-  flex: 1;
-}
-
-.salt-copy-button {
-  background: rgba(52, 211, 153, 0.1);
-  border: 1px solid rgba(52, 211, 153, 0.3);
+.copy-button {
+  background: rgba(103, 232, 249, 0.1);
+  border: 1px solid rgba(103, 232, 249, 0.3);
   border-radius: 4px;
-  color: #34d399;
+  color: #67e8f9;
   padding: 2px 6px;
   font-size: 0.8rem;
   cursor: pointer;
@@ -97,7 +89,25 @@
   transition: background 0.2s, border-color 0.2s;
 }
 
-.salt-copy-button:hover {
-  background: rgba(52, 211, 153, 0.2);
-  border-color: rgba(52, 211, 153, 0.5);
+.copy-button:hover {
+  background: rgba(103, 232, 249, 0.2);
+  border-color: rgba(103, 232, 249, 0.5);
+}
+
+/* Salt display specific */
+.salt-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.salt-item .copyable-value-container {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.salt-value {
+  word-break: break-all;
+  line-height: 1.4;
+  flex: 1;
 }

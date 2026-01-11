@@ -26,7 +26,7 @@ export async function setBlob(
 ): Promise<void> {
   const formData = new FormData();
   formData.append('secondaryKey', secondaryKeyHex);
-  formData.append('file', new Blob([data], { type: 'application/octet-stream' }));
+  formData.append('file', new Blob([data as BlobPart], { type: 'application/octet-stream' }));
   
   const res = await fetch(`${API_URL}/blob/${addressHash}`, {
     method: 'PUT',

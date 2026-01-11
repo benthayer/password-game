@@ -3,6 +3,7 @@ import type { GenerationConfig } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import RecoveryModal from './RecoveryModal';
 import PracticeModal from './PracticeModal';
+import AboutModal from './AboutModal';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -19,6 +20,7 @@ export default function MainPage({
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
 
   const handlePractice = () => {
     setPracticeModalOpen(true);
@@ -37,6 +39,9 @@ export default function MainPage({
           </button>
           <button onClick={handlePractice} className="primary-button practice-button">
             Practice
+          </button>
+          <button onClick={() => setAboutModalOpen(true)} className="primary-button about-button">
+            About
           </button>
         </div>
       </div>
@@ -57,6 +62,10 @@ export default function MainPage({
       <PracticeModal
         isOpen={practiceModalOpen}
         onClose={() => setPracticeModalOpen(false)}
+      />
+      <AboutModal
+        isOpen={aboutModalOpen}
+        onClose={() => setAboutModalOpen(false)}
       />
     </div>
   );

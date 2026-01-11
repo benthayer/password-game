@@ -2,9 +2,8 @@ import { useState } from 'react';
 import VaultModal from './VaultModal';
 import ErrorModal from './ErrorModal';
 import StatusModal from './StatusModal';
-import { getAddressHash, encrypt, decrypt } from './vault-crypto';
+import { getAddressHash, getSecondaryKey, encrypt, decrypt, decryptOuterLayer } from './vault-crypto';
 import { getBlob, setBlob } from './vault-api';
-import { generateSecondaryKey, encryptWithSecondaryKey } from './secondary-encryption';
 import type { FullHashConfig } from '../hash-config';
 import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
 import './VaultCard.css';
@@ -42,21 +41,19 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       
-      const addressHash = await computeAddressHash();
+      setStatusMessage('Computing keys...');
+      const addressHash = await getAddressHash(password, hashConfig);
+      setCachedAddressHash(addressHash);
+      const secondaryKeyHex = await getSecondaryKey(password, hashConfig);
       
       setStatusMessage('Encrypting...');
       const text = await file.text();
-      // First layer: encrypt with password-derived key
-      const primaryEncrypted = await encrypt(text, password, hashConfig);
-      
-      // Second layer: wrap with secondary key (for server validation)
-      const { keyHex, encrypted: doublyEncrypted } = await encryptWithSecondaryKey(
-        new TextEncoder().encode(primaryEncrypted)
-      );
+      // Encrypt with primary key only - server will add outer layer
+      const encrypted = await encrypt(text, password, hashConfig);
       
       setStatusMessage('Uploading...');
       try {
-        await setBlob(addressHash, doublyEncrypted, keyHex);
+        await setBlob(addressHash, new TextEncoder().encode(encrypted), secondaryKeyHex);
         setStatusMessage(null);
       } catch (err: any) {
         setStatusMessage(null);
@@ -67,20 +64,28 @@ export default function VaultCard({ password, hashConfig = DEFAULT_FULL_HASH_CON
   };
 
   const handleDownload = async () => {
-    const addressHash = await computeAddressHash();
+    setStatusMessage('Computing address...');
+    const addressHash = await getAddressHash(password, hashConfig);
+    setCachedAddressHash(addressHash);
     
     setStatusMessage('Downloading...');
     try {
-      const data = await getBlob(addressHash);
-      if (!data) {
+      const doublyEncrypted = await getBlob(addressHash);
+      if (!doublyEncrypted) {
         setStatusMessage(null);
         setErrorMessage('No file found at this address');
         return;
       }
       
       setStatusMessage('Decrypting...');
-      const encrypted = new TextDecoder().decode(data);
-      const decrypted = await decrypt(encrypted, password, hashConfig);
+      // Strip outer layer (server-added encryption with secondary key)
+      const primaryEncrypted = await decryptOuterLayer(
+        new Uint8Array(doublyEncrypted), 
+        password, 
+        hashConfig
+      );
+      // Decrypt inner layer (our primary encryption)
+      const decrypted = await decrypt(primaryEncrypted, password, hashConfig);
       
       const blob = new Blob([decrypted], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);

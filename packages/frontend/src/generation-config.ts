@@ -27,6 +27,7 @@ export interface GenerationConfig {
   
   // Hash settings (for final key derivation)
   hashAlgorithm: HashAlgorithmConfig;
+  useRecommendedHash: boolean;
   includeSalt: boolean;
   salt: string;
 }
@@ -36,6 +37,7 @@ export const DEFAULT_CONFIG: GenerationConfig = {
   gridRows: 4,
   gridCols: 4,
   hashAlgorithm: DEFAULT_ARGON2ID_CONFIG,
+  useRecommendedHash: true,
   includeSalt: true,
   salt: '',
 };

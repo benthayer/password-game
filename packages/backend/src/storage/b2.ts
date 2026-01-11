@@ -2,39 +2,54 @@ import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, Head
 import { Readable } from 'stream';
 
 // =============================================================================
-// CONFIG
+// CONFIG (lazy-loaded to allow dotenv to run first)
 // =============================================================================
 
-const KEY_ID = process.env.B2_KEY_ID || process.env.B2_TEST_KEY_ID;
-const APP_KEY = process.env.B2_KEY || process.env.B2_TEST_KEY;
-const BUCKET_NAME = process.env.B2_BUCKET || process.env.B2_TEST_BUCKET;
-const ENDPOINT = process.env.B2_ENDPOINT || 'https://s3.us-east-005.backblazeb2.com';
-
-if (!KEY_ID || !APP_KEY || !BUCKET_NAME) {
-  console.warn('B2 credentials not configured. Blob storage will fail.');
+function getConfig() {
+  const KEY_ID = process.env.B2_KEY_ID || process.env.B2_TEST_KEY_ID;
+  const APP_KEY = process.env.B2_KEY || process.env.B2_TEST_KEY;
+  const BUCKET_NAME = process.env.B2_BUCKET || process.env.B2_TEST_BUCKET;
+  const ENDPOINT = process.env.B2_ENDPOINT || 'https://s3.us-east-005.backblazeb2.com';
+  
+  if (!KEY_ID || !APP_KEY || !BUCKET_NAME) {
+    throw new Error('B2 credentials not configured (B2_KEY_ID, B2_KEY, B2_BUCKET)');
+  }
+  
+  return { KEY_ID, APP_KEY, BUCKET_NAME, ENDPOINT };
 }
 
 // =============================================================================
-// CLIENT
+// CLIENT (lazy initialization)
 // =============================================================================
 
-const s3 = new S3Client({
-  endpoint: ENDPOINT,
-  region: 'us-east-005',
-  credentials: {
-    accessKeyId: KEY_ID!,
-    secretAccessKey: APP_KEY!,
-  },
-});
+let s3Client: S3Client | null = null;
+let bucketName: string | null = null;
+
+function getS3() {
+  if (!s3Client) {
+    const config = getConfig();
+    bucketName = config.BUCKET_NAME;
+    s3Client = new S3Client({
+      endpoint: config.ENDPOINT,
+      region: 'us-east-005',
+      credentials: {
+        accessKeyId: config.KEY_ID,
+        secretAccessKey: config.APP_KEY,
+      },
+    });
+  }
+  return { s3: s3Client, bucket: bucketName! };
+}
 
 // =============================================================================
 // BLOB OPERATIONS
 // =============================================================================
 
 export async function getBlobStream(addressHash: string): Promise<Readable | null> {
+  const { s3, bucket } = getS3();
   try {
     const response = await s3.send(new GetObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucket,
       Key: addressHash,
     }));
     
@@ -48,8 +63,9 @@ export async function getBlobStream(addressHash: string): Promise<Readable | nul
 }
 
 export async function setBlobStream(addressHash: string, stream: Readable, contentLength: number): Promise<void> {
+  const { s3, bucket } = getS3();
   await s3.send(new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: bucket,
     Key: addressHash,
     Body: stream,
     ContentLength: contentLength,
@@ -58,9 +74,10 @@ export async function setBlobStream(addressHash: string, stream: Readable, conte
 }
 
 export async function deleteBlob(addressHash: string): Promise<void> {
+  const { s3, bucket } = getS3();
   try {
     await s3.send(new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucket,
       Key: addressHash,
     }));
   } catch (err: any) {
@@ -72,9 +89,10 @@ export async function deleteBlob(addressHash: string): Promise<void> {
 }
 
 export async function blobExists(addressHash: string): Promise<boolean> {
+  const { s3, bucket } = getS3();
   try {
     await s3.send(new HeadObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucket,
       Key: addressHash,
     }));
     return true;
@@ -87,9 +105,10 @@ export async function blobExists(addressHash: string): Promise<boolean> {
 }
 
 export async function getBlobSize(addressHash: string): Promise<number | null> {
+  const { s3, bucket } = getS3();
   try {
     const response = await s3.send(new HeadObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucket,
       Key: addressHash,
     }));
     return response.ContentLength ?? null;

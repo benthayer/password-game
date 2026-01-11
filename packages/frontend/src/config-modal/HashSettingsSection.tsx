@@ -127,7 +127,7 @@ function SaltSettings({
             checked={includeSalt}
             onChange={(e) => onIncludeSaltChange(e.target.checked)}
           />
-          Include Salt
+          Include Salt - You will have to copy this!
         </label>
         <div className={`salt-status-inline ${includeSalt ? 'salt-enabled' : 'salt-warning'}`}>
           <span className="salt-status-icon">{includeSalt ? '✓' : '⚠'}</span>

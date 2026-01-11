@@ -50,7 +50,7 @@ export function useConfigForm(
   // Hash state
   const [hashAlgorithm, setHashAlgorithm] = useState<HashAlgorithmConfig>(initialConfig.hashAlgorithm);
   const [useRecommendedHash, setUseRecommendedHashState] = useState(
-    initialConfig.hashAlgorithm.algorithm === 'argon2id'
+    initialConfig.useRecommendedHash
   );
   
   // When useRecommended is toggled on, reset to default Argon2id
@@ -72,7 +72,7 @@ export function useConfigForm(
       setGridRows(initialConfig.gridRows);
       setGridCols(initialConfig.gridCols);
       setHashAlgorithm(initialConfig.hashAlgorithm);
-      setUseRecommendedHashState(initialConfig.hashAlgorithm.algorithm === 'argon2id');
+      setUseRecommendedHashState(initialConfig.useRecommendedHash);
       setIncludeSalt(initialConfig.includeSalt);
       setSalt(initialConfig.salt);
     }
@@ -94,10 +94,11 @@ export function useConfigForm(
 
   // Convert to config
   const toConfig = (): GenerationConfig => ({
-    seedPhrase,
+    seedPhrase: seedPhrase.trim(),
     gridRows,
     gridCols,
     hashAlgorithm,
+    useRecommendedHash,
     includeSalt,
     salt: includeSalt ? salt : '',
   });

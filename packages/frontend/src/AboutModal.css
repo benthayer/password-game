@@ -57,6 +57,28 @@
   color: #94a3b8;
   font-size: 0.9rem;
   line-height: 1.6;
+  
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #1e3a4c transparent;
+}
+
+.about-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.about-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 16px 0;
+}
+
+.about-modal-content::-webkit-scrollbar-thumb {
+  background: #1e3a4c;
+  border-radius: 4px;
+}
+
+.about-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #155e75;
 }
 
 .about-modal-content section {

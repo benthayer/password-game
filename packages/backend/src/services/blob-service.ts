@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 import { setFileSize } from '../storage/db.js';
 import { getBlobStream, setBlobStream, deleteBlob, blobExists } from '../storage/b2.js';
 import { SecureTempFile } from './secure-temp-file.js';
-import { validateEncryption, type EncryptionValidationResult } from './encryption-validation.js';
+import { validateAndEncrypt, type EncryptionValidationResult } from './encryption-validation.js';
 
 export class BlobService {
   async exists(addressHash: string): Promise<boolean> {
@@ -14,13 +14,15 @@ export class BlobService {
   }
 
   /**
-   * Upload a doubly-encrypted blob.
+   * Upload and validate encrypted blob.
    * 
    * Flow:
    * 1. Store incoming stream to disk with ephemeral encryption
-   * 2. Read back and decrypt with secondary key (strips outer layer)
-   * 3. Validate inner layer is still encrypted
-   * 4. Store inner layer (single-encrypted with user's primary key)
+   * 2. Read back (decrypts ephemeral layer)
+   * 3. Validate data appears encrypted and secondary key cannot decrypt it
+   * 4. Encrypt with secondary key (server-side layer)
+   * 5. Store doubly-encrypted result
+   * 6. Discard secondary key
    */
   async upload(
     addressHash: string, 
@@ -36,19 +38,21 @@ export class BlobService {
       await tempFile.writeEncrypted(stream);
       
       // 2. Read back (decrypts ephemeral layer)
-      const doublyEncrypted = await tempFile.readDecrypted();
+      const clientEncrypted = await tempFile.readDecrypted();
       
-      // 3. Validate and strip outer encryption
-      const validation = validateEncryption(doublyEncrypted, secondaryKey);
+      // 3-4. Validate and encrypt with secondary key
+      const validation = validateAndEncrypt(clientEncrypted, secondaryKey);
       
       if (!validation.valid) {
         throw new Error(`VALIDATION_FAILED: ${validation.rejectionReason}`);
       }
       
-      // 4. Store the inner layer (encrypted with user's primary key only)
-      const innerLayer = validation.dataToStore!;
-      await setBlobStream(addressHash, Readable.from(innerLayer), innerLayer.length);
-      await setFileSize(addressHash, innerLayer.length);
+      // 5. Store the doubly-encrypted result
+      const doublyEncrypted = validation.dataToStore!;
+      await setBlobStream(addressHash, Readable.from(doublyEncrypted), doublyEncrypted.length);
+      await setFileSize(addressHash, doublyEncrypted.length);
+      
+      // 6. Secondary key discarded when this function returns
       
       return validation;
     } finally {
