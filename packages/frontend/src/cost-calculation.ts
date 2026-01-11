@@ -214,11 +214,17 @@ function formatCurrency(usd: number): string {
     return `$${stripTrailingZeros(usd.toFixed(2))}`;
   }
   
+  // Above trillion: use scientific notation with powers of 3
+  if (usd >= 1e15) {
+    const exponent = Math.floor(Math.log10(usd));
+    // Round down to nearest multiple of 3
+    const exp3 = Math.floor(exponent / 3) * 3;
+    const mantissa = usd / Math.pow(10, exp3);
+    return `$${stripTrailingZeros(mantissa.toFixed(2))} × 10^${exp3}`;
+  }
+  
+  // Up to trillion: use named units
   const units = [
-    { threshold: 1e24, suffix: 'septillion' },
-    { threshold: 1e21, suffix: 'sextillion' },
-    { threshold: 1e18, suffix: 'quintillion' },
-    { threshold: 1e15, suffix: 'quadrillion' },
     { threshold: 1e12, suffix: 'trillion' },
     { threshold: 1e9, suffix: 'billion' },
     { threshold: 1e6, suffix: 'million' },
