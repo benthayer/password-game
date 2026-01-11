@@ -1,5 +1,5 @@
 import { createWriteStream, createReadStream } from 'fs';
-import { unlink, mkdir } from 'fs/promises';
+import { unlink, mkdir, readFile } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { Readable } from 'stream';
@@ -29,6 +29,12 @@ export class SecureTempFile {
     return createReadStream(this.path).pipe(decipher);
   }
 
+  async readDecrypted(): Promise<Buffer> {
+    const encrypted = await readFile(this.path);
+    const decipher = createDecipheriv('aes-256-cbc', this.key, this.iv);
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  }
+
   async cleanup(): Promise<void> {
     try {
       await unlink(this.path);
@@ -37,4 +43,3 @@ export class SecureTempFile {
     }
   }
 }
-

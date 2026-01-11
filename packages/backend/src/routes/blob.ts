@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
 
@@ -43,10 +43,18 @@ blobRoutes.put('/:addressHash', async (req, res) => {
     return res.status(400).json({ error: 'Content-Length header required' });
   }
   
+  const secondaryKey = req.headers['x-secondary-key'];
+  if (!secondaryKey || typeof secondaryKey !== 'string') {
+    return res.status(400).json({ error: 'X-Secondary-Key header required' });
+  }
+  
   try {
-    await blobService.upload(addressHash, req, contentLength);
-    res.json({ success: true, size: contentLength });
+    const validation = await blobService.upload(addressHash, req, contentLength, secondaryKey);
+    res.json({ success: true, size: contentLength, validation });
   } catch (err) {
+    if (err instanceof Error && err.message.startsWith('VALIDATION_FAILED:')) {
+      return res.status(400).json({ error: err.message });
+    }
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Upload failed' });
   }
