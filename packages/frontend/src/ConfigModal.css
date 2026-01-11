@@ -568,13 +568,34 @@
   border-top: 1px solid #1e2a3a;
 }
 
-.cost-subsection-title {
-  margin: 16px 0 8px 0;
+.cost-subsection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #1e2a3a;
+}
+
+.cost-subsection-title {
+  margin: 0;
   font-size: 0.85rem;
   color: #64748b;
   font-weight: 500;
+}
+
+.dragnet-warning-link {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #eab308;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.dragnet-warning-link:hover {
+  background: rgba(234, 179, 8, 0.15);
 }
 
 .cost-highlight-value {
@@ -584,22 +605,6 @@
   font-family: 'SF Mono', 'Consolas', monospace;
 }
 
-.salt-warning {
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #eab308;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.salt-warning-icon {
-  font-size: 1rem;
-}
 
 /* Footer */
 .config-modal-footer {

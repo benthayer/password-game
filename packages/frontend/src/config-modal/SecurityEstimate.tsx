@@ -3,8 +3,10 @@
  * Shows cost-to-crack calculations.
  */
 
+import { useState } from 'react';
 import { calculateCostToCrack } from '../cost-calculation';
 import type { HashAlgorithmConfig } from '../generation-config';
+import SaltInfoModal from './SaltInfoModal';
 
 interface SecurityEstimateProps {
   gridSize: number;
@@ -23,6 +25,8 @@ export default function SecurityEstimate({
   hashConfig,
   includeSalt,
 }: SecurityEstimateProps) {
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  
   if (wordCount <= 0) return null;
 
   const result = calculateCostToCrack({
@@ -50,15 +54,20 @@ export default function SecurityEstimate({
         <CostItem label="Password space" value={result.formatted.passwordSpace} />
       </div>
 
-      <h4 className="cost-subsection-title">Estimated Cost to Crack</h4>
+      <div className="cost-subsection-header">
+        <h4 className="cost-subsection-title">Estimated Cost to Crack</h4>
+        {includeSalt === false && (
+          <button 
+            className="dragnet-warning-link"
+            onClick={() => setInfoModalOpen(true)}
+          >
+            ⚠ dragnet
+          </button>
+        )}
+      </div>
       <div className="cost-highlight-value">{result.formatted.singleTarget}</div>
       
-      {includeSalt === false && (
-        <div className="salt-warning">
-          <span className="salt-warning-icon">⚠</span>
-          <span>Vulnerable to dragnet attacks without salt</span>
-        </div>
-      )}
+      <SaltInfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
     </div>
   );
 }
