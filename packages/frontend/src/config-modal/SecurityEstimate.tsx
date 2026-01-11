@@ -90,26 +90,28 @@ function WordCountInput({
 
   return (
     <div className="word-count-input">
-      <span className="word-count-label">Number of words</span>
-      <div className="word-count-control">
-        <button className="word-count-btn" onClick={decrement} disabled={value <= 1}>
-          <span>‹</span>
-        </button>
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => {
-            const parsed = parseInt(e.target.value);
-            if (!isNaN(parsed) && parsed > 0) {
-              onChange(parsed);
-            }
-          }}
-          min="1"
-          step="1"
-        />
-        <button className="word-count-btn" onClick={increment}>
-          <span>›</span>
-        </button>
+      <div className="word-count-left">
+        <span className="word-count-label">Number of words</span>
+        <div className="word-count-control">
+          <button className="word-count-btn" onClick={decrement} disabled={value <= 1}>
+            <span>‹</span>
+          </button>
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => {
+              const parsed = parseInt(e.target.value);
+              if (!isNaN(parsed) && parsed > 0) {
+                onChange(parsed);
+              }
+            }}
+            min="1"
+            step="1"
+          />
+          <button className="word-count-btn" onClick={increment}>
+            <span>›</span>
+          </button>
+        </div>
       </div>
       {totalBits !== null && (
         <span className="word-count-bits">≈ {totalBits.toFixed(1)} bits</span>
