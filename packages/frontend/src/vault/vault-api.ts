@@ -24,13 +24,13 @@ export async function setBlob(
   data: Uint8Array, 
   secondaryKeyHex: string
 ): Promise<void> {
-  const formData = new FormData();
-  formData.append('secondaryKey', secondaryKeyHex);
-  formData.append('file', new Blob([data as BlobPart], { type: 'application/octet-stream' }));
-  
   const res = await fetch(`${API_URL}/blob/${addressHash}`, {
     method: 'PUT',
-    body: formData,
+    body: new Blob([data as BlobPart], { type: 'application/octet-stream' }),
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'X-Secondary-Key': secondaryKeyHex,
+    },
   });
   if (res.status === 402) throw new Error('Insufficient credits');
   if (res.status === 409) throw new Error('File already exists');
@@ -46,4 +46,3 @@ export async function deleteBlob(addressHash: string): Promise<void> {
   });
   if (!res.ok) throw new Error('Delete failed');
 }
-

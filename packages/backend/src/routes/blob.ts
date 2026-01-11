@@ -1,6 +1,4 @@
-import { Router } from 'express';
-import multer from 'multer';
-import { Readable } from 'stream';
+import { Router, Request } from 'express';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
 
@@ -8,7 +6,35 @@ export const blobRoutes = Router();
 
 const blobService = new BlobService();
 const creditService = new CreditService();
-const upload = multer({ storage: multer.memoryStorage() });
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function getContentLength(req: Request): number | null {
+  const value = parseInt(req.headers['content-length'] || '', 10);
+  return value > 0 ? value : null;
+}
+
+function getSecondaryKey(req: Request): string | null {
+  const key = req.headers['x-secondary-key'];
+  if (typeof key === 'string' && key.length > 0) {
+    return key;
+  }
+  return null;
+}
+
+/**
+ * Calculate encrypted output size for AES-256-CBC.
+ */
+function calculateEncryptedSize(inputSize: number): number {
+  const paddedSize = (Math.floor(inputSize / 16) + 1) * 16;
+  return paddedSize + 16;
+}
+
+// =============================================================================
+// ROUTES
+// =============================================================================
 
 blobRoutes.get('/:addressHash', async (req, res) => {
   const { addressHash } = req.params;
@@ -29,7 +55,14 @@ blobRoutes.get('/:addressHash', async (req, res) => {
   stream.pipe(res);
 });
 
-blobRoutes.put('/:addressHash', upload.single('file'), async (req, res) => {
+/**
+ * Upload endpoint - streams directly from request body.
+ * 
+ * Required headers:
+ * - Content-Length: size of the encrypted payload
+ * - X-Secondary-Key: hex-encoded secondary encryption key
+ */
+blobRoutes.put('/:addressHash', async (req, res) => {
   const { addressHash } = req.params;
   
   const canUpload = await creditService.canUpload(addressHash);
@@ -41,24 +74,23 @@ blobRoutes.put('/:addressHash', upload.single('file'), async (req, res) => {
     return res.status(409).json({ error: 'File already exists at this address' });
   }
   
-  if (!req.file) {
-    return res.status(400).json({ error: 'File required' });
+  const contentLength = getContentLength(req);
+  if (!contentLength) {
+    return res.status(400).json({ error: 'Content-Length header required' });
   }
   
-  const secondaryKey = req.body.secondaryKey;
-  if (!secondaryKey || typeof secondaryKey !== 'string') {
-    return res.status(400).json({ error: 'secondaryKey field required' });
+  const secondaryKey = getSecondaryKey(req);
+  if (!secondaryKey) {
+    return res.status(400).json({ error: 'X-Secondary-Key header required' });
   }
   
   try {
-    const stream = Readable.from(req.file.buffer);
-    const validation = await blobService.upload(addressHash, stream, req.file.size, secondaryKey);
-    // Don't send dataToStore buffer in response
-    const { dataToStore, ...validationResponse } = validation;
+    const validation = await blobService.upload(addressHash, req, contentLength, secondaryKey);
+    const storedSize = calculateEncryptedSize(contentLength);
     res.json({ 
       success: true, 
-      storedSize: dataToStore?.length ?? 0,
-      validation: validationResponse 
+      storedSize,
+      validation
     });
   } catch (err) {
     if (err instanceof Error && err.message.startsWith('VALIDATION_FAILED:')) {
