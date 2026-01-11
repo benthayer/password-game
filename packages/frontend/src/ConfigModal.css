@@ -423,20 +423,59 @@
   justify-content: space-between;
 }
 
-.word-count-input label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.word-count-label {
   color: #94a3b8;
   font-size: 0.9rem;
 }
 
+.word-count-control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.word-count-btn {
+  width: 28px;
+  height: 32px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.word-count-btn:first-child {
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+}
+
+.word-count-btn:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+.word-count-btn:hover:not(:disabled) {
+  background: rgba(8, 145, 178, 0.15);
+  border-color: #0891b2;
+  color: #22d3ee;
+}
+
+.word-count-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .word-count-input input {
-  width: 70px;
-  padding: 8px 12px;
+  width: 50px;
+  height: 32px;
+  padding: 0;
   background: #0d1117;
   border: 1px solid #30363d;
-  border-radius: 6px;
+  border-radius: 0;
   color: #e6edf3;
   font-size: 0.9rem;
   text-align: center;

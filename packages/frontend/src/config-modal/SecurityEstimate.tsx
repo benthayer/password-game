@@ -81,10 +81,20 @@ function WordCountInput({
   onChange: (value: number) => void;
   totalBits: number | null;
 }) {
+  const decrement = () => {
+    if (value > 1) onChange(value - 1);
+  };
+  const increment = () => {
+    onChange(value + 1);
+  };
+
   return (
     <div className="word-count-input">
-      <label>
-        <span>Number of words</span>
+      <span className="word-count-label">Number of words</span>
+      <div className="word-count-control">
+        <button className="word-count-btn" onClick={decrement} disabled={value <= 1}>
+          <span>‹</span>
+        </button>
         <input
           type="number"
           value={value}
@@ -97,7 +107,10 @@ function WordCountInput({
           min="1"
           step="1"
         />
-      </label>
+        <button className="word-count-btn" onClick={increment}>
+          <span>›</span>
+        </button>
+      </div>
       {totalBits !== null && (
         <span className="word-count-bits">≈ {totalBits.toFixed(1)} bits</span>
       )}
