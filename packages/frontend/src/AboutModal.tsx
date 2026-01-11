@@ -108,6 +108,11 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <section>
             <h3>Security Model</h3>
             <p>
+                The basic idea behind the platform is that your key is the source of truth and should be uncrackable.
+                The password is expected to be strong enough to be crack-resistant and is relied upon for
+                the entirety of the security model to work.
+            </p>
+            <p>
               Your password is hashed (Argon2id by default) to derive three values:
             </p>
             <ul>
@@ -133,6 +138,62 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
             <p>
               <strong>What the server knows temporarily:</strong> Your secondary encryption key
             </p>
+          </section>
+
+          <section>
+            <h3>Failure Modes & Attack Vectors</h3>
+            <p>
+              <strong>What this system doesn't protect against</strong>
+            </p>
+            <ul>
+              <li>The server operator (me) and data storage provider (Backblaze) can access encrypted data and address hashes</li>
+              <li>Anyone can poll the server to test for the existence of any address hash</li>
+              <li>If someone has your address hash, they can download your encrypted data</li>
+              <li>If someone has your address hash, and knows or guesses your configuration, they can use it to attempt to crack your password</li>
+              <li>Once someone cracks your password, they will have your encryption keys and be able to read your data</li>
+            </ul>
+            <p>
+              <strong>Positive considerations</strong>
+            </p>
+            <ul>
+              <li>Encrypted data is only discoverable by knowing the exact hash, which is impossible without either cracking passwords, snooping or hacking some other way</li>
+              <li>The client doesn't leave any traces on the user's device, limiting the attack surface just to the moments when the user is using the recovery or practice interface</li>
+              <li>If your password is strong enough, it is not possible to derive your password or encryption key from your address hash</li>
+            </ul>
+            <p>
+              <strong>The Attack Vector:</strong> There is essentially one attack vector for the system. 
+              An attacker would select a configuration and iterate over passwords, poll the server to 
+              test if the address hash exists, and if so, download the encrypted blob and decrypt the 
+              data using the encryption keys they can generate from the password. This comes in two flavors:
+            </p>
+            <ul>
+              <li><strong>Targeted:</strong> The attacker obtains the target's configuration details 
+              and iterates through passwords, polling to find a match. If they find a match, they have 
+              your data. With a strong password, this is economically infeasible — the estimated cost 
+              is shown in the configuration.</li>
+              <li><strong>Dragnet:</strong> Same as above, but the attacker selects the default 
+              configuration and hopes that someone misconfigured. Using a salt or unique configuration 
+              protects against this.</li>
+            </ul>
+            <p>
+              Other security considerations:
+            </p>
+            <ul>
+              <li><strong>Rate Limiting:</strong> The server rate limits per IP, which provides basic protection, 
+              but you should assume it's possible for an attacker to check if a given hash exists. If an 
+              attacker finds a hash, it's very likely because they cracked a weak password.</li>
+              <li><strong>Information Leakage:</strong> The system is designed such that the risk of leaking 
+              information is extremely minimal. Even if the client communicated with the server over plain 
+              HTTP, this would still not leak enough information to compromise your data. The only way for 
+              an attacker to compromise your data is to run a full password crack attempt or hack your 
+              computer/browser directly.</li>
+              <li><strong>Data Breach Impact:</strong> A server data breach is minimally useful to an attacker — 
+              the only benefit would be that they can now run the same attacks offline rather than polling 
+              the server. The encrypted data itself reveals nothing.</li>
+              <li><strong>Anonymity:</strong> Your encrypted data cannot be linked back to you. There are no 
+              accounts, no usernames, no metadata. An attacker looking at the server's database sees only 
+              anonymous encrypted blobs and hashes — with no way to know who they belong to or what they contain.</li>
+            </ul>
           </section>
         </div>
 
