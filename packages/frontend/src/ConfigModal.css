@@ -315,13 +315,7 @@
   gap: 6px;
 }
 
-.salt-status-inline.salt-enabled {
-  background: rgba(20, 83, 45, 0.2);
-  border: 1px solid #166534;
-  color: #86efac;
-}
-
-.salt-status-inline.salt-warning {
+.salt-status-inline.salt-info {
   background: rgba(234, 179, 8, 0.15);
   border: 1px solid #ca8a04;
   color: #fde047;

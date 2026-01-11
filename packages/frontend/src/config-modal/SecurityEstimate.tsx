@@ -61,7 +61,7 @@ export default function SecurityEstimate({
             className="dragnet-warning-link"
             onClick={() => setInfoModalOpen(true)}
           >
-            ⚠ Dragnet
+            ⚠ Mutli-target attack
           </button>
         )}
       </div>

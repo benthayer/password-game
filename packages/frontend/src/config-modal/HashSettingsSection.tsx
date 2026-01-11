@@ -129,12 +129,10 @@ function SaltSettings({
           />
           Include Salt - You will have to copy this!
         </label>
-        <div className={`salt-status-inline ${includeSalt ? 'salt-enabled' : 'salt-warning'}`}>
-          <span className="salt-status-icon">{includeSalt ? '✓' : '⚠'}</span>
+        <div className="salt-status-inline salt-info">
+          <span className="salt-status-icon">⚠</span>
           <span className="salt-status-text">
-            {includeSalt 
-              ? 'Protected against multi-target attacks' 
-              : 'Vulnerable to multi-target attacks'}
+            This setting affects vulnerability to multi-target attacks
           </span>
           <button 
             type="button"
