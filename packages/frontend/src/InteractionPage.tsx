@@ -184,6 +184,7 @@ function ConfigSection({
           wordCount={wordCount}
           entropyPerWord={entropyPerWord}
           hashConfig={config.hashAlgorithm}
+          includeSalt={config.includeSalt}
         />
         <PracticeConfigDisplay
           config={practiceDisplayConfig}

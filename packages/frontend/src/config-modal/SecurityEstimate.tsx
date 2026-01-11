@@ -12,6 +12,7 @@ interface SecurityEstimateProps {
   onWordCountChange?: (count: number) => void;
   entropyPerWord?: number;
   hashConfig: HashAlgorithmConfig;
+  includeSalt?: boolean;
 }
 
 export default function SecurityEstimate({
@@ -20,6 +21,7 @@ export default function SecurityEstimate({
   onWordCountChange,
   entropyPerWord,
   hashConfig,
+  includeSalt,
 }: SecurityEstimateProps) {
   if (wordCount <= 0) return null;
 
@@ -50,6 +52,13 @@ export default function SecurityEstimate({
 
       <h4 className="cost-subsection-title">Estimated Cost to Crack</h4>
       <div className="cost-highlight-value">{result.formatted.singleTarget}</div>
+      
+      {includeSalt === false && (
+        <div className="salt-warning">
+          <span className="salt-warning-icon">⚠</span>
+          <span>Vulnerable to dragnet attacks without salt</span>
+        </div>
+      )}
     </div>
   );
 }

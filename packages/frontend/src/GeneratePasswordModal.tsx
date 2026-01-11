@@ -89,6 +89,7 @@ export default function GeneratePasswordModal({
             onWordCountChange={setDesiredNumWords}
             entropyPerWord={entropyPerWord}
             hashConfig={form.hashAlgorithm}
+            includeSalt={form.includeSalt}
           />
         </div>
 
