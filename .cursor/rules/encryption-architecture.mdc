@@ -1,6 +1,13 @@
-# Encryption Architecture
+---
+description: Cryptographic design of the password-based storage system
+globs:
+  - packages/backend/src/services/**
+  - packages/frontend/src/**/crypto*
+  - packages/frontend/src/**/encrypt*
+  - packages/backend/src/routes/blob*
+---
 
-This document describes the cryptographic design of the password-based storage system.
+# Encryption Architecture
 
 ## Overview
 
@@ -138,4 +145,3 @@ AES is used for symmetric encryption. CryptoJS handles the primary encryption, W
 ### Key Format
 
 Keys are represented as hex strings when transmitted. The secondary key sent to server should be 32 bytes (256 bits) as hex = 64 characters.
-
