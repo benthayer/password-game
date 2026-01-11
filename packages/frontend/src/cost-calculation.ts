@@ -214,13 +214,15 @@ function formatCurrency(usd: number): string {
     return `$${stripTrailingZeros(usd.toFixed(2))}`;
   }
   
-  // Above trillion: use scientific notation with powers of 3
+  // Above trillion: use scientific notation relative to trillion
+  // e.g., 100 quadrillion = $100 × 10^3 trillion
   if (usd >= 1e15) {
-    const exponent = Math.floor(Math.log10(usd));
+    const trillions = usd / 1e12;
+    const exponent = Math.floor(Math.log10(trillions));
     // Round down to nearest multiple of 3
     const exp3 = Math.floor(exponent / 3) * 3;
-    const mantissa = usd / Math.pow(10, exp3);
-    return `$${stripTrailingZeros(mantissa.toFixed(2))} × 10^${exp3}`;
+    const mantissa = trillions / Math.pow(10, exp3);
+    return `$${stripTrailingZeros(mantissa.toFixed(2))} × 10^${exp3} trillion`;
   }
   
   // Up to trillion: use named units
