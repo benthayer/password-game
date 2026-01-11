@@ -1,12 +1,10 @@
 /**
  * Security estimate display.
- * Shows cost-to-crack calculations with salt toggle.
+ * Shows cost-to-crack calculations.
  */
 
-import { useState } from 'react';
-import { calculateCostToCrack, type CostToCrackResult } from '../cost-calculation';
+import { calculateCostToCrack } from '../cost-calculation';
 import type { HashAlgorithmConfig } from '../generation-config';
-import SaltInfoModal from './SaltInfoModal';
 
 interface SecurityEstimateProps {
   gridSize: number;
@@ -14,8 +12,6 @@ interface SecurityEstimateProps {
   onWordCountChange?: (count: number) => void;
   entropyPerWord?: number;
   hashConfig: HashAlgorithmConfig;
-  includeSalt: boolean;
-  onIncludeSaltChange: (include: boolean) => void;
 }
 
 export default function SecurityEstimate({
@@ -24,11 +20,7 @@ export default function SecurityEstimate({
   onWordCountChange,
   entropyPerWord,
   hashConfig,
-  includeSalt,
-  onIncludeSaltChange,
 }: SecurityEstimateProps) {
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
-
   if (wordCount <= 0) return null;
 
   const result = calculateCostToCrack({
@@ -43,10 +35,6 @@ export default function SecurityEstimate({
   return (
     <div className="cost-display">
       <h3>Security Estimate</h3>
-      
-      <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
-      
-      <SaltStatus enabled={includeSalt} onLearnMore={() => setInfoModalOpen(true)} />
 
       {onWordCountChange && (
         <WordCountInput 
@@ -66,8 +54,6 @@ export default function SecurityEstimate({
           highlight
         />
       </div>
-
-      <SaltInfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
     </div>
   );
 }
@@ -120,27 +106,6 @@ function WordCountInput({
   );
 }
 
-function SaltToggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="salt-toggle">
-      <label>
-        <span>Include salt</span>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-      </label>
-    </div>
-  );
-}
-
 function CostItem({
   label,
   value,
@@ -157,20 +122,3 @@ function CostItem({
     </div>
   );
 }
-
-function SaltStatus({ enabled, onLearnMore }: { enabled: boolean; onLearnMore: () => void }) {
-  return (
-    <div className={`salt-status ${enabled ? 'salt-status-enabled' : 'salt-status-warning'}`}>
-      <span className="salt-status-icon">{enabled ? '✓' : '⚠️'}</span>
-      <span className="salt-status-text">
-        {enabled 
-          ? 'Salt enabled — you cannot be compromised in a multi-target attack' 
-          : 'Salt disabled — you might be compromised in a multi-target attack'}
-      </span>
-      <button className="salt-status-learn-more" onClick={onLearnMore}>
-        Learn more
-      </button>
-    </div>
-  );
-}
-

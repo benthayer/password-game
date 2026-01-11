@@ -8,7 +8,6 @@ import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
   HashSettingsSection,
-  SecurityEstimate,
 } from './config-modal';
 import './ConfigModal.css';
 
@@ -25,7 +24,6 @@ export default function ConfigModal({
   onClose,
   config,
   onSave,
-  wordCount = 8,
 }: ConfigModalProps) {
   const form = useConfigForm(config, isOpen);
 
@@ -60,12 +58,6 @@ export default function ConfigModal({
             onConfigChange={form.setHashAlgorithm}
             useRecommended={form.useRecommendedHash}
             onUseRecommendedChange={form.setUseRecommendedHash}
-          />
-
-          <SecurityEstimate
-            gridSize={form.gridSize}
-            wordCount={wordCount}
-            hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
             onIncludeSaltChange={form.setIncludeSalt}
           />

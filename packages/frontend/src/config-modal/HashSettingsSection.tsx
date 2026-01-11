@@ -1,12 +1,14 @@
 /**
  * Hash algorithm settings section.
- * Algorithm selection + per-algorithm parameter controls.
+ * Algorithm selection + per-algorithm parameter controls + salt settings.
  */
 
+import { useState } from 'react';
 import type { HashAlgorithm, HashAlgorithmConfig } from '../generation-config';
 import { AVAILABLE_ALGORITHMS, ALGORITHM_META } from '../generation-config';
 import type { Argon2idConfig, ScryptConfig, BcryptConfig, Pbkdf2Config } from '../hash-config';
 import { kbToUnit, unitToKb, inferUnit, type MemoryUnit } from '../memory-units';
+import SaltInfoModal from './SaltInfoModal';
 
 interface HashSettingsSectionProps {
   algorithm: HashAlgorithmConfig;
@@ -14,6 +16,8 @@ interface HashSettingsSectionProps {
   onConfigChange: (config: HashAlgorithmConfig) => void;
   useRecommended: boolean;
   onUseRecommendedChange: (value: boolean) => void;
+  includeSalt: boolean;
+  onIncludeSaltChange: (value: boolean) => void;
 }
 
 export default function HashSettingsSection({
@@ -22,6 +26,8 @@ export default function HashSettingsSection({
   onConfigChange,
   useRecommended,
   onUseRecommendedChange,
+  includeSalt,
+  onIncludeSaltChange,
 }: HashSettingsSectionProps) {
   return (
     <div className="config-section">
@@ -44,7 +50,54 @@ export default function HashSettingsSection({
           </div>
         </>
       )}
+
+      <SaltSettings includeSalt={includeSalt} onIncludeSaltChange={onIncludeSaltChange} />
     </div>
+  );
+}
+
+// ============================================================
+// Salt Settings
+// ============================================================
+
+function SaltSettings({
+  includeSalt,
+  onIncludeSaltChange,
+}: {
+  includeSalt: boolean;
+  onIncludeSaltChange: (value: boolean) => void;
+}) {
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
+  return (
+    <>
+      <div className="config-field checkbox-field salt-field">
+        <label onClick={() => onIncludeSaltChange(!includeSalt)}>
+          <input
+            type="checkbox"
+            checked={includeSalt}
+            onChange={(e) => onIncludeSaltChange(e.target.checked)}
+          />
+          Include Salt
+        </label>
+        <div className={`salt-status-inline ${includeSalt ? 'salt-enabled' : 'salt-warning'}`}>
+          <span className="salt-status-icon">{includeSalt ? '✓' : '⚠'}</span>
+          <span className="salt-status-text">
+            {includeSalt 
+              ? 'Protected against multi-target attacks' 
+              : 'Vulnerable to multi-target attacks'}
+          </span>
+          <button 
+            type="button"
+            className="salt-learn-more" 
+            onClick={(e) => { e.stopPropagation(); setInfoModalOpen(true); }}
+          >
+            Learn more
+          </button>
+        </div>
+      </div>
+      <SaltInfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+    </>
   );
 }
 

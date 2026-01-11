@@ -79,6 +79,8 @@ export default function GeneratePasswordModal({
             onConfigChange={form.setHashAlgorithm}
             useRecommended={form.useRecommendedHash}
             onUseRecommendedChange={form.setUseRecommendedHash}
+            includeSalt={form.includeSalt}
+            onIncludeSaltChange={form.setIncludeSalt}
           />
 
           <SecurityEstimate
@@ -87,8 +89,6 @@ export default function GeneratePasswordModal({
             onWordCountChange={setDesiredNumWords}
             entropyPerWord={entropyPerWord}
             hashConfig={form.hashAlgorithm}
-            includeSalt={form.includeSalt}
-            onIncludeSaltChange={form.setIncludeSalt}
           />
         </div>
 

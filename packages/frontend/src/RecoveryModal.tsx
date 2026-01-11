@@ -9,7 +9,6 @@ import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
   HashSettingsSection,
-  SecurityEstimate,
 } from './config-modal';
 import './RecoveryModal.css';
 
@@ -64,12 +63,6 @@ export default function RecoveryModal({
             onConfigChange={form.setHashAlgorithm}
             useRecommended={form.useRecommendedHash}
             onUseRecommendedChange={form.setUseRecommendedHash}
-          />
-
-          <SecurityEstimate
-            gridSize={form.gridSize}
-            wordCount={8}
-            hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
             onIncludeSaltChange={form.setIncludeSalt}
           />

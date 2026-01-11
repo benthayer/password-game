@@ -298,6 +298,61 @@
   accent-color: #0891b2;
 }
 
+/* Salt settings in hash section */
+.salt-field {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #1e2a3a;
+}
+
+.salt-status-inline {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.salt-status-inline.salt-enabled {
+  background: rgba(20, 83, 45, 0.2);
+  border: 1px solid #166534;
+  color: #86efac;
+}
+
+.salt-status-inline.salt-warning {
+  background: rgba(127, 29, 29, 0.2);
+  border: 1px solid #7f1d1d;
+  color: #fca5a5;
+}
+
+.salt-status-inline .salt-status-icon {
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.salt-status-inline .salt-status-text {
+  flex: 1;
+}
+
+.salt-learn-more {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.salt-learn-more:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Cost display */
 .cost-display {
   margin-top: 24px;
