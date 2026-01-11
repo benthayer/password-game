@@ -3,7 +3,7 @@
  * Takes a config, returns a hash function.
  */
 
-import { argon2id, scrypt, bcrypt, pbkdf2 } from 'hash-wasm';
+import { argon2id, scrypt, bcrypt, pbkdf2, createSHA256, createSHA512 } from 'hash-wasm';
 import CryptoJS from 'crypto-js';
 import type { 
   HashAlgorithmConfig, 
@@ -26,6 +26,14 @@ export type HashFunction = (input: string) => Promise<string>;
 
 function stringToUint8Array(str: string): Uint8Array {
   return new TextEncoder().encode(str);
+}
+
+function hexToUint8Array(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
 }
 
 // ============================================================
@@ -67,13 +75,17 @@ async function hashScrypt(input: string, salt: string, config: ScryptConfig): Pr
 }
 
 async function hashBcrypt(input: string, salt: string, config: BcryptConfig): Promise<string> {
-  // bcrypt has its own salt format, we incorporate user salt into input
-  const combinedInput = salt ? `${salt}:${input}` : input;
+  // bcrypt requires a 16-byte salt. We derive it deterministically from the user's salt
+  // so results are reproducible. Use SHA256 of salt and take first 16 bytes.
+  const saltSource = salt || 'default-bcrypt-salt';
+  const saltHash = CryptoJS.SHA256(saltSource).toString();
+  const bcryptSalt = hexToUint8Array(saltHash.slice(0, 32)); // 16 bytes = 32 hex chars
   
   return await bcrypt({
-    password: combinedInput,
+    password: stringToUint8Array(input),
+    salt: bcryptSalt,
     costFactor: config.cost,
-    outputType: 'encoded', // bcrypt format includes salt
+    outputType: 'encoded',
   });
 }
 
@@ -87,7 +99,7 @@ async function hashPbkdf2(input: string, salt: string, config: Pbkdf2Config): Pr
     salt: saltBytes,
     iterations: config.iterations,
     hashLength: 32,
-    hashFunction: config.hash === 'sha512' ? 'SHA-512' : 'SHA-256',
+    hashFunction: config.hash === 'sha512' ? createSHA512() : createSHA256(),
     outputType: 'hex',
   });
 }
