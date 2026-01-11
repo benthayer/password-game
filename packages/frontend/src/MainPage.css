@@ -19,7 +19,7 @@
 .main-content h1 {
   font-size: 2.5rem;
   color: #e2e8f0;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   font-weight: 300;
   letter-spacing: 0.05em;
 }
@@ -28,6 +28,76 @@
   color: #64748b;
   font-size: 1.1rem;
   margin-bottom: 32px;
+}
+
+/* ============================================================
+   Main Config Display
+   ============================================================ */
+
+.main-config-display {
+  background: #0a0a0f;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 28px;
+  border: 1px solid #1e2a3a;
+  text-align: left;
+}
+
+.main-config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #1e2a3a;
+}
+
+.main-config-item:last-child {
+  border-bottom: none;
+}
+
+.main-config-label {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.main-config-value {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', 'Menlo', 'Courier New', monospace;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.main-config-detail {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.main-config-warning .main-config-value,
+.main-config-warning .main-config-label {
+  color: #fbbf24;
+}
+
+/* Salt status */
+.main-config-salt-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.main-config-salt-status.salt-enabled {
+  color: #34d399;
+}
+
+.main-config-salt-status.salt-disabled {
+  color: #fbbf24;
+}
+
+.salt-icon {
+  font-size: 0.85rem;
 }
 
 .button-container {
