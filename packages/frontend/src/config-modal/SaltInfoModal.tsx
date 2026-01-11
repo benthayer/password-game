@@ -29,9 +29,11 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
           <section>
             <h3>Why This Matters</h3>
             <p>
-              This system's API is publicly accessible. Anyone can attempt to access any data — the 
-              only barrier is encryption. There are no accounts, no rate limits, no gatekeepers. 
-              Your password's strength <em>is</em> your security.
+              This system's API is <em>publicly accessible</em>. Anyone can attempt to access any data, but <em>without
+               your password, that data is useless</em>.
+              There are <em>no accounts, no rate limits, no gatekeepers</em>, but with a <em>good
+              password and configuration</em>, that doesn't matter because your data will <em>never be decrypted</em>,
+              and if it's not decrypted, it <em>cannot be linked back to you</em>.
             </p>
           </section>
 
@@ -41,7 +43,7 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
               In this system, hashes are used to locate and encrypt your data. In a <strong>dragnet 
               (multi-target) attack</strong>, an attacker picks a seed phrase and grid configuration, 
               then tries random passwords until they find a combination that unlocks someone's data. 
-              They're not targeting you specifically — they're fishing for anyone.
+              In a dragnet attack, they're not targeting you specifically — they're fishing for anyone.
             </p>
             <p>
                 The value of a dragnet attack depends on how much data is stored with the targeted configuration. 
@@ -49,11 +51,12 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
                 without a salt, then you'll be in the net and might get caught.
             </p>
             
-            <p><strong>Three ways to protect yourself, in order of reliability:</strong></p>
+            <h3>How To Protect Yourself</h3>
+            <p>There are three ways to protect yourself, in order of reliability:</p>
             <ol>
-              <li><strong>Use a salt</strong></li>
-              <li><strong>Use a unique seed phrase</strong></li>
-              <li><strong>Use a longer password</strong></li>
+              <li>Use a salt</li>
+              <li>Use a unique seed phrase</li>
+              <li>Use a longer password</li>
             </ol>
           </section>
 
@@ -67,7 +70,7 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
               A targeted attack is still possible, but the cost (if you have a good password) makes it economically impossible. 
               We estimate this cost based on current hardware and electricity prices. The larger the cost, 
               the better. Since costs may decrease over time as technology improves, aim for an absurdly large 
-              estimate — making it exceedingly unlikely that cracking your password will <em>ever</em> be 
+              number — making it exceedingly unlikely that cracking your password will <em>ever</em> be 
               economically feasible.
             </p>
           </section>
@@ -87,6 +90,7 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
             <p>
               A sufficiently long password can make even dragnet attacks uneconomical. For example, the 
               global economy is ~$100 trillion. A 17-word password currently costs roughly that much to crack.
+              At that price, there is no way for it to be economically feasible to decrypt your data, even in a dragnet.
             </p>
           </section>
         </div>
