@@ -47,7 +47,7 @@ export default function SecurityEstimate({
         />
       </div>
       
-      {!includeSalt && <BirthdayWarning />}
+      <BirthdayWarning visible={!includeSalt} />
     </div>
   );
 }
@@ -90,9 +90,9 @@ function CostItem({
   );
 }
 
-function BirthdayWarning() {
+function BirthdayWarning({ visible }: { visible: boolean }) {
   return (
-    <div className="cost-warning">
+    <div className={`cost-warning${visible ? '' : ' hidden'}`}>
       ⚠️ Without salt, multiple users share this cost (birthday attack).
     </div>
   );

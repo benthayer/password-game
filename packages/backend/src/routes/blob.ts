@@ -50,7 +50,13 @@ blobRoutes.put('/:addressHash', async (req, res) => {
   
   try {
     const validation = await blobService.upload(addressHash, req, contentLength, secondaryKey);
-    res.json({ success: true, size: contentLength, validation });
+    // Don't send dataToStore buffer in response
+    const { dataToStore, ...validationResponse } = validation;
+    res.json({ 
+      success: true, 
+      storedSize: dataToStore?.length ?? 0,
+      validation: validationResponse 
+    });
   } catch (err) {
     if (err instanceof Error && err.message.startsWith('VALIDATION_FAILED:')) {
       return res.status(400).json({ error: err.message });

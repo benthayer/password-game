@@ -1,4 +1,4 @@
-import { createDecipheriv, createCipheriv, randomBytes } from 'crypto';
+import { createDecipheriv } from 'crypto';
 
 // =============================================================================
 // ENTROPY ANALYSIS
@@ -6,19 +6,20 @@ import { createDecipheriv, createCipheriv, randomBytes } from 'crypto';
 
 /**
  * Calculate Shannon entropy of a buffer.
- * Truly random data should have entropy close to 8 bits per byte.
- * Plaintext typically has entropy around 4-5 bits per byte.
+ * Truly random/encrypted data: ~7.9-8.0 bits/byte
+ * Compressed data: ~7.0-7.5 bits/byte (still high but lower)
+ * Plaintext: ~4.0-5.0 bits/byte
  */
 function calculateEntropy(data: Buffer): number {
-  const frequencies = new Map<number, number>();
+  if (data.length === 0) return 0;
   
+  const frequencies = new Map<number, number>();
   for (const byte of data) {
     frequencies.set(byte, (frequencies.get(byte) || 0) + 1);
   }
   
   let entropy = 0;
   const length = data.length;
-  
   for (const count of frequencies.values()) {
     const probability = count / length;
     entropy -= probability * Math.log2(probability);
@@ -27,151 +28,239 @@ function calculateEntropy(data: Buffer): number {
   return entropy;
 }
 
-/**
- * Minimum acceptable entropy for encrypted data.
- * 7.5 bits per byte is a reasonable threshold.
- * Random data approaches 8.0, plaintext is usually 4-5.
- */
-const MIN_ENCRYPTED_ENTROPY = 7.5;
+// =============================================================================
+// COMPRESSION DETECTION
+// =============================================================================
 
-function appearsEncrypted(data: Buffer): boolean {
-  if (data.length < 64) {
-    // Too small to reliably measure entropy
-    return true;
+const COMPRESSION_SIGNATURES = [
+  { name: 'gzip', magic: [0x1f, 0x8b] },
+  { name: 'zlib', magic: [0x78, 0x9c] },
+  { name: 'zlib-low', magic: [0x78, 0x01] },
+  { name: 'zlib-high', magic: [0x78, 0xda] },
+  { name: 'bzip2', magic: [0x42, 0x5a, 0x68] },
+  { name: 'xz', magic: [0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00] },
+  { name: 'lz4', magic: [0x04, 0x22, 0x4d, 0x18] },
+  { name: 'zstd', magic: [0x28, 0xb5, 0x2f, 0xfd] },
+  { name: 'zip', magic: [0x50, 0x4b, 0x03, 0x04] },
+];
+
+function detectCompression(data: Buffer): string | null {
+  for (const sig of COMPRESSION_SIGNATURES) {
+    if (data.length >= sig.magic.length) {
+      const matches = sig.magic.every((byte, i) => data[i] === byte);
+      if (matches) return sig.name;
+    }
   }
-  return calculateEntropy(data) >= MIN_ENCRYPTED_ENTROPY;
+  return null;
 }
 
 // =============================================================================
-// RANDOMNESS VERIFICATION
+// BYTE DISTRIBUTION ANALYSIS
 // =============================================================================
 
-function verifyKeyRandomness(key: Buffer): { valid: boolean; entropy: number } {
-  if (key.length < 16) {
-    return { valid: false, entropy: 0 };
+/**
+ * Chi-squared test for uniform distribution.
+ * Encrypted data should have very uniform byte distribution.
+ * Returns p-value approximation (higher = more uniform = more likely encrypted)
+ */
+function chiSquaredUniformity(data: Buffer): number {
+  if (data.length < 256) return 0;
+  
+  const observed = new Array(256).fill(0);
+  for (const byte of data) {
+    observed[byte]++;
+  }
+  
+  const expected = data.length / 256;
+  let chiSquared = 0;
+  for (let i = 0; i < 256; i++) {
+    const diff = observed[i] - expected;
+    chiSquared += (diff * diff) / expected;
+  }
+  
+  // For 255 degrees of freedom, chi-squared ~255 is "normal"
+  // Very high values suggest non-uniform distribution
+  // Return a normalized score (1.0 = perfectly uniform, 0.0 = very non-uniform)
+  const normalized = Math.max(0, 1 - (chiSquared - 255) / 500);
+  return normalized;
+}
+
+// =============================================================================
+// SECONDARY KEY DECRYPTION
+// =============================================================================
+
+/**
+ * Attempt to decrypt with secondary key.
+ * The secondary key SHOULD decrypt successfully, revealing the inner encrypted layer.
+ */
+function decryptWithSecondaryKey(
+  doublyEncrypted: Buffer, 
+  secondaryKey: Buffer
+): { success: boolean; decrypted?: Buffer; error?: string } {
+  // CryptoJS AES with passphrase uses OpenSSL format:
+  // "Salted__" (8 bytes) + salt (8 bytes) + ciphertext
+  // But we're receiving raw bytes, not base64
+  
+  // Try standard AES-256-CBC with IV prepended
+  try {
+    if (doublyEncrypted.length < 16) {
+      return { success: false, error: 'Data too short for AES' };
+    }
+    
+    const iv = doublyEncrypted.slice(0, 16);
+    const ciphertext = doublyEncrypted.slice(16);
+    
+    // Ensure key is 32 bytes for AES-256
+    const key = secondaryKey.length >= 32 
+      ? secondaryKey.slice(0, 32) 
+      : Buffer.concat([secondaryKey, Buffer.alloc(32 - secondaryKey.length)]);
+    
+    const decipher = createDecipheriv('aes-256-cbc', key, iv);
+    const decrypted = Buffer.concat([
+      decipher.update(ciphertext),
+      decipher.final()
+    ]);
+    
+    return { success: true, decrypted };
+  } catch (err) {
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : 'Decryption failed' 
+    };
+  }
+}
+
+// =============================================================================
+// KEY RANDOMNESS
+// =============================================================================
+
+function verifyKeyRandomness(key: Buffer): { valid: boolean; entropy: number; reason?: string } {
+  if (key.length < 32) {
+    return { valid: false, entropy: 0, reason: 'Key must be at least 32 bytes' };
   }
   
   const entropy = calculateEntropy(key);
-  return { valid: entropy >= 7.0, entropy };
-}
-
-// =============================================================================
-// DECRYPTION FAILURE VERIFICATION
-// =============================================================================
-
-/**
- * Attempt to decrypt with the secondary key and verify it fails.
- * This proves the secondary key is NOT the real encryption key.
- */
-function verifyDecryptionFails(encryptedData: Buffer, wrongKey: Buffer): {
-  verified: boolean;
-  reason: string;
-} {
-  const ivSizes = [16];
-  const keySizes = [16, 24, 32];
-  
-  for (const keySize of keySizes) {
-    for (const ivSize of ivSizes) {
-      try {
-        const iv = encryptedData.slice(0, ivSize);
-        const ciphertext = encryptedData.slice(ivSize);
-        const keyToUse = wrongKey.slice(0, keySize);
-        
-        if (keyToUse.length < keySize || ciphertext.length === 0) {
-          continue;
-        }
-        
-        const decipher = createDecipheriv('aes-256-cbc', keyToUse.slice(0, 32), iv);
-        const decrypted = Buffer.concat([
-          decipher.update(ciphertext),
-          decipher.final(),
-        ]);
-        
-        // If decryption produced low-entropy output, the key might be valid
-        if (calculateEntropy(decrypted) < 6.0) {
-          return {
-            verified: false,
-            reason: 'Decryption produced low-entropy output - key may be valid',
-          };
-        }
-      } catch {
-        // Decryption failed - this is expected with wrong key
-      }
-    }
+  if (entropy < 7.0) {
+    return { valid: false, entropy, reason: `Key entropy too low: ${entropy.toFixed(2)} bits/byte` };
   }
   
-  return {
-    verified: true,
-    reason: 'Key does not decrypt the data',
-  };
+  // Check for obvious patterns
+  const uniformity = chiSquaredUniformity(key);
+  if (uniformity < 0.3) {
+    return { valid: false, entropy, reason: 'Key has non-uniform byte distribution' };
+  }
+  
+  return { valid: true, entropy };
 }
 
 // =============================================================================
-// SECONDARY ENCRYPTION
-// =============================================================================
-
-function encryptWithSecondaryKey(data: Buffer, secondaryKey: Buffer): {
-  encrypted: Buffer;
-  iv: Buffer;
-} {
-  const iv = randomBytes(16);
-  const key = secondaryKey.slice(0, 32);
-  
-  const cipher = createCipheriv('aes-256-cbc', key, iv);
-  const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-  
-  // Prepend IV to encrypted data
-  return { encrypted: Buffer.concat([iv, encrypted]), iv };
-}
-
-// =============================================================================
-// VALIDATION
+// VALIDATION RESULT
 // =============================================================================
 
 export interface EncryptionValidationResult {
-  dataAppearsEncrypted: boolean;
-  dataEntropy: number;
+  // Secondary key checks
   secondaryKeyValid: boolean;
   secondaryKeyEntropy: number;
-  secondaryKeyDoesNotDecrypt: boolean;
-  decryptionVerificationReason: string;
-  doublyEncryptedData?: Buffer;
-  secondaryIv?: string;
+  secondaryKeyReason?: string;
+  
+  // Outer layer decryption
+  outerDecryptionSucceeded: boolean;
+  outerDecryptionError?: string;
+  
+  // Inner layer (after stripping outer encryption)
+  innerLayerEntropy: number;
+  innerLayerAppearsEncrypted: boolean;
+  innerLayerCompressionDetected: string | null;
+  innerLayerUniformity: number;
+  
+  // Final verdict
+  valid: boolean;
+  rejectionReason?: string;
+  
+  // The data to store (inner layer, if valid)
+  dataToStore?: Buffer;
 }
 
+const MIN_ENCRYPTED_ENTROPY = 7.8;
+const MIN_UNIFORMITY = 0.5;
+
 /**
- * Validate encryption and produce doubly-encrypted data.
+ * Validate doubly-encrypted upload.
  * 
- * Proves:
- * 1. Uploaded data appears encrypted (high entropy)
- * 2. Secondary key is random
- * 3. Secondary key does NOT decrypt the data
- * 4. Server re-encrypted with secondary key (it only touched encrypted bytes)
+ * 1. Verify secondary key is random
+ * 2. Decrypt outer layer with secondary key
+ * 3. Verify inner layer still appears encrypted
+ * 4. Return inner layer for storage
  */
 export function validateEncryption(
-  encryptedData: Buffer,
+  doublyEncrypted: Buffer,
   secondaryKey: Buffer
 ): EncryptionValidationResult {
-  const dataEntropy = calculateEntropy(encryptedData);
-  const dataAppearsEncrypted = appearsEncrypted(encryptedData);
-  const keyValidation = verifyKeyRandomness(secondaryKey);
-  const decryptionCheck = verifyDecryptionFails(encryptedData, secondaryKey);
-  
   const result: EncryptionValidationResult = {
-    dataAppearsEncrypted,
-    dataEntropy,
-    secondaryKeyValid: keyValidation.valid,
-    secondaryKeyEntropy: keyValidation.entropy,
-    secondaryKeyDoesNotDecrypt: decryptionCheck.verified,
-    decryptionVerificationReason: decryptionCheck.reason,
+    secondaryKeyValid: false,
+    secondaryKeyEntropy: 0,
+    outerDecryptionSucceeded: false,
+    innerLayerEntropy: 0,
+    innerLayerAppearsEncrypted: false,
+    innerLayerCompressionDetected: null,
+    innerLayerUniformity: 0,
+    valid: false,
   };
   
-  // Only produce doubly-encrypted data if all checks pass
-  if (dataAppearsEncrypted && keyValidation.valid && decryptionCheck.verified) {
-    const { encrypted, iv } = encryptWithSecondaryKey(encryptedData, secondaryKey);
-    result.doublyEncryptedData = encrypted;
-    result.secondaryIv = iv.toString('hex');
+  // 1. Verify secondary key randomness
+  const keyCheck = verifyKeyRandomness(secondaryKey);
+  result.secondaryKeyValid = keyCheck.valid;
+  result.secondaryKeyEntropy = keyCheck.entropy;
+  result.secondaryKeyReason = keyCheck.reason;
+  
+  if (!keyCheck.valid) {
+    result.rejectionReason = `Secondary key invalid: ${keyCheck.reason}`;
+    return result;
   }
+  
+  // 2. Decrypt outer layer
+  const decryption = decryptWithSecondaryKey(doublyEncrypted, secondaryKey);
+  result.outerDecryptionSucceeded = decryption.success;
+  result.outerDecryptionError = decryption.error;
+  
+  if (!decryption.success || !decryption.decrypted) {
+    result.rejectionReason = `Cannot decrypt outer layer: ${decryption.error}`;
+    return result;
+  }
+  
+  const innerLayer = decryption.decrypted;
+  
+  // 3. Check inner layer is not just compressed
+  const compression = detectCompression(innerLayer);
+  result.innerLayerCompressionDetected = compression;
+  
+  if (compression) {
+    result.rejectionReason = `Inner layer appears to be ${compression} compressed, not encrypted`;
+    return result;
+  }
+  
+  // 4. Check inner layer entropy
+  const innerEntropy = calculateEntropy(innerLayer);
+  result.innerLayerEntropy = innerEntropy;
+  
+  if (innerEntropy < MIN_ENCRYPTED_ENTROPY) {
+    result.rejectionReason = `Inner layer entropy too low: ${innerEntropy.toFixed(2)} (need >= ${MIN_ENCRYPTED_ENTROPY})`;
+    return result;
+  }
+  
+  // 5. Check inner layer byte distribution
+  const uniformity = chiSquaredUniformity(innerLayer);
+  result.innerLayerUniformity = uniformity;
+  
+  if (uniformity < MIN_UNIFORMITY) {
+    result.rejectionReason = `Inner layer byte distribution not uniform enough: ${uniformity.toFixed(2)}`;
+    return result;
+  }
+  
+  // All checks passed
+  result.innerLayerAppearsEncrypted = true;
+  result.valid = true;
+  result.dataToStore = innerLayer;
   
   return result;
 }
