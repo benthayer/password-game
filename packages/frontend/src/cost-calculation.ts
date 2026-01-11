@@ -202,8 +202,8 @@ export function calculateCostToCrack(params: CostToCrackParams): CostToCrackResu
 // ============================================================
 
 function formatCurrency(usd: number): string {
-  if (!isFinite(usd) || usd > 1e30) {
-    return 'a lot';
+  if (!isFinite(usd)) {
+    return 'Numerical overflow';
   }
   
   if (usd < 0.01) {
@@ -215,14 +215,12 @@ function formatCurrency(usd: number): string {
   }
   
   // Above trillion: use scientific notation relative to trillion
-  // e.g., 100 quadrillion = $100 × 10^3 trillion
+  // 3 significant figures, e.g., $1.33 × 10^3 trillion
   if (usd >= 1e15) {
     const trillions = usd / 1e12;
     const exponent = Math.floor(Math.log10(trillions));
-    // Round down to nearest multiple of 3
-    const exp3 = Math.floor(exponent / 3) * 3;
-    const mantissa = trillions / Math.pow(10, exp3);
-    return `$${stripTrailingZeros(mantissa.toFixed(2))} × 10^${exp3} trillion`;
+    const mantissa = trillions / Math.pow(10, exponent);
+    return `$${mantissa.toPrecision(3)} × 10^${exponent} trillion`;
   }
   
   // Up to trillion: use named units
