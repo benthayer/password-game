@@ -10,14 +10,11 @@ interface VaultModalProps {
 
 export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalProps) {
   const [info, setInfo] = useState<AccountInfo | null>(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && addressHash) {
-      setLoading(true);
-      getAccountInfo(addressHash)
-        .then(setInfo)
-        .finally(() => setLoading(false));
+      setInfo(null); // Clear immediately so loading shows on first render
+      getAccountInfo(addressHash).then(setInfo);
     }
   }, [isOpen, addressHash]);
 
@@ -28,9 +25,9 @@ export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalP
       <div className="vault-modal" onClick={(e) => e.stopPropagation()}>
         <h2>Vault Info</h2>
         
-        {loading && <p>Loading...</p>}
+        {!info && <p>Loading...</p>}
         
-        {info && !loading && (
+        {info && (
           <div className="vault-info">
             <div className="vault-info-row">
               <span>Credits:</span>
