@@ -1,0 +1,166 @@
+---
+alwaysApply: false
+description: How to deploy Password Game to production
+globs:
+  - "**/docker-compose.yml"
+  - "**/Dockerfile*"
+  - "**/.env*"
+---
+
+# Deployment Guide
+
+Password Game deploys to `apps.benthayer.com`.
+
+## Architecture
+
+- **Frontend**: Nginx container at `passwordgame.apps.benthayer.com` (port 48607)
+- **Backend**: Node.js container at `api.passwordgame.apps.benthayer.com` (port 48608)
+- **Storage**: Backblaze B2 for encrypted blob storage
+- **Database**: SQLite for account/credits data (persisted via Docker volume)
+
+## Environment Files
+
+### Local Development (`.env.local`)
+
+Located at project root, gitignored:
+
+```bash
+B2_KEY_ID=<test-key-id>
+B2_KEY=<test-key>
+B2_BUCKET=password-game-test
+B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
+ADMIN_SECRET=<admin-secret>
+```
+
+### Production (`.env` on server)
+
+Located at `/home/deploy/apps/password-game/.env` (must be created manually):
+
+```bash
+B2_KEY_ID=<prod-key-id>
+B2_KEY=<prod-key>
+B2_BUCKET=password-game
+B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
+ADMIN_SECRET=<admin-secret>
+```
+
+**Critical**: `.env` is gitignored. Never use `rsync --delete` without excluding it.
+
+## Quick Deploy
+
+```bash
+cd /home/ben/projects/password-game
+
+# Sync code (preserves .env and data/ on server)
+rsync -avz \
+  --exclude 'node_modules' --exclude 'dist' --exclude '.git' \
+  --exclude '.env*' --exclude 'data' \
+  ./ deploy@apps.benthayer.com:/home/deploy/apps/password-game/
+
+# Deploy
+ssh deploy@apps.benthayer.com "cd /home/deploy/apps/password-game && \
+  docker compose down && docker compose up -d --build"
+
+# Verify
+curl -s https://api.passwordgame.apps.benthayer.com/health
+```
+
+## Verification Commands
+
+```bash
+# Check containers
+ssh deploy@apps.benthayer.com "docker ps | grep password-game"
+
+# Backend health
+curl -s https://api.passwordgame.apps.benthayer.com/health
+
+# Frontend
+curl -s -o /dev/null -w "%{http_code}" https://passwordgame.apps.benthayer.com/
+```
+
+## Server Configuration
+
+### Nginx (managed by sync-nginx)
+
+Config at `/home/deploy/config`:
+
+```
+proxy,passwordgame.apps.benthayer.com,48607
+proxy,api.passwordgame.apps.benthayer.com,48608
+```
+
+### Docker Ports
+
+| Service | Container | Internal | External |
+|---------|-----------|----------|----------|
+| frontend | password-game-frontend | 80 | 48607 |
+| backend | password-game-backend | 3001 | 48608 |
+
+## Directory Structure on Server
+
+```
+/home/deploy/apps/password-game/
+├── .env                    # Production env (gitignored, manual)
+├── data/                   # SQLite database (persisted)
+│   └── accounts.db
+├── docker-compose.yml
+├── Dockerfile              # Frontend
+├── Dockerfile.backend
+├── nginx.conf
+└── packages/
+    ├── backend/
+    └── frontend/
+```
+
+## Troubleshooting
+
+### Backend Won't Start
+
+```bash
+ssh deploy@apps.benthayer.com "docker logs password-game-backend --tail 100"
+```
+
+Common: Missing `.env` or `data/` directory.
+
+### B2 Connection Errors
+
+```bash
+ssh deploy@apps.benthayer.com "cat /home/deploy/apps/password-game/.env"
+```
+
+### Database Operations
+
+```bash
+# View accounts
+ssh deploy@apps.benthayer.com "sqlite3 /home/deploy/apps/password-game/data/accounts.db \
+  'SELECT address_hash, initial_credits, spent_credits FROM accounts;'"
+
+# Add credits
+ssh deploy@apps.benthayer.com "sqlite3 /home/deploy/apps/password-game/data/accounts.db \
+  \"UPDATE accounts SET initial_credits = initial_credits + 100 WHERE address_hash = 'HASH';\""
+```
+
+### View Logs
+
+```bash
+# Backend
+ssh deploy@apps.benthayer.com "docker logs password-game-backend --tail 100 -f"
+
+# Frontend
+ssh deploy@apps.benthayer.com "docker logs password-game-frontend --tail 100 -f"
+```
+
+## First-Time Setup
+
+1. Create directory and sync code
+2. Create `.env` with production B2 credentials
+3. Create `data/` directory
+4. Add to nginx config (`/home/deploy/config`)
+5. Run `/home/deploy/sync` to generate nginx configs
+6. `docker compose up -d --build`
+
+## Critical Warnings
+
+- **NEVER** use `rsync --delete` without `--exclude '.env*'` and `--exclude 'data'`
+- Production credentials are in `.env.local` locally (commented out)
+- Always verify deployment with health check after deploying
