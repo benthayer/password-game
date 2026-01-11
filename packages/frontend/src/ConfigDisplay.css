@@ -45,3 +45,11 @@
 .config-seed-phrase {
   white-space: nowrap;
 }
+
+.config-salt.salt-enabled {
+  color: #34d399;
+}
+
+.config-salt.salt-disabled {
+  color: #fbbf24;
+}

@@ -1,5 +1,5 @@
 import type { GenerationConfig } from './generation-config';
-import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits } from './generation-config';
+import { getGridSize, calculateEntropyPerWord, calculateWordsFor80Bits, ALGORITHM_META } from './generation-config';
 import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
@@ -12,6 +12,7 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
   const entropyPerWord = calculateEntropyPerWord(config);
   const wordsFor80Bits = calculateWordsFor80Bits(config);
   const totalEntropy = numWords !== undefined ? entropyPerWord * numWords : undefined;
+  const algorithmMeta = ALGORITHM_META[config.hashAlgorithm.algorithm];
 
   return (
     <div className="config-display">
@@ -23,6 +24,16 @@ export default function ConfigDisplay({ config, numWords }: ConfigDisplayProps) 
       <div className="config-display-item">
         <span className="config-label">Grid:</span>
         <span className="config-value">{config.gridRows} × {config.gridCols}</span>
+      </div>
+      <div className="config-display-item">
+        <span className="config-label">Hash:</span>
+        <span className="config-value">{algorithmMeta.name}</span>
+      </div>
+      <div className="config-display-item">
+        <span className="config-label">Salt:</span>
+        <span className={`config-value config-salt ${config.includeSalt ? 'salt-enabled' : 'salt-disabled'}`}>
+          {config.includeSalt ? '✓ Enabled' : '⚠ Disabled'}
+        </span>
       </div>
       <h3 className="config-title">Calculations</h3>
       <div className="config-display-item">
