@@ -3,11 +3,13 @@ import VaultModal from './VaultModal';
 import ErrorModal from './ErrorModal';
 import StatusModal from './StatusModal';
 import ConfirmModal from './ConfirmModal';
+import TextUploadModal from './TextUploadModal';
+import TextDisplayModal from './TextDisplayModal';
 import { 
   getAddressHash, 
   getSecondaryKey, 
   encryptFile, 
-  decryptAndDownload 
+  decryptFile
 } from './vault-crypto-streaming';
 import { getBlob, setBlob, deleteBlob } from './vault-api';
 import type { FullHashConfig } from '../hash-config';
@@ -32,9 +34,13 @@ export default function VaultCard({
 }: VaultCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [textUploadModalOpen, setTextUploadModalOpen] = useState(false);
+  const [textDisplayModalOpen, setTextDisplayModalOpen] = useState(false);
+  const [displayedText, setDisplayedText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [addressHash, setAddressHash] = useState<string | null>(null);
+  const [lastDecryptedData, setLastDecryptedData] = useState<{ filename: string; mimetype: string; content: Uint8Array } | null>(null);
 
   const handleUpload = async () => {
     if (password.length === 0) return;
@@ -67,6 +73,33 @@ export default function VaultCard({
     input.click();
   };
 
+  const handleUploadText = async (text: string) => {
+    if (password.length === 0) return;
+    setTextUploadModalOpen(false);
+    
+    try {
+      setStatusMessage('Computing keys...');
+      const [hash, secondaryKey] = await Promise.all([
+        getAddressHash(password, hashConfig),
+        getSecondaryKey(password, hashConfig),
+      ]);
+      setAddressHash(hash);
+      
+      // Create a File object from the text
+      const file = new File([text], 'text.txt', { type: 'text/plain' });
+      
+      setStatusMessage('Encrypting...');
+      const encrypted = await encryptFile(file, password, hashConfig);
+      
+      setStatusMessage('Uploading...');
+      await setBlob(hash, encrypted, secondaryKey);
+      setStatusMessage(null);
+    } catch (err: unknown) {
+      setStatusMessage(null);
+      setErrorMessage(err instanceof Error ? err.message : 'Upload failed');
+    }
+  };
+
   const handleDownload = async () => {
     if (password.length === 0) return;
     
@@ -84,12 +117,39 @@ export default function VaultCard({
       }
       
       setStatusMessage('Decrypting...');
-      await decryptAndDownload(data, password, hashConfig);
+      const { metadata, content } = await decryptFile(new Uint8Array(data), password, hashConfig);
       setStatusMessage(null);
+      
+      // If it's plaintext, show in modal
+      if (metadata.mimetype === 'text/plain') {
+        const text = new TextDecoder().decode(content);
+        setDisplayedText(text);
+        setLastDecryptedData({ filename: metadata.filename, mimetype: metadata.mimetype, content });
+        setTextDisplayModalOpen(true);
+      } else {
+        // For other file types, trigger download
+        triggerFileDownload(metadata.filename, metadata.mimetype, content);
+      }
     } catch (err: unknown) {
       setStatusMessage(null);
       setErrorMessage(err instanceof Error ? err.message : 'Download failed');
     }
+  };
+
+  const triggerFileDownload = (filename: string, mimetype: string, content: Uint8Array) => {
+    const blob = new Blob([content], { type: mimetype });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadAsFile = () => {
+    if (!lastDecryptedData) return;
+    triggerFileDownload(lastDecryptedData.filename, lastDecryptedData.mimetype, lastDecryptedData.content);
+    setTextDisplayModalOpen(false);
   };
 
   const handleInfoClick = async () => {
@@ -145,6 +205,7 @@ export default function VaultCard({
       <div className="vault-card">
         <button onClick={handleInfoClick} className="vault-button">Info</button>
         <button onClick={handleUpload} className="vault-button">Upload</button>
+        <button onClick={() => setTextUploadModalOpen(true)} className="vault-button">Upload Text</button>
         <button onClick={handleDownload} className="vault-button">Download</button>
         <button onClick={handleDeleteClick} className="vault-button">Delete</button>
       </div>
@@ -168,6 +229,17 @@ export default function VaultCard({
         onCancel={() => setConfirmDeleteOpen(false)}
         title="Delete Vault File"
         message="Are you sure you want to delete this file? This action cannot be undone."
+      />
+      <TextUploadModal
+        isOpen={textUploadModalOpen}
+        onConfirm={handleUploadText}
+        onCancel={() => setTextUploadModalOpen(false)}
+      />
+      <TextDisplayModal
+        isOpen={textDisplayModalOpen}
+        onClose={() => setTextDisplayModalOpen(false)}
+        text={displayedText}
+        onDownloadAsFile={handleDownloadAsFile}
       />
     </>
   );
