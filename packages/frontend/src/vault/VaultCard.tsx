@@ -2,13 +2,14 @@ import { useState } from 'react';
 import VaultModal from './VaultModal';
 import ErrorModal from './ErrorModal';
 import StatusModal from './StatusModal';
+import ConfirmModal from './ConfirmModal';
 import { 
   getAddressHash, 
   getSecondaryKey, 
   encryptFile, 
   decryptAndDownload 
 } from './vault-crypto-streaming';
-import { getBlob, setBlob } from './vault-api';
+import { getBlob, setBlob, deleteBlob } from './vault-api';
 import type { FullHashConfig } from '../hash-config';
 import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
 import './VaultCard.css';
@@ -30,6 +31,7 @@ export default function VaultCard({
   hashConfig = DEFAULT_FULL_HASH_CONFIG 
 }: VaultCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [addressHash, setAddressHash] = useState<string | null>(null);
@@ -105,6 +107,35 @@ export default function VaultCard({
     }
   };
 
+  const handleDeleteClick = async () => {
+    if (password.length === 0) return;
+    
+    try {
+      setStatusMessage('Computing address...');
+      const hash = await getAddressHash(password, hashConfig);
+      setAddressHash(hash);
+      setStatusMessage(null);
+      setConfirmDeleteOpen(true);
+    } catch (err: unknown) {
+      setStatusMessage(null);
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to compute address');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!addressHash) return;
+    setConfirmDeleteOpen(false);
+    
+    try {
+      setStatusMessage('Deleting...');
+      await deleteBlob(addressHash);
+      setStatusMessage(null);
+    } catch (err: unknown) {
+      setStatusMessage(null);
+      setErrorMessage(err instanceof Error ? err.message : 'Delete failed');
+    }
+  };
+
   if (password.length === 0) {
     return null;
   }
@@ -115,6 +146,7 @@ export default function VaultCard({
         <button onClick={handleInfoClick} className="vault-button">Info</button>
         <button onClick={handleUpload} className="vault-button">Upload</button>
         <button onClick={handleDownload} className="vault-button">Download</button>
+        <button onClick={handleDeleteClick} className="vault-button">Delete</button>
       </div>
       <VaultModal 
         isOpen={modalOpen} 
@@ -129,6 +161,13 @@ export default function VaultCard({
       <StatusModal
         isOpen={!!statusMessage}
         message={statusMessage || ''}
+      />
+      <ConfirmModal
+        isOpen={confirmDeleteOpen}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        title="Delete Vault File"
+        message="Are you sure you want to delete this file? This action cannot be undone."
       />
     </>
   );

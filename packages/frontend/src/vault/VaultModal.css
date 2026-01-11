@@ -104,6 +104,34 @@
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
 }
 
+/* Confirm modal buttons */
+.vault-modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.vault-modal-cancel,
+.vault-modal-confirm {
+  flex: 1;
+  background: #1e3a4c;
+  border: 1px solid #0891b2;
+  color: #22d3ee;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.vault-modal-cancel:hover,
+.vault-modal-confirm:hover {
+  background: #164e63;
+  border-color: #22d3ee;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+}
+
 /* Status spinner */
 .status-spinner {
   width: 40px;
