@@ -22,8 +22,14 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
         
         <div className="salt-info-content">
           <section className="salt-info-recommendation">
-            <strong>Recommendation:</strong> Enable salt and make your configuration details easily accessible. 
-            The salt is not a secret — it just needs to be unique to you.
+            <p>
+              <strong>Recommendation:</strong> Either use a very strong password without salt, 
+              or use a salt with a password strong enough for your use case.
+            </p>
+            <p>
+              In all cases, write down your configuration (seed phrase, grid dimensions, and salt if enabled). 
+              The salt isn't secret—it just makes your configuration unique to prevent dragnet attacks.
+            </p>
           </section>
 
 

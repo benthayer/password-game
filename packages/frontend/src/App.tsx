@@ -2,28 +2,32 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
-import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
+import { DEFAULT_CONFIG, PERSIST_CONFIG, type GenerationConfig } from './generation-config';
 
 function AppRouter() {
   const [config, setConfig] = useState<GenerationConfig>(() => {
-    const saved = localStorage.getItem('config');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Migrate old config format if needed
-        return {
-          ...DEFAULT_CONFIG,
-          ...parsed,
-        };
-      } catch {
-        return DEFAULT_CONFIG;
+    if (PERSIST_CONFIG) {
+      const saved = localStorage.getItem('config');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Migrate old config format if needed
+          return {
+            ...DEFAULT_CONFIG,
+            ...parsed,
+          };
+        } catch {
+          return DEFAULT_CONFIG;
+        }
       }
     }
     return DEFAULT_CONFIG;
   });
 
   useEffect(() => {
-    localStorage.setItem('config', JSON.stringify(config));
+    if (PERSIST_CONFIG) {
+      localStorage.setItem('config', JSON.stringify(config));
+    }
   }, [config]);
 
   // Shared subpassword state between MainPage and InteractionPage

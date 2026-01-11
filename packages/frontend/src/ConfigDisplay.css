@@ -16,6 +16,17 @@
   letter-spacing: 0.02em;
 }
 
+.config-notice {
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  border-radius: 0 4px 4px 0;
+}
+
 .config-display-item {
   display: flex;
   justify-content: space-between;

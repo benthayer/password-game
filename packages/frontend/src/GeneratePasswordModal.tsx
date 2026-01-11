@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
-import { calculateEntropyPerWord } from './generation-config';
+import { calculateEntropyPerWord, PERSIST_DESIRED_NUM_WORDS } from './generation-config';
 import { generatePassword, generateSalt } from './crypto-utils';
 import { useConfigForm } from './hooks/useConfigForm';
 import {
@@ -35,12 +35,17 @@ export default function GeneratePasswordModal({
   const form = useConfigForm(config, isOpen);
 
   const [desiredNumWords, setDesiredNumWords] = useState<number>(() => {
-    const saved = localStorage.getItem('desiredNumWords');
-    return saved ? parseInt(saved) : 20;
+    if (PERSIST_DESIRED_NUM_WORDS) {
+      const saved = localStorage.getItem('desiredNumWords');
+      return saved ? parseInt(saved) : 20;
+    }
+    return 20;
   });
 
   useEffect(() => {
-    localStorage.setItem('desiredNumWords', desiredNumWords.toString());
+    if (PERSIST_DESIRED_NUM_WORDS) {
+      localStorage.setItem('desiredNumWords', desiredNumWords.toString());
+    }
   }, [desiredNumWords]);
 
   if (!isOpen) return null;

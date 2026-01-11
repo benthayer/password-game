@@ -80,6 +80,10 @@ export const DEFAULT_PRACTICE_DISPLAY_CONFIG: PracticeDisplayConfig = {
   hint: true,
 };
 
+// Feature flags
+export const PERSIST_CONFIG = false;
+export const PERSIST_DESIRED_NUM_WORDS = false;
+
 // Legacy exports for backwards compatibility
 export const GRID_COLUMNS = DEFAULT_CONFIG.gridCols;
 export const GRID_ROWS = DEFAULT_CONFIG.gridRows;

@@ -10,7 +10,9 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
   return (
     <div className="config-display">
       <h3 className="config-title">Configuration</h3>
-      <h3 className="config-title">Write this down! You need it for recovery! It does not need to be private!</h3>
+      <div className="config-notice">
+        Write this down! You need it for recovery. It does not need to be private.
+      </div>
       <div className="config-display-item">
         <span className="config-label">Public seed phrase:</span>
         <span className="config-value config-seed-phrase">"{config.seedPhrase || ''}"</span>
