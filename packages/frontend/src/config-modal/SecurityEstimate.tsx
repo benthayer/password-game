@@ -1,6 +1,6 @@
 /**
  * Security estimate display.
- * Shows cost-to-crack calculations.
+ * Shows cost-to-crack calculations with salt toggle.
  */
 
 import { calculateCostToCrack, type CostToCrackResult } from '../cost-calculation';
@@ -11,6 +11,7 @@ interface SecurityEstimateProps {
   wordCount: number;
   hashConfig: HashAlgorithmConfig;
   includeSalt: boolean;
+  onIncludeSaltChange: (include: boolean) => void;
 }
 
 export default function SecurityEstimate({
@@ -18,6 +19,7 @@ export default function SecurityEstimate({
   wordCount,
   hashConfig,
   includeSalt,
+  onIncludeSaltChange,
 }: SecurityEstimateProps) {
   if (wordCount <= 0) return null;
 
@@ -32,16 +34,41 @@ export default function SecurityEstimate({
     <div className="cost-display">
       <h3>Security Estimate</h3>
       
-      <CostItem label="Password entropy" value={result.formatted.entropy} />
-      <CostItem label="Password space" value={result.formatted.passwordSpace} />
-      <CostItem label="Hash algorithm" value={result.costPerHashDescription} />
-      <CostItem 
-        label="Estimated cost to crack" 
-        value={result.formatted.singleTarget}
-        highlight
-      />
+      <SaltToggle checked={includeSalt} onChange={onIncludeSaltChange} />
+      
+      <div className="cost-items">
+        <CostItem label="Password entropy" value={result.formatted.entropy} />
+        <CostItem label="Password space" value={result.formatted.passwordSpace} />
+        <CostItem label="Hash algorithm" value={result.costPerHashDescription} />
+        <CostItem 
+          label="Estimated cost to crack" 
+          value={result.formatted.singleTarget}
+          highlight
+        />
+      </div>
       
       {!includeSalt && <BirthdayWarning />}
+    </div>
+  );
+}
+
+function SaltToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="salt-toggle">
+      <label>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        Include salt
+      </label>
     </div>
   );
 }

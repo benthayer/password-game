@@ -8,7 +8,6 @@ import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
   HashSettingsSection,
-  SaltSection,
   SecurityEstimate,
 } from './config-modal';
 import './ConfigModal.css';
@@ -63,18 +62,12 @@ export default function ConfigModal({
             onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
-          <SaltSection
-            includeSalt={form.includeSalt}
-            onIncludeSaltChange={form.setIncludeSalt}
-            salt={form.salt}
-            onSaltChange={form.setSalt}
-          />
-
           <SecurityEstimate
             gridSize={form.gridSize}
             wordCount={wordCount}
             hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
+            onIncludeSaltChange={form.setIncludeSalt}
           />
         </div>
 

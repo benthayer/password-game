@@ -12,7 +12,6 @@ import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
   HashSettingsSection,
-  SaltSection,
   SecurityEstimate,
 } from './config-modal';
 import './GeneratePasswordModal.css';
@@ -83,13 +82,6 @@ export default function GeneratePasswordModal({
             onUseRecommendedChange={form.setUseRecommendedHash}
           />
 
-          <SaltSection
-            includeSalt={form.includeSalt}
-            onIncludeSaltChange={form.setIncludeSalt}
-            salt={form.salt}
-            onSaltChange={form.setSalt}
-          />
-
           <WordCountInput
             value={desiredNumWords}
             onChange={setDesiredNumWords}
@@ -101,6 +93,7 @@ export default function GeneratePasswordModal({
             wordCount={desiredNumWords}
             hashConfig={form.hashAlgorithm}
             includeSalt={form.includeSalt}
+            onIncludeSaltChange={form.setIncludeSalt}
           />
         </div>
 

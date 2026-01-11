@@ -25,11 +25,9 @@ export interface UseConfigFormResult {
   useRecommendedHash: boolean;
   setUseRecommendedHash: (value: boolean) => void;
   
-  // Salt fields
+  // Salt (auto-derived from seedPhrase when enabled)
   includeSalt: boolean;
   setIncludeSalt: (value: boolean) => void;
-  salt: string;
-  setSalt: (value: string) => void;
   
   // Derived values
   gridSize: number;
@@ -61,9 +59,8 @@ export function useConfigForm(
     }
   };
   
-  // Salt state
+  // Salt state (salt value is auto-derived from seedPhrase)
   const [includeSalt, setIncludeSalt] = useState(initialConfig.includeSalt);
-  const [salt, setSalt] = useState(initialConfig.salt);
 
   // Reset form when initialConfig changes (if resetOnChange is true)
   useEffect(() => {
@@ -74,7 +71,6 @@ export function useConfigForm(
       setHashAlgorithm(initialConfig.hashAlgorithm);
       setUseRecommendedHashState(initialConfig.hashAlgorithm.algorithm === 'argon2id');
       setIncludeSalt(initialConfig.includeSalt);
-      setSalt(initialConfig.salt);
     }
   }, [resetOnChange, initialConfig]);
 
@@ -92,14 +88,14 @@ export function useConfigForm(
   // Derived
   const gridSize = useMemo(() => gridRows * gridCols, [gridRows, gridCols]);
 
-  // Convert to config
+  // Convert to config (salt is auto-derived from seedPhrase when enabled)
   const toConfig = (): GenerationConfig => ({
     seedPhrase,
     gridRows,
     gridCols,
     hashAlgorithm,
     includeSalt,
-    salt,
+    salt: includeSalt ? seedPhrase : '',
   });
 
   return {
@@ -120,11 +116,9 @@ export function useConfigForm(
     useRecommendedHash,
     setUseRecommendedHash,
     
-    // Salt
+    // Salt (auto-derived from seedPhrase)
     includeSalt,
     setIncludeSalt,
-    salt,
-    setSalt,
     
     // Derived
     gridSize,
