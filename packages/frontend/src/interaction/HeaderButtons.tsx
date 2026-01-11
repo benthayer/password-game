@@ -3,14 +3,6 @@
  * Consistent styling for page header actions.
  */
 
-const HEADER_BUTTON_STYLE = {
-  background: '#6366f1',
-  color: 'white',
-  padding: '12px 24px',
-  fontSize: '1rem',
-  fontWeight: '500' as const,
-};
-
 interface HeaderButtonProps {
   onClick: () => void;
   disabled?: boolean;
@@ -23,7 +15,6 @@ export function HeaderButton({ onClick, disabled, children }: HeaderButtonProps)
       onClick={onClick}
       className="header-button"
       disabled={disabled}
-      style={HEADER_BUTTON_STYLE}
     >
       {children}
     </button>
