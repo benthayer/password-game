@@ -447,6 +447,17 @@
   outline: none;
 }
 
+/* Hide native number input spinners */
+.word-count-input input::-webkit-outer-spin-button,
+.word-count-input input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.word-count-input input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .word-count-bits {
   color: #67e8f9;
   font-size: 0.85rem;
