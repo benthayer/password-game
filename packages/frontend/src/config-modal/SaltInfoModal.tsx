@@ -26,16 +26,6 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
             The salt is not a secret — it just needs to be unique to you.
           </section>
 
-          <section>
-            <h3>Why This Matters</h3>
-            <p>
-              This system's API is <em>publicly accessible</em>. Anyone can attempt to access any data, but <em>without
-               your password, that data is useless</em>.
-              There are <em>no accounts, no rate limits, no gatekeepers</em>, but with a <em>good
-              password and configuration</em>, that doesn't matter because your data will <em>never be decrypted</em>,
-              and if it's not decrypted, it <em>cannot be linked back to you</em>.
-            </p>
-          </section>
 
           <section>
             <h3>Understanding Dragnet Attacks</h3>
@@ -50,6 +40,18 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
                 Attackers will target popular configs and if you're using a common config 
                 without a salt, then you'll be in the net and might get caught.
             </p>
+          </section>
+          <section>
+            <h3>Why This Matters</h3>
+            <p>
+              This system's API is <em>publicly accessible</em>. Anyone can attempt to access any data, but <em>without
+               your password, they cannot find or decrypt your data</em>.
+              There are no accounts, no rate limits, no gatekeepers, but with a <em>good
+              password and configuration, your data will never be decrypted</em>.
+            </p>
+          </section>
+
+          <section>
             
             <h3>How To Protect Yourself</h3>
             <p>There are three ways to protect yourself, in order of reliability:</p>

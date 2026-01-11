@@ -34,8 +34,6 @@ export default function SecurityEstimate({
 
   return (
     <div className="cost-display">
-      <h3>Security Estimate</h3>
-
       {onWordCountChange && (
         <WordCountInput 
           value={wordCount} 
@@ -43,6 +41,7 @@ export default function SecurityEstimate({
           totalBits={totalBits}
         />
       )}
+      <h3>Security Estimate</h3>
       
       <div className="cost-items">
         <CostItem label="Password entropy" value={result.formatted.entropy} />
