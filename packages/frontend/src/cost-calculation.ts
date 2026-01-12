@@ -29,20 +29,22 @@ interface CostPerHashEstimate {
   description: string;
 }
 
-function getArgon2idCostPerHash(memoryCostKB: number, timeCost: number): CostPerHashEstimate {
-  // Base: 64MB, 3 iterations ≈ $0.0001 per hash (conservative)
-  // Scale with memory and time
+function getArgon2idCostPerHash(memoryCostKB: number, timeCost: number, parallelism: number): CostPerHashEstimate {
+  // Base: 64MB, 3 iterations, 1 thread ≈ $0.0001 per hash (conservative)
+  // Scale with memory, time, and parallelism
   const baseMemory = 65536; // 64MB in KB
   const baseTime = 3;
+  const baseParallelism = 1;
   const baseCost = 0.0001;
   
   const memoryMultiplier = memoryCostKB / baseMemory;
   const timeMultiplier = timeCost / baseTime;
-  const costUsd = baseCost * memoryMultiplier * timeMultiplier;
+  const parallelismMultiplier = parallelism / baseParallelism;
+  const costUsd = baseCost * memoryMultiplier * timeMultiplier * parallelismMultiplier;
   
   return {
     costUsd,
-    description: `Argon2id (${memoryCostKB / 1024}MB, ${timeCost} iterations)`,
+    description: `Argon2id (${memoryCostKB / 1024}MB, ${timeCost} iterations, p=${parallelism})`,
   };
 }
 
@@ -102,7 +104,7 @@ function getSha256CostPerHash(): CostPerHashEstimate {
 export function getCostPerHash(config: HashAlgorithmConfig): CostPerHashEstimate {
   switch (config.algorithm) {
     case 'argon2id':
-      return getArgon2idCostPerHash(config.memoryCost, config.timeCost);
+      return getArgon2idCostPerHash(config.memoryCost, config.timeCost, config.parallelism);
     case 'scrypt':
       return getScryptCostPerHash(config.N, config.r, config.p);
     case 'bcrypt':
