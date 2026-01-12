@@ -153,30 +153,30 @@ function getArgon2idCostPerHash(
  * Password-strength scrypt (N=2^20, r=8) has no direct benchmark because
  * no cryptocurrency uses these parameters (too memory-intensive for mining).
  * 
- * ## Bound Derivation
+ * Litecoin scrypt (N=1024, r=1) benchmarks exist but are ~8000x less
+ * memory-intensive [6], making them inapplicable.
  * 
- * From [6] scrypt paper: Memory = 128 * N * r bytes
- * - Password scrypt (N=2^20, r=8): 1 GB
- * - Argon2 benchmark (512 KB): 0.5 MB
+ * ## Cited Facts
  * 
- * scrypt with 1 GB memory requirement is at least as slow as Argon2 with
- * 512 KB (scrypt has ~2000x more memory). Therefore:
+ * [6] Memory formula: 128 * N * r bytes
+ *     - Password scrypt (N=2^20, r=8): 1 GB
+ *     - Litecoin scrypt (N=1024, r=1): 128 KB
  * 
- * scrypt hashrate ≤ Argon2 hashrate at 512 KB = 800 H/s [3]
+ * [10] RFC 7914: "computations of SMix are independent"
+ *      - p scales linearly (attacker must do all p computations)
  * 
- * This is likely a very loose upper bound (scrypt at 1GB is probably much
- * slower than 800 H/s), but it's the best CITED bound we have.
+ * ## ESTIMATE (NOT A BOUND)
  * 
- * Cost ≥ Argon2 cost = $8e-8
+ * We use the same base cost as Argon2 ($8e-8) as a rough estimate.
+ * This is NOT a proven bound - we cannot cite a benchmark or prove
+ * that scrypt is at least as slow as Argon2. Different algorithms
+ * have different memory access patterns.
  * 
- * ## p Parameter [10]
- * 
- * RFC 7914: "computations of SMix are independent" - attacker must do all p.
- * Cost scales linearly with p (CITED).
+ * The only justified claim: cost scales linearly with p [10].
  */
 function getScryptCostPerHash(_N: number, _r: number, p: number): CostPerHashEstimate {
-  // Lower bound: at least as expensive as Argon2 at 512KB
-  // This is a loose bound - real scrypt at N=2^20 is likely much slower
+  // ESTIMATE: Using Argon2 base cost as rough proxy
+  // NOT A BOUND - no benchmark exists for password-strength scrypt
   const hashesPerHour = ARGON2_RADEON7_HASHRATE_512KB * 3600;
   const baseCostUsd = GPU_RENTAL_COST_PER_HOUR / hashesPerHour;
   
@@ -185,7 +185,7 @@ function getScryptCostPerHash(_N: number, _r: number, p: number): CostPerHashEst
   
   return {
     costUsd,
-    description: `scrypt (≥$${costUsd.toExponential(1)}/hash)`,
+    description: `scrypt (~$${costUsd.toExponential(1)}/hash, estimate)`,
   };
 }
 
@@ -472,49 +472,3 @@ function formatBigNumber(n: bigint): string {
   return `~10^${s.length - 1}`;
 }
 
-// ============================================================
-// Time Estimates
-// ============================================================
-
-export interface TimeEstimate {
-  years: number;
-  formatted: string;
-}
-
-/**
- * Estimate time to crack based on hashrate.
- */
-export function estimateTimeToCrack(
-  params: CostToCrackParams,
-  hashesPerSecond: number = 100
-): TimeEstimate {
-  const { gridSize, wordCount } = params;
-  const passwordSpace = calculatePasswordSpace({ gridSize, wordCount });
-  
-  const expectedGuesses = Number(passwordSpace) / 2;
-  const seconds = expectedGuesses / hashesPerSecond;
-  const years = seconds / (60 * 60 * 24 * 365);
-  
-  let formatted: string;
-  if (years < 1) {
-    const days = years * 365;
-    if (days < 1) {
-      const hours = days * 24;
-      formatted = `${hours.toFixed(1)} hours`;
-    } else {
-      formatted = `${days.toFixed(1)} days`;
-    }
-  } else if (years < 1000) {
-    formatted = `${years.toFixed(1)} years`;
-  } else if (years < 1e6) {
-    formatted = `${(years / 1000).toFixed(1)} thousand years`;
-  } else if (years < 1e9) {
-    formatted = `${(years / 1e6).toFixed(1)} million years`;
-  } else if (years < 1e12) {
-    formatted = `${(years / 1e9).toFixed(1)} billion years`;
-  } else {
-    formatted = `${years.toExponential(2)} years`;
-  }
-  
-  return { years, formatted };
-}
