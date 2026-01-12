@@ -21,27 +21,6 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
         </div>
         
         <div className="salt-info-content">
-          <section className="salt-info-recommendation">
-            <p>
-              <strong>Recommendation:</strong>
-            </p>
-            <p>
-              Use a very strong password without salt. Salt offers the strongest
-              cryptographic protection, but the risk of 
-              losing your salt (and permanently losing access to your data) is higher than the risk of a dragnet attack if your password is strong enough.
-            </p>
-            <p>
-              In all cases, write down your configuration (seed phrase, grid dimensions, and salt if enabled). 
-              This information needs to be accessible to you when you're looking to recover your information.
-              The risk of making it private is that you will not be able to access it when you need it.
-              The risk of making it public is that other people may know you have data stored on this system.
-            </p>
-            <p>
-                The ideal is to write down information in a way that's minimally publicly visible while still being accessible to you.
-            </p>
-          </section>
-
-
           <section>
             <h3>Understanding Dragnet Attacks</h3>
             <p>
@@ -126,6 +105,32 @@ export default function SaltInfoModal({ isOpen, onClose }: SaltInfoModalProps) {
               your configuration. The value of the attack is proportional to the number of people using the 
               shared configuration. This is not recommended to be your primary defense.
               It is better to just use a salt or a stronger password.
+            </p>
+          </section>
+          <section className="salt-info-recommendation">
+            <p>
+              <strong>Recommendation:</strong>
+            </p>
+            <p>
+              Use all defaults. Do not use a salt and instead use a password that costs ≥$100T to crack.
+            </p>
+            <p>
+              This system is designed to make memorizing passwords easy. A strong password makes dragnet
+              attacks irrelevant. If you use a salt, or custom config, there is a risk of losing or miscopying
+              it and being unable to gain access to your data. The best way to use this system it to take advantage
+              of the easy memorization and remove the hassle of finding your configuration values when trying
+              to retreive your data.
+            </p>
+            <p>
+              If you do use a salt or custom configuration, write every detail down. This includes the seed phrase, the
+              grid configuration, the salt, and the hash function.
+              This information needs to be accessible to you when you recover your information.
+              The risk of making it private is that you will not be able to access it when you need it.
+              The risk of making it public is that other people may know you have data stored on this system.
+            </p>
+            <p>
+                If you do choose a custom config, the ideal is to write down information in a way that's
+                minimally publicly visible while still being accessible to you.
             </p>
           </section>
         </div>

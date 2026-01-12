@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord, PERSIST_DESIRED_NUM_WORDS } from './generation-config';
 import { generatePassword, generateSalt } from './crypto-utils';
+import { calculateCostToCrack } from './cost-calculation';
 import { useConfigForm } from './hooks/useConfigForm';
 import {
   GridSettingsSection,
@@ -15,6 +16,47 @@ import {
   SecurityEstimate,
 } from './config-modal';
 import './GeneratePasswordModal.css';
+
+// ============================================================
+// Security Thresholds for Multi-Target Attack Protection
+// ============================================================
+
+const C2C_THRESHOLD_NO_SEED_NO_SALT = 1e9;   // $1 billion
+const C2C_THRESHOLD_SEED_NO_SALT = 500_000;   // $500k
+
+interface GenerationBlockReason {
+  blocked: boolean;
+  reason: string | null;
+}
+
+function getGenerationBlockReason(
+  seedPhrase: string,
+  includeSalt: boolean,
+  costToCrack: number
+): GenerationBlockReason {
+  // Salt always allows generation
+  if (includeSalt) {
+    return { blocked: false, reason: null };
+  }
+  
+  const hasSeedPhrase = seedPhrase.trim().length > 0;
+  
+  if (!hasSeedPhrase && costToCrack < C2C_THRESHOLD_NO_SEED_NO_SALT) {
+    return {
+      blocked: true,
+      reason: `Cost to crack must be ≥$1 billion without a seed phrase or salt`,
+    };
+  }
+  
+  if (hasSeedPhrase && costToCrack < C2C_THRESHOLD_SEED_NO_SALT) {
+    return {
+      blocked: true,
+      reason: `Cost to crack must be ≥$500k when using a seed phrase without salt`,
+    };
+  }
+  
+  return { blocked: false, reason: null };
+}
 
 interface GeneratePasswordModalProps {
   isOpen: boolean;
@@ -51,6 +93,20 @@ export default function GeneratePasswordModal({
   if (!isOpen) return null;
 
   const entropyPerWord = calculateEntropyPerWord(form.toConfig());
+  
+  // Calculate cost to crack for validation
+  const costResult = calculateCostToCrack({
+    gridSize: form.gridSize,
+    wordCount: desiredNumWords,
+    hashConfig: form.hashAlgorithm,
+    userCount: 1,
+  });
+  
+  const blockReason = getGenerationBlockReason(
+    form.seedPhrase,
+    form.includeSalt,
+    costResult.singleTargetCostUsd
+  );
 
   const handleGenerate = () => {
     const newConfig = form.toConfig();
@@ -106,6 +162,8 @@ export default function GeneratePasswordModal({
           onCancel={onClose}
           onGenerate={handleGenerate}
           numWords={desiredNumWords}
+          disabled={blockReason.blocked}
+          disabledReason={blockReason.reason}
         />
       </div>
     </div>
@@ -125,23 +183,46 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
   );
 }
 
+const WEAK_PASSWORD_TOOLTIP = `By default, we do not let you generate weak passwords due to the risk of multi-target attacks:
+
+• If no seed phrase and no salt, cost to crack must be ≥$1 billion
+• If using a seed phrase and no salt, cost to crack must be ≥$500k
+• If using a salt, weak passwords are not blocked`;
+
 function ModalFooter({
   onCancel,
   onGenerate,
   numWords,
+  disabled,
+  disabledReason,
 }: {
   onCancel: () => void;
   onGenerate: () => void;
   numWords: number;
+  disabled?: boolean;
+  disabledReason?: string | null;
 }) {
   return (
     <div className="generate-modal-footer">
       <button onClick={onCancel} className="generate-button cancel-button">
         Cancel
       </button>
-      <button onClick={onGenerate} className="generate-button generate-button-primary">
-        Generate {numWords} words
-      </button>
+      <div className="generate-button-wrapper">
+        <button 
+          onClick={onGenerate} 
+          className={`generate-button generate-button-primary${disabled ? ' disabled' : ''}`}
+          disabled={disabled}
+        >
+          Generate {numWords} words
+        </button>
+        {disabled && (
+          <div className="generate-tooltip">
+            <div className="generate-tooltip-body">
+              {WEAK_PASSWORD_TOOLTIP}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
