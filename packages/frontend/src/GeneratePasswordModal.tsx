@@ -21,8 +21,7 @@ import './GeneratePasswordModal.css';
 // Security Thresholds for Multi-Target Attack Protection
 // ============================================================
 
-const C2C_THRESHOLD_NO_SEED_NO_SALT = 1e9;   // $1 billion
-const C2C_THRESHOLD_SEED_NO_SALT = 500_000;   // $500k
+const C2C_THRESHOLD_NO_SALT = 100e12;   // $100 trillion (~global GDP)
 
 interface GenerationBlockReason {
   blocked: boolean;
@@ -30,28 +29,18 @@ interface GenerationBlockReason {
 }
 
 function getGenerationBlockReason(
-  seedPhrase: string,
   includeSalt: boolean,
   costToCrack: number
 ): GenerationBlockReason {
-  // Salt always allows generation
+  // Salt allows any password strength
   if (includeSalt) {
     return { blocked: false, reason: null };
   }
   
-  const hasSeedPhrase = seedPhrase.trim().length > 0;
-  
-  if (!hasSeedPhrase && costToCrack < C2C_THRESHOLD_NO_SEED_NO_SALT) {
+  if (costToCrack < C2C_THRESHOLD_NO_SALT) {
     return {
       blocked: true,
-      reason: `Cost to crack must be ≥$1 billion without a seed phrase or salt`,
-    };
-  }
-  
-  if (hasSeedPhrase && costToCrack < C2C_THRESHOLD_SEED_NO_SALT) {
-    return {
-      blocked: true,
-      reason: `Cost to crack must be ≥$500k when using a seed phrase without salt`,
+      reason: `Cost to crack must exceed global GDP (~$100T) without salt`,
     };
   }
   
@@ -103,7 +92,6 @@ export default function GeneratePasswordModal({
   });
   
   const blockReason = getGenerationBlockReason(
-    form.seedPhrase,
     form.includeSalt,
     costResult.singleTargetCostUsd
   );
@@ -185,9 +173,8 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
 
 const WEAK_PASSWORD_TOOLTIP = `By default, we do not let you generate weak passwords due to the risk of multi-target attacks:
 
-• If no seed phrase and no salt, cost to crack must be ≥$1 billion
-• If using a seed phrase and no salt, cost to crack must be ≥$500k
-• If using a salt, weak passwords are not blocked`;
+• Without salt, cost to crack must exceed global GDP (~$100 trillion)
+• With salt, weak passwords are not blocked`;
 
 function ModalFooter({
   onCancel,
@@ -217,6 +204,9 @@ function ModalFooter({
         </button>
         {disabled && (
           <div className="generate-tooltip">
+            <div className="generate-tooltip-header">
+              ⚠️ {disabledReason}
+            </div>
             <div className="generate-tooltip-body">
               {WEAK_PASSWORD_TOOLTIP}
             </div>
