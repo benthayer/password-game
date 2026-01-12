@@ -59,6 +59,11 @@
  *     https://vast.ai/
  *     RTX 4090 rental: ~$0.30-0.50/hour (we use $0.40 as midpoint)
  * 
+ * [10] RFC 7914 - The scrypt Password-Based Key Derivation Function
+ *      https://www.rfc-editor.org/rfc/rfc7914.html
+ *      Section 2: p parameter increases computational cost without
+ *      increasing memory (SMix computations are independent)
+ * 
  * Last updated: January 2026
  */
 
@@ -220,9 +225,13 @@ function getArgon2idCostPerHash(
  * 
  * - N, r: Memory scales with N * r [6]. Cost scales approximately linearly.
  * 
- * - p: Parallelization factor. Does not proportionally increase attacker cost.
- *   We use sqrt(p) as a CONSERVATIVE ESTIMATE (no direct citation for this
- *   specific factor - errs toward attacker benefit).
+ * - p: From RFC 7914 Section 2 [10]:
+ *   "since the computations of SMix are independent, a large value of p
+ *   can be used to increase the computational cost of scrypt without
+ *   increasing the memory usage"
+ * 
+ *   This means: attacker MUST do p times the work (can't skip computations),
+ *   but CAN reuse memory (run sequentially). Cost scales linearly with p.
  */
 function getScryptCostPerHash(N: number, r: number, p: number): CostPerHashEstimate {
   // Base: N=2^20, r=8, p=1 → $1e-5 per hash
@@ -234,10 +243,9 @@ function getScryptCostPerHash(N: number, r: number, p: number): CostPerHashEstim
   // Memory scales with N * r [6]
   const memoryMultiplier = (N * r) / (BASE_N * BASE_R);
   
-  // p: sqrt scaling (CONSERVATIVE ESTIMATE - no citation)
-  // Rationale: Linear would overestimate attacker cost; ignoring would
-  // underestimate. sqrt is a conservative middle ground.
-  const pMultiplier = Math.sqrt(p);
+  // p: Linear scaling [10]
+  // RFC 7914: "computations of SMix are independent" - attacker must do all p
+  const pMultiplier = p;
   
   const costUsd = BASE_COST_USD * memoryMultiplier * pMultiplier;
   
