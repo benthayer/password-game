@@ -85,6 +85,10 @@ import type { HashAlgorithmConfig } from './hash-config';
 // [1,2] RTX 4090 SHA-256 hashrate: 21.9755 GH/s (DIRECTLY CITED)
 const SHA256_RTX4090_HASHRATE = 21.9755e9;
 
+// [3] Antminer S19 Pro SHA-256 hashrate: 110 TH/s at $3200 (DIRECTLY CITED)
+const SHA256_ASIC_HASHRATE = 110e12;
+const SHA256_ASIC_PRICE = 3200;
+
 // [1,2] RTX 4090 bcrypt hashrate at cost=5: 184.0 kH/s (DIRECTLY CITED)
 const BCRYPT_RTX4090_HASHRATE_COST5 = 184.0e3;
 
@@ -302,26 +306,38 @@ function getPbkdf2CostPerHash(iterations: number): CostPerHashEstimate {
 /**
  * SHA-256 cost calculation.
  * 
- * ## Cited Benchmark [1,2]
+ * ## ASIC Benchmark [3]
  * 
- * RTX 4090: 21.9755 GH/s (DIRECTLY CITED)
+ * Antminer S19 Pro: 110 TH/s at $3200 (DIRECTLY CITED)
  * 
- * Cost calculation:
- *   Hashes/hour = 21.9755e9 * 3600 = 7.91e13
- *   Cost/hash = $0.25 / 7.91e13 = $3.2e-15
+ * SHA-256 ASICs are commodity hardware (Bitcoin mining). An attacker
+ * WILL use ASICs, not GPUs. We must assume worst-case.
  * 
- * This is an EXACT derivation from cited values.
+ * ## Cost Derivation
  * 
- * Note: ASIC mining [3] achieves 110 TH/s (~5000x faster), giving ~$6e-19/hash.
- * We use GPU pricing as it's more accessible to typical attackers.
+ * Hardware amortization (ignoring electricity, which only adds cost):
+ *   - Hashrate: 110 TH/s = 110e12 H/s
+ *   - Hashes per year: 110e12 * 3600 * 24 * 365 = 3.47e21
+ *   - Conservative 3-year lifespan: 1.04e22 total hashes
+ *   - Cost per hash = $3200 / 1.04e22 = $3.1e-19
+ * 
+ * We use $3e-19 as the lower bound.
+ * 
+ * Note: Electricity (~$0.05-0.10/kWh × 3.25kW) would ADD ~$0.16-0.32/hour,
+ * increasing cost. We ignore it to favor the attacker.
+ * 
+ * For comparison, GPU (RTX 4090) achieves only 21.9755 GH/s [1,2],
+ * which is ~5000x slower, giving ~$3.2e-15/hash.
  */
 function getSha256CostPerHash(): CostPerHashEstimate {
-  const hashesPerHour = SHA256_RTX4090_HASHRATE * 3600;
-  const costUsd = GPU_RENTAL_COST_PER_HOUR / hashesPerHour;
+  // ASIC cost: $3200 amortized over ~3 years of continuous operation
+  // Hashes in 3 years: 110e12 * 3600 * 24 * 365 * 3 ≈ 1.04e22
+  // Cost per hash: $3200 / 1.04e22 ≈ $3.1e-19
+  const ASIC_COST_PER_HASH = 3e-19;
   
   return {
-    costUsd,
-    description: 'SHA-256',
+    costUsd: ASIC_COST_PER_HASH,
+    description: 'SHA-256 (ASIC)',
   };
 }
 
