@@ -6,6 +6,7 @@ import ConfirmModal from './ConfirmModal';
 import TextUploadModal from './TextUploadModal';
 import TextDisplayModal from './TextDisplayModal';
 import UploadConfirmModal from './UploadConfirmModal';
+import AddCreditsModal from './AddCreditsModal';
 import { 
   getAddressHash, 
   getSecondaryKey, 
@@ -38,6 +39,7 @@ export default function VaultCard({
   const [textUploadModalOpen, setTextUploadModalOpen] = useState(false);
   const [textDisplayModalOpen, setTextDisplayModalOpen] = useState(false);
   const [uploadConfirmOpen, setUploadConfirmOpen] = useState(false);
+  const [addCreditsModalOpen, setAddCreditsModalOpen] = useState(false);
   const [pendingUpload, setPendingUpload] = useState<{ type: 'file'; file: File } | { type: 'text'; text: string } | null>(null);
   const [displayedText, setDisplayedText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -168,6 +170,21 @@ export default function VaultCard({
     }
   };
 
+  const handleAddCreditsClick = async () => {
+    if (password.length === 0) return;
+    
+    try {
+      setStatusMessage('Computing address...');
+      const hash = await getAddressHash(password, hashConfig);
+      setAddressHash(hash);
+      setStatusMessage(null);
+      setAddCreditsModalOpen(true);
+    } catch (err: unknown) {
+      setStatusMessage(null);
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to compute address');
+    }
+  };
+
   const handleDeleteClick = async () => {
     if (password.length === 0) return;
     
@@ -205,6 +222,7 @@ export default function VaultCard({
     <>
       <div className="vault-card">
         <button onClick={handleInfoClick} className="vault-button">Info</button>
+        <button onClick={handleAddCreditsClick} className="vault-button">Add Credits</button>
         <button onClick={handleUpload} className="vault-button">Upload File</button>
         <button onClick={() => setTextUploadModalOpen(true)} className="vault-button">Upload Text</button>
         <button onClick={handleDownload} className="vault-button">Download</button>
@@ -248,6 +266,13 @@ export default function VaultCard({
         onCancel={handleUploadCancelled}
         includeSalt={hashConfig.includeSalt}
       />
+      {addressHash && (
+        <AddCreditsModal
+          isOpen={addCreditsModalOpen}
+          onClose={() => setAddCreditsModalOpen(false)}
+          addressHash={addressHash}
+        />
+      )}
     </>
   );
 }

@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import './AddCreditsModal.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+// Billing: $1 = 1 gigabyte-year + 50 GB egress
+const GB_YEARS_PER_DOLLAR = 1;
+const EGRESS_GB_PER_DOLLAR = 50;
+
+interface AddCreditsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  addressHash: string;
+}
+
+export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCreditsModalProps) {
+  const [credits, setCredits] = useState(5);
+  const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const gbYears = credits * GB_YEARS_PER_DOLLAR;
+  const egressGb = credits * EGRESS_GB_PER_DOLLAR;
+
+  const handlePayWithStripe = async () => {
+    if (credits < 1 || credits > 100) {
+      setError('Credits must be between 1 and 100');
+      return;
+    }
+
+    setLoading('stripe');
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/stripe/create-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressHash,
+          amountUsd: credits,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create payment');
+      }
+
+      const { checkoutUrl } = await response.json();
+      
+      // Open Stripe checkout in new tab
+      window.open(checkoutUrl, '_blank');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment failed');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handlePayWithCrypto = async () => {
+    if (credits < 1 || credits > 100) {
+      setError('Credits must be between 1 and 100');
+      return;
+    }
+
+    setLoading('crypto');
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/payments/create-charge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressHash,
+          amountUsd: credits,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create payment');
+      }
+
+      const { chargeUrl } = await response.json();
+      
+      // Open Coinbase Commerce checkout in new tab
+      window.open(chargeUrl, '_blank');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment failed');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  return (
+    <div className="add-credits-overlay" onClick={onClose}>
+      <div className="add-credits-modal" onClick={(e) => e.stopPropagation()}>
+        <h2>Add Credits</h2>
+
+        <div className="credits-input-section">
+          <label htmlFor="credits-input">Credits (USD)</label>
+          <input
+            id="credits-input"
+            type="number"
+            min={1}
+            max={100}
+            value={credits}
+            onChange={(e) => setCredits(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+          />
+        </div>
+
+        <div className="credits-breakdown">
+          <div className="breakdown-item">
+            <span className="breakdown-label">Storage</span>
+            <span className="breakdown-value">{gbYears} GB-year{gbYears !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="breakdown-item">
+            <span className="breakdown-label">Egress</span>
+            <span className="breakdown-value">{egressGb} GB</span>
+          </div>
+        </div>
+
+        <div className="credits-total">
+          <span className="total-label">Total</span>
+          <span className="total-value">${credits}</span>
+        </div>
+
+        {error && <div className="credits-error">{error}</div>}
+
+        <div className="credits-actions">
+          <button className="credits-cancel" onClick={onClose} disabled={!!loading}>
+            Cancel
+          </button>
+        </div>
+
+        <div className="payment-methods">
+          <button 
+            className="credits-pay credits-pay-stripe" 
+            onClick={handlePayWithStripe} 
+            disabled={!!loading}
+          >
+            {loading === 'stripe' ? 'Creating...' : 'Pay with Card'}
+          </button>
+          <button 
+            className="credits-pay credits-pay-crypto" 
+            onClick={handlePayWithCrypto} 
+            disabled={!!loading}
+          >
+            {loading === 'crypto' ? 'Creating...' : 'Pay with Crypto'}
+          </button>
+        </div>
+
+        <p className="credits-note">
+          Payment opens in a new tab. Credits are added automatically after payment.
+        </p>
+      </div>
+    </div>
+  );
+}
+

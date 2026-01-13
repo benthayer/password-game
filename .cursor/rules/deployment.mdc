@@ -30,6 +30,14 @@ B2_KEY=<test-key>
 B2_BUCKET=password-game-test
 B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
 ADMIN_SECRET=<admin-secret>
+
+# Coinbase Commerce (optional for local dev)
+COINBASE_COMMERCE_API_KEY=<api-key>
+COINBASE_COMMERCE_WEBHOOK_SECRET=<webhook-secret>
+
+# Stripe (optional for local dev)
+STRIPE_SECRET_KEY=<sk_test_...>
+STRIPE_WEBHOOK_SECRET=<whsec_...>
 ```
 
 ### Production (`.env` on server)
@@ -42,6 +50,14 @@ B2_KEY=<prod-key>
 B2_BUCKET=password-game
 B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
 ADMIN_SECRET=<admin-secret>
+
+# Coinbase Commerce (for USDC payments)
+COINBASE_COMMERCE_API_KEY=<api-key>
+COINBASE_COMMERCE_WEBHOOK_SECRET=<webhook-secret>
+
+# Stripe (for card payments)
+STRIPE_SECRET_KEY=<sk_live_...>
+STRIPE_WEBHOOK_SECRET=<whsec_...>
 ```
 
 **Critical**: `.env` is gitignored. Never use `rsync --delete` without excluding it.
