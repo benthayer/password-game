@@ -4,7 +4,7 @@ import {
   getPaymentByChargeId, 
   recordPayment, 
   updatePaymentStatus,
-  addCredits,
+  grantStorageAndEgressFromPayment,
   getPendingChargeByChargeId,
   deletePendingCharge,
 } from '../storage/db.js';
@@ -37,10 +37,9 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
 // CREDIT CALCULATION
 // =============================================================================
 
-// $1 = 1 gigabyte-year + 50 GB egress
-// For now, we just track as "credits" where 1 credit = $1 worth
-function calculateCreditsFromUsdc(amountUsdc: number): number {
-  return Math.floor(amountUsdc); // 1 credit per dollar
+// Returns the USD value (used for payment recording)
+function calculateUsdFromUsdc(amountUsdc: number): number {
+  return Math.floor(amountUsdc); // 1:1 for USDC
 }
 
 // =============================================================================
@@ -121,8 +120,8 @@ webhookRoutes.post('/coinbase', async (req: Request, res: Response) => {
           await updatePaymentStatus(chargeId, 'pending');
           console.log(`Charge ${chargeId} already exists, updated to pending`);
         } else {
-          // New payment - record and grant credits
-          const creditsToGrant = calculateCreditsFromUsdc(amountUsdc);
+          // New payment - record and grant storage/egress
+          const amountUsd = calculateUsdFromUsdc(amountUsdc);
           
           await recordPayment({
             chargeId,
@@ -133,17 +132,17 @@ webhookRoutes.post('/coinbase', async (req: Request, res: Response) => {
             senderAddress,
             status: 'pending',
             accountAddressHash: addressHash,
-            creditsGranted: creditsToGrant,
+            creditsGranted: amountUsd, // Stored as USD amount for records
             rawWebhookPayload: rawBody,
           });
           
-          // Grant credits to account if we have an address hash
-          if (addressHash && creditsToGrant > 0) {
-            await addCredits(addressHash, creditsToGrant);
-            console.log(`Granted ${creditsToGrant} credits to ${addressHash}`);
+          // Grant storage and egress if we have an address hash
+          if (addressHash && amountUsd > 0) {
+            await grantStorageAndEgressFromPayment(addressHash, amountUsd);
+            console.log(`Granted $${amountUsd} worth of storage/egress to ${addressHash}`);
           }
           
-          console.log(`Recorded new payment: ${chargeId}, ${amountUsdc} USDC, ${creditsToGrant} credits`);
+          console.log(`Recorded new payment: ${chargeId}, ${amountUsdc} USDC, $${amountUsd}`);
         }
         break;
       }
@@ -154,7 +153,7 @@ webhookRoutes.post('/coinbase', async (req: Request, res: Response) => {
           console.log(`Charge ${chargeId} confirmed`);
         } else {
           // Rare case: confirmed without pending (shouldn't happen but handle it)
-          const creditsToGrant = calculateCreditsFromUsdc(amountUsdc);
+          const amountUsd = calculateUsdFromUsdc(amountUsdc);
           
           await recordPayment({
             chargeId,
@@ -165,13 +164,13 @@ webhookRoutes.post('/coinbase', async (req: Request, res: Response) => {
             senderAddress,
             status: 'confirmed',
             accountAddressHash: addressHash,
-            creditsGranted: creditsToGrant,
+            creditsGranted: amountUsd,
             rawWebhookPayload: rawBody,
           });
           
-          if (addressHash && creditsToGrant > 0) {
-            await addCredits(addressHash, creditsToGrant);
-            console.log(`Granted ${creditsToGrant} credits to ${addressHash} (confirmed)`);
+          if (addressHash && amountUsd > 0) {
+            await grantStorageAndEgressFromPayment(addressHash, amountUsd);
+            console.log(`Granted $${amountUsd} worth of storage/egress to ${addressHash} (confirmed)`);
           }
         }
         

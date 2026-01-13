@@ -3,8 +3,7 @@ import crypto from 'crypto';
 import { 
   getPaymentByChargeId, 
   recordPayment, 
-  updatePaymentStatus,
-  addCredits,
+  grantStorageAndEgressFromPayment,
   getPendingChargeByChargeId,
   deletePendingCharge,
 } from '../storage/db.js';
@@ -57,11 +56,11 @@ function verifyStripeSignature(payload: string, signatureHeader: string): boolea
 }
 
 // =============================================================================
-// CREDIT CALCULATION
+// AMOUNT CALCULATION
 // =============================================================================
 
-function calculateCreditsFromUsd(amountUsd: number): number {
-  return Math.floor(amountUsd); // 1 credit per dollar
+function calculateUsdFromCents(amountCents: number): number {
+  return Math.floor(amountCents / 100);
 }
 
 // =============================================================================
@@ -139,8 +138,8 @@ stripeWebhookRoutes.post('/stripe', async (req: Request, res: Response) => {
       return res.json({ received: true });
     }
     
-    // Record payment and grant credits
-    const creditsToGrant = calculateCreditsFromUsd(amountUsd);
+    // Record payment and grant storage/egress
+    const amountUsdInt = Math.floor(amountUsd);
     
     await recordPayment({
       chargeId: sessionId,
@@ -151,13 +150,13 @@ stripeWebhookRoutes.post('/stripe', async (req: Request, res: Response) => {
       senderAddress: undefined,
       status: 'confirmed',
       accountAddressHash: addressHash,
-      creditsGranted: creditsToGrant,
+      creditsGranted: amountUsdInt, // Stored as USD amount for records
       rawWebhookPayload: rawBody,
     });
     
-    if (addressHash && creditsToGrant > 0) {
-      await addCredits(addressHash, creditsToGrant);
-      console.log(`Granted ${creditsToGrant} credits to ${addressHash} via Stripe`);
+    if (addressHash && amountUsdInt > 0) {
+      await grantStorageAndEgressFromPayment(addressHash, amountUsdInt);
+      console.log(`Granted $${amountUsdInt} worth of storage/egress to ${addressHash} via Stripe`);
     }
     
     // Clean up pending charge

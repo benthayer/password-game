@@ -10,8 +10,8 @@ const DB_FILE = path.join(DATA_DIR, 'accounts.db');
 
 export interface Account {
   addressHash: string;
-  initialCredits: number;
-  spentCredits: number;
+  gbYearsRemaining: number;   // Storage: 1 GB-year per $1
+  egressGbRemaining: number;  // Egress: 50 GB per $1
   fileSize: number | null;
   createdAt: string;
   updatedAt: string;
@@ -46,8 +46,8 @@ db.pragma('journal_mode = WAL');
 db.exec(`
   CREATE TABLE IF NOT EXISTS accounts (
     address_hash TEXT PRIMARY KEY,
-    initial_credits INTEGER DEFAULT 0,
-    spent_credits INTEGER DEFAULT 0,
+    gb_years_remaining REAL DEFAULT 0,
+    egress_gb_remaining REAL DEFAULT 0,
     file_size INTEGER,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -95,8 +95,8 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_pending_charges_charge_id ON pending_cha
 function rowToAccount(row: any): Account {
   return {
     addressHash: row.address_hash,
-    initialCredits: row.initial_credits,
-    spentCredits: row.spent_credits,
+    gbYearsRemaining: row.gb_years_remaining,
+    egressGbRemaining: row.egress_gb_remaining,
     fileSize: row.file_size,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -117,33 +117,51 @@ export async function getAllAccounts(): Promise<Account[]> {
   return rows.map(rowToAccount);
 }
 
-export async function addCredits(addressHash: string, amount: number): Promise<Account> {
+// Billing: $1 = 1 GB-year storage + 50 GB egress
+const GB_YEARS_PER_DOLLAR = 1;
+const EGRESS_GB_PER_DOLLAR = 50;
+
+export async function grantStorageAndEgressFromPayment(addressHash: string, amountUsd: number): Promise<Account> {
   const now = new Date().toISOString();
+  const gbYearsToAdd = amountUsd * GB_YEARS_PER_DOLLAR;
+  const egressGbToAdd = amountUsd * EGRESS_GB_PER_DOLLAR;
   
   const existing = db.prepare('SELECT * FROM accounts WHERE address_hash = ?').get(addressHash);
   
   if (existing) {
     db.prepare(`
       UPDATE accounts 
-      SET initial_credits = initial_credits + ?, updated_at = ?
+      SET gb_years_remaining = gb_years_remaining + ?,
+          egress_gb_remaining = egress_gb_remaining + ?,
+          updated_at = ?
       WHERE address_hash = ?
-    `).run(amount, now, addressHash);
+    `).run(gbYearsToAdd, egressGbToAdd, now, addressHash);
   } else {
     db.prepare(`
-      INSERT INTO accounts (address_hash, initial_credits, spent_credits, file_size, created_at, updated_at)
-      VALUES (?, ?, 0, NULL, ?, ?)
-    `).run(addressHash, amount, now, now);
+      INSERT INTO accounts (address_hash, gb_years_remaining, egress_gb_remaining, file_size, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, ?, ?)
+    `).run(addressHash, gbYearsToAdd, egressGbToAdd, now, now);
   }
   
   return (await getAccount(addressHash))!;
 }
 
-export async function spendCredits(addressHash: string, amount: number): Promise<boolean> {
+export async function spendEgress(addressHash: string, gbAmount: number): Promise<boolean> {
   const result = db.prepare(`
     UPDATE accounts 
-    SET spent_credits = spent_credits + ?, updated_at = ?
+    SET egress_gb_remaining = egress_gb_remaining - ?, updated_at = ?
     WHERE address_hash = ?
-  `).run(amount, new Date().toISOString(), addressHash);
+  `).run(gbAmount, new Date().toISOString(), addressHash);
+  
+  return result.changes > 0;
+}
+
+export async function spendStorage(addressHash: string, gbYearAmount: number): Promise<boolean> {
+  const result = db.prepare(`
+    UPDATE accounts 
+    SET gb_years_remaining = gb_years_remaining - ?, updated_at = ?
+    WHERE address_hash = ?
+  `).run(gbYearAmount, new Date().toISOString(), addressHash);
   
   return result.changes > 0;
 }
@@ -159,16 +177,22 @@ export async function setFileSize(addressHash: string, size: number | null): Pro
     `).run(size, now, addressHash);
   } else {
     db.prepare(`
-      INSERT INTO accounts (address_hash, initial_credits, spent_credits, file_size, created_at, updated_at)
+      INSERT INTO accounts (address_hash, gb_years_remaining, egress_gb_remaining, file_size, created_at, updated_at)
       VALUES (?, 0, 0, ?, ?, ?)
     `).run(addressHash, size, now, now);
   }
 }
 
-export async function getCurrentCredits(addressHash: string): Promise<number> {
+export async function getGbYearsRemaining(addressHash: string): Promise<number> {
   const account = await getAccount(addressHash);
   if (!account) return 0;
-  return account.initialCredits - account.spentCredits;
+  return account.gbYearsRemaining;
+}
+
+export async function getEgressGbRemaining(addressHash: string): Promise<number> {
+  const account = await getAccount(addressHash);
+  if (!account) return 0;
+  return account.egressGbRemaining;
 }
 
 // =============================================================================

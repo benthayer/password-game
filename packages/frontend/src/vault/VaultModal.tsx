@@ -30,8 +30,12 @@ export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalP
         {info && (
           <div className="vault-info">
             <div className="vault-info-row">
-              <span>Credits:</span>
-              <span>{info.credits}</span>
+              <span>Storage:</span>
+              <span>{info.gbYearsRemaining.toFixed(2)} GB-years</span>
+            </div>
+            <div className="vault-info-row">
+              <span>Egress:</span>
+              <span>{info.egressGbRemaining.toFixed(2)} GB</span>
             </div>
             <div className="vault-info-row">
               <span>File:</span>
@@ -40,10 +44,6 @@ export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalP
             <div className="vault-verification">
               <span>Address:</span>
               <code>{addressHash}</code>
-            </div>
-            <div className="vault-verification">
-              <span>Payment memo:</span>
-              <code>{info.verificationMessage}</code>
             </div>
           </div>
         )}

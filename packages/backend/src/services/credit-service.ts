@@ -1,27 +1,31 @@
-import { getCurrentCredits, spendCredits } from '../storage/db.js';
-
-const DOWNLOAD_COST = 1;
+import { getGbYearsRemaining, getEgressGbRemaining, spendEgress } from '../storage/db.js';
 
 function isCreditCheckDisabled(): boolean {
   return process.env.DISABLE_CREDIT_CHECK === 'true';
 }
 
+function bytesToGb(bytes: number): number {
+  return bytes / (1024 * 1024 * 1024);
+}
+
 export class CreditService {
-  async canDownload(addressHash: string): Promise<boolean> {
+  async canDownload(addressHash: string, fileSizeBytes: number): Promise<boolean> {
     if (isCreditCheckDisabled()) return true;
-    const credits = await getCurrentCredits(addressHash);
-    return credits > 0;
+    const egressRemaining = await getEgressGbRemaining(addressHash);
+    const fileSizeGb = bytesToGb(fileSizeBytes);
+    return egressRemaining >= fileSizeGb;
   }
 
   async canUpload(addressHash: string): Promise<boolean> {
     if (isCreditCheckDisabled()) return true;
-    const credits = await getCurrentCredits(addressHash);
-    return credits > 0;
+    const storageRemaining = await getGbYearsRemaining(addressHash);
+    return storageRemaining > 0;
   }
 
-  async chargeDownload(addressHash: string): Promise<void> {
+  async chargeDownload(addressHash: string, fileSizeBytes: number): Promise<void> {
     if (isCreditCheckDisabled()) return;
-    await spendCredits(addressHash, DOWNLOAD_COST);
+    const fileSizeGb = bytesToGb(fileSizeBytes);
+    await spendEgress(addressHash, fileSizeGb);
   }
 }
 

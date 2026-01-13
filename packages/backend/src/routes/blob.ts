@@ -2,6 +2,7 @@ import { Router, Request } from 'express';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
 import { hasSpaceForUpload } from '../services/disk-space.js';
+import { getAccount } from '../storage/db.js';
 
 export const blobRoutes = Router();
 
@@ -40,10 +41,17 @@ function calculateEncryptedSize(inputSize: number): number {
 blobRoutes.get('/:addressHash', async (req, res) => {
   const { addressHash } = req.params;
   
-  const canDownload = await creditService.canDownload(addressHash);
+  // Get file size from account (stored on upload)
+  const account = await getAccount(addressHash);
+  const fileSize = account?.fileSize ?? 0;
+  
+  if (fileSize === 0) {
+    return res.status(404).json({ error: 'No file found' });
+  }
+  
+  const canDownload = await creditService.canDownload(addressHash, fileSize);
   if (!canDownload) {
-    await blobService.deleteIfExists(addressHash);
-    return res.status(402).json({ error: 'Insufficient credits' });
+    return res.status(402).json({ error: 'Insufficient egress credits' });
   }
   
   const stream = await blobService.getStream(addressHash);
@@ -51,7 +59,7 @@ blobRoutes.get('/:addressHash', async (req, res) => {
     return res.status(404).json({ error: 'No file found' });
   }
   
-  await creditService.chargeDownload(addressHash);
+  await creditService.chargeDownload(addressHash, fileSize);
   res.set('Content-Type', 'application/octet-stream');
   stream.pipe(res);
 });
