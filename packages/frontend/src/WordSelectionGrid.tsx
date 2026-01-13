@@ -65,7 +65,7 @@ export default function WordSelectionGrid({
                 fontWeight: shouldHighlight ? 'bold' : 'normal',
                 cursor: showPlaceholder ? 'default' : 'pointer',
                 boxSizing: 'border-box',
-                color: showPlaceholder ? '#9ca3af' : undefined,
+                color: shouldHighlight ? '#000000' : showPlaceholder ? '#9ca3af' : undefined,
               }}
             >
               {word}
