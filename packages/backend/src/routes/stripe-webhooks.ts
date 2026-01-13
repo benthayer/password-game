@@ -144,11 +144,11 @@ stripeWebhookRoutes.post('/stripe', async (req: Request, res: Response) => {
     
     await recordPayment({
       chargeId: sessionId,
-      chargeCode: null,
+      chargeCode: undefined,
       amountUsdc: amountUsd, // Reusing field for USD amount
       chain: 'stripe',
-      txHash: null,
-      senderAddress: null,
+      txHash: undefined,
+      senderAddress: undefined,
       status: 'confirmed',
       accountAddressHash: addressHash,
       creditsGranted: creditsToGrant,
