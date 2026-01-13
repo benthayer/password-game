@@ -140,7 +140,7 @@ export default function VaultCard({
   };
 
   const triggerFileDownload = (filename: string, mimetype: string, content: Uint8Array) => {
-    const blob = new Blob([content], { type: mimetype });
+    const blob = new Blob([content as BlobPart], { type: mimetype });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
