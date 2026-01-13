@@ -59,13 +59,13 @@ export default function WordSelectionGrid({
               disabled={showPlaceholder}
               className={buttonClasses}
               style={{
-                background: shouldHighlight ? '#10b981' : showPlaceholder ? '#1a1a24' : undefined,
-                border: shouldHighlight ? '3px solid #059669' : showPlaceholder ? '3px solid #2d2d3d' : '3px solid transparent',
+                background: shouldHighlight ? '#10b981' : showPlaceholder ? '#e5e7eb' : undefined,
+                border: shouldHighlight ? '3px solid #059669' : '3px solid transparent',
                 boxShadow: shouldHighlight ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none',
                 fontWeight: shouldHighlight ? 'bold' : 'normal',
                 cursor: showPlaceholder ? 'default' : 'pointer',
                 boxSizing: 'border-box',
-                color: showPlaceholder ? '#4b5563' : undefined,
+                color: showPlaceholder ? '#9ca3af' : undefined,
               }}
             >
               {word}
