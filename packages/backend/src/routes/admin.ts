@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { addCredits, getAccount, getAllAccounts, getCurrentCredits } from '../storage/db.js';
+import { getAccount, getAllAccounts, grantStorageAndEgressFromPayment } from '../storage/db.js';
 import { logAudit, getAuditLog } from '../storage/audit.js';
 
 export const adminRoutes = Router();
@@ -33,14 +33,10 @@ adminRoutes.get('/accounts', requireAdmin, async (req, res) => {
   const key = getAdminKey(req)!;
   
   const accounts = await getAllAccounts();
-  const accountsWithCredits = accounts.map((acc) => ({
-    ...acc,
-    currentCredits: acc.initialCredits - acc.spentCredits,
-  }));
   
   await logAudit('list_accounts', key, { count: accounts.length });
   
-  res.json({ accounts: accountsWithCredits });
+  res.json({ accounts });
 });
 
 // GET /admin/accounts/:addressHash - Get single account
@@ -56,13 +52,10 @@ adminRoutes.get('/accounts/:addressHash', requireAdmin, async (req, res) => {
     return res.status(404).json({ error: 'Account not found' });
   }
   
-  res.json({
-    ...account,
-    currentCredits: account.initialCredits - account.spentCredits,
-  });
+  res.json(account);
 });
 
-// POST /admin/credits - Add credits to account
+// POST /admin/credits - Add credits to account (grants storage + egress)
 adminRoutes.post('/credits', requireAdmin, async (req, res) => {
   const key = getAdminKey(req)!;
   const { addressHash, amount } = req.body;
@@ -71,17 +64,11 @@ adminRoutes.post('/credits', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Missing addressHash or amount' });
   }
   
-  const account = await addCredits(addressHash, amount);
+  const account = await grantStorageAndEgressFromPayment(addressHash, amount);
   
   await logAudit('add_credits', key, { addressHash, amount });
   
-  res.json({
-    success: true,
-    account: {
-      ...account,
-      currentCredits: account.initialCredits - account.spentCredits,
-    },
-  });
+  res.json({ success: true, account });
 });
 
 // GET /admin/audit - Get audit log
