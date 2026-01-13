@@ -1,0 +1,80 @@
+/* Upload confirmation modal */
+.upload-confirm-modal {
+  min-width: 480px;
+  max-width: 600px;
+}
+
+.upload-confirm-intro {
+  color: #94a3b8;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.upload-confirm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.upload-confirm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #0a0a0f;
+  border: 1px solid #1e2a3a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-confirm-item:hover {
+  border-color: #334155;
+  background: #0f0f18;
+}
+
+.upload-confirm-item.salt-warning {
+  border-color: #854d0e;
+  background: #1a1400;
+}
+
+.upload-confirm-item.salt-warning:hover {
+  border-color: #a16207;
+  background: #1f1900;
+}
+
+.upload-confirm-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-top: 2px;
+  accent-color: #22d3ee;
+  cursor: pointer;
+}
+
+.upload-confirm-item span {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.upload-confirm-item.salt-warning span {
+  color: #fbbf24;
+}
+
+/* Disabled confirm button */
+.vault-modal-confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #1e2a3a;
+  border-color: #334155;
+  color: #64748b;
+}
+
+.vault-modal-confirm:disabled:hover {
+  background: #1e2a3a;
+  border-color: #334155;
+  box-shadow: none;
+}
+

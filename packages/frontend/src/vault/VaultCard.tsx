@@ -5,6 +5,7 @@ import StatusModal from './StatusModal';
 import ConfirmModal from './ConfirmModal';
 import TextUploadModal from './TextUploadModal';
 import TextDisplayModal from './TextDisplayModal';
+import UploadConfirmModal from './UploadConfirmModal';
 import { 
   getAddressHash, 
   getSecondaryKey, 
@@ -36,46 +37,38 @@ export default function VaultCard({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [textUploadModalOpen, setTextUploadModalOpen] = useState(false);
   const [textDisplayModalOpen, setTextDisplayModalOpen] = useState(false);
+  const [uploadConfirmOpen, setUploadConfirmOpen] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState<{ type: 'file'; file: File } | { type: 'text'; text: string } | null>(null);
   const [displayedText, setDisplayedText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [addressHash, setAddressHash] = useState<string | null>(null);
   const [lastDecryptedData, setLastDecryptedData] = useState<{ filename: string; mimetype: string; content: Uint8Array } | null>(null);
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (password.length === 0) return;
     
     const input = document.createElement('input');
     input.type = 'file';
-    input.onchange = async (e) => {
+    input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      
-      try {
-        setStatusMessage('Computing keys...');
-        const [hash, secondaryKey] = await Promise.all([
-          getAddressHash(password, hashConfig),
-          getSecondaryKey(password, hashConfig),
-        ]);
-        setAddressHash(hash);
-        
-        setStatusMessage('Encrypting...');
-        const encrypted = await encryptFile(file, password, hashConfig);
-        
-        setStatusMessage('Uploading...');
-        await setBlob(hash, encrypted, secondaryKey);
-        setStatusMessage(null);
-      } catch (err: unknown) {
-        setStatusMessage(null);
-        setErrorMessage(err instanceof Error ? err.message : 'Upload failed');
-      }
+      setPendingUpload({ type: 'file', file });
+      setUploadConfirmOpen(true);
     };
     input.click();
   };
 
-  const handleUploadText = async (text: string) => {
+  const handleUploadText = (text: string) => {
     if (password.length === 0) return;
     setTextUploadModalOpen(false);
+    setPendingUpload({ type: 'text', text });
+    setUploadConfirmOpen(true);
+  };
+
+  const handleUploadConfirmed = async () => {
+    if (!pendingUpload) return;
+    setUploadConfirmOpen(false);
     
     try {
       setStatusMessage('Computing keys...');
@@ -85,8 +78,9 @@ export default function VaultCard({
       ]);
       setAddressHash(hash);
       
-      // Create a File object from the text
-      const file = new File([text], 'text.txt', { type: 'text/plain' });
+      const file = pendingUpload.type === 'file' 
+        ? pendingUpload.file 
+        : new File([pendingUpload.text], 'text.txt', { type: 'text/plain' });
       
       setStatusMessage('Encrypting...');
       const encrypted = await encryptFile(file, password, hashConfig);
@@ -97,7 +91,14 @@ export default function VaultCard({
     } catch (err: unknown) {
       setStatusMessage(null);
       setErrorMessage(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setPendingUpload(null);
     }
+  };
+
+  const handleUploadCancelled = () => {
+    setUploadConfirmOpen(false);
+    setPendingUpload(null);
   };
 
   const handleDownload = async () => {
@@ -204,7 +205,7 @@ export default function VaultCard({
     <>
       <div className="vault-card">
         <button onClick={handleInfoClick} className="vault-button">Info</button>
-        <button onClick={handleUpload} className="vault-button">Upload</button>
+        <button onClick={handleUpload} className="vault-button">Upload File</button>
         <button onClick={() => setTextUploadModalOpen(true)} className="vault-button">Upload Text</button>
         <button onClick={handleDownload} className="vault-button">Download</button>
         <button onClick={handleDeleteClick} className="vault-button">Delete</button>
@@ -240,6 +241,12 @@ export default function VaultCard({
         onClose={() => setTextDisplayModalOpen(false)}
         text={displayedText}
         onDownloadAsFile={handleDownloadAsFile}
+      />
+      <UploadConfirmModal
+        isOpen={uploadConfirmOpen}
+        onConfirm={handleUploadConfirmed}
+        onCancel={handleUploadCancelled}
+        includeSalt={hashConfig.includeSalt}
       />
     </>
   );
