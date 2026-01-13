@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
-import { setFileSize } from '../storage/db.js';
+import { setFileSize, billStorageSinceLastBilled } from '../storage/db.js';
 import { getBlobStream, setBlobStream, deleteBlob, blobExists } from '../storage/b2.js';
 import { SecureTempFile } from './secure-temp-file.js';
 import { StreamingStats } from './streaming-stats.js';
@@ -122,6 +122,9 @@ export class BlobService {
   }
 
   async delete(addressHash: string): Promise<void> {
+    // Bill for any unbilled storage time before deleting
+    await billStorageSinceLastBilled(addressHash);
+    
     await deleteBlob(addressHash);
     await setFileSize(addressHash, null);
   }
