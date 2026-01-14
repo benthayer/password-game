@@ -118,7 +118,7 @@ export async function importPrimaryKeyFromHex(keyHex: string): Promise<CryptoKey
   const keyBytes = hexToBytes(keyHex);
   return crypto.subtle.importKey(
     'raw',
-    keyBytes,
+    keyBytes.buffer as ArrayBuffer,
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt']

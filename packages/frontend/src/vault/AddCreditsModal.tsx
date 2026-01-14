@@ -43,7 +43,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
         includeSalt={includeSalt}
         title="Add Credits"
         confirmText="Continue"
-        fullConfig={fullConfig}
+        {...(fullConfig && { fullConfig })}
       />
     );
   }
