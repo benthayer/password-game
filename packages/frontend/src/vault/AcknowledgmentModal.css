@@ -1,23 +1,24 @@
-/* Upload confirmation modal */
-.upload-confirm-modal {
+/* Acknowledgment modal */
+.acknowledgment-modal {
+  position: relative;
   min-width: 480px;
   max-width: 600px;
 }
 
-.upload-confirm-intro {
+.acknowledgment-intro {
   color: #94a3b8;
   margin-bottom: 20px;
   font-size: 0.95rem;
 }
 
-.upload-confirm-list {
+.acknowledgment-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 8px;
 }
 
-.upload-confirm-item {
+.acknowledgment-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -29,22 +30,22 @@
   transition: all 0.2s;
 }
 
-.upload-confirm-item:hover {
+.acknowledgment-item:hover {
   border-color: #334155;
   background: #0f0f18;
 }
 
-.upload-confirm-item.salt-warning {
+.acknowledgment-item.salt-warning {
   border-color: #854d0e;
   background: #1a1400;
 }
 
-.upload-confirm-item.salt-warning:hover {
+.acknowledgment-item.salt-warning:hover {
   border-color: #a16207;
   background: #1f1900;
 }
 
-.upload-confirm-item input[type="checkbox"] {
+.acknowledgment-item input[type="checkbox"] {
   width: 18px;
   height: 18px;
   min-width: 18px;
@@ -53,28 +54,23 @@
   cursor: pointer;
 }
 
-.upload-confirm-item span {
+.acknowledgment-item span {
   color: #cbd5e1;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.upload-confirm-item.salt-warning span {
+.acknowledgment-item.salt-warning span {
   color: #fbbf24;
 }
 
-/* Disabled confirm button */
-.vault-modal-confirm:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: #1e2a3a;
-  border-color: #334155;
-  color: #64748b;
+/* Single button layout */
+.vault-modal-buttons.single-button {
+  justify-content: flex-end;
 }
 
-.vault-modal-confirm:disabled:hover {
-  background: #1e2a3a;
-  border-color: #334155;
-  box-shadow: none;
+.vault-modal-buttons.single-button .vault-modal-confirm {
+  flex: none;
+  min-width: 140px;
 }
 

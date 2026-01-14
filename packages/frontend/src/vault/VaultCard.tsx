@@ -271,6 +271,7 @@ export default function VaultCard({
           isOpen={addCreditsModalOpen}
           onClose={() => setAddCreditsModalOpen(false)}
           addressHash={addressHash}
+          includeSalt={hashConfig.includeSalt}
         />
       )}
     </>

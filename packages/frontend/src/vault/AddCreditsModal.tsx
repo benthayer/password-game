@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import AcknowledgmentModal from './AcknowledgmentModal';
+import './VaultModal.css';
 import './AddCreditsModal.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -11,14 +13,37 @@ interface AddCreditsModalProps {
   isOpen: boolean;
   onClose: () => void;
   addressHash: string;
+  includeSalt: boolean;
 }
 
-export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCreditsModalProps) {
+type ModalStep = 'acknowledgment' | 'payment';
+
+export default function AddCreditsModal({ isOpen, onClose, addressHash, includeSalt }: AddCreditsModalProps) {
+  const [step, setStep] = useState<ModalStep>('acknowledgment');
   const [credits, setCredits] = useState(5);
   const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const handleClose = () => {
+    setStep('acknowledgment');
+    setError(null);
+    onClose();
+  };
+
   if (!isOpen) return null;
+
+  if (step === 'acknowledgment') {
+    return (
+      <AcknowledgmentModal
+        isOpen={isOpen}
+        onConfirm={() => setStep('payment')}
+        onClose={handleClose}
+        includeSalt={includeSalt}
+        title="Add Credits"
+        confirmText="Continue"
+      />
+    );
+  }
 
   const gbYears = credits * GB_YEARS_PER_DOLLAR;
   const egressGb = credits * EGRESS_GB_PER_DOLLAR;
@@ -51,7 +76,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCre
       
       // Open Stripe checkout in new tab
       window.open(checkoutUrl, '_blank');
-      onClose();
+      handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
@@ -87,7 +112,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCre
       
       // Open Coinbase Commerce checkout in new tab
       window.open(chargeUrl, '_blank');
-      onClose();
+      handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
@@ -96,8 +121,11 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCre
   };
 
   return (
-    <div className="add-credits-overlay" onClick={onClose}>
-      <div className="add-credits-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="vault-modal-overlay" onClick={handleClose}>
+      <div className="vault-modal add-credits-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close-x" onClick={handleClose} aria-label="Close">
+          ×
+        </button>
         <h2>Add Credits</h2>
 
         <div className="credits-input-section">
@@ -130,12 +158,6 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCre
 
         {error && <div className="credits-error">{error}</div>}
 
-        <div className="credits-actions">
-          <button className="credits-cancel" onClick={onClose} disabled={!!loading}>
-            Cancel
-          </button>
-        </div>
-
         <div className="payment-methods">
           <button 
             className="credits-pay credits-pay-stripe" 
@@ -160,4 +182,3 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash }: AddCre
     </div>
   );
 }
-

@@ -9,6 +9,7 @@
 }
 
 .vault-modal {
+  position: relative;
   background: #12121a;
   border-radius: 12px;
   padding: 32px;
@@ -16,6 +17,31 @@
   max-width: 480px;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
   border: 1px solid #1e2a3a;
+}
+
+/* X close button in top right */
+.modal-close-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.modal-close-x:hover {
+  background: #1e2a3a;
+  color: #94a3b8;
 }
 
 .vault-modal h2 {

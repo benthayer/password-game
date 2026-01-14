@@ -1,31 +1,7 @@
-.add-credits-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
+/* Add credits modal - extends vault-modal */
 .add-credits-modal {
-  background: #12121a;
-  border: 1px solid #1e2a3a;
-  border-radius: 12px;
-  padding: 28px 32px;
   min-width: 360px;
   max-width: 420px;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
-}
-
-.add-credits-modal h2 {
-  margin: 0 0 24px 0;
-  color: #e2e8f0;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .credits-input-section {
@@ -118,29 +94,6 @@
   margin-bottom: 16px;
 }
 
-.credits-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.credits-cancel {
-  flex: 1;
-  padding: 12px 20px;
-  background: transparent;
-  border: 1px solid #334155;
-  border-radius: 6px;
-  color: #94a3b8;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.credits-cancel:hover:not(:disabled) {
-  background: #1e293b;
-  border-color: #475569;
-}
-
 .payment-methods {
   display: flex;
   flex-direction: column;
@@ -181,8 +134,7 @@
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
 }
 
-.credits-pay:disabled,
-.credits-cancel:disabled {
+.credits-pay:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
