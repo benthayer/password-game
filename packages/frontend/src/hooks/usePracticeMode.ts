@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getNextWords } from '../crypto-utils';
+import { getNextWordsFlat } from '../crypto-utils';
 import type { GenerationConfig } from '../generation-config';
 
 export interface UsePracticeModeResult {
@@ -48,7 +48,7 @@ export function usePracticeMode(
     }
 
     const prefix = targetPassword.slice(0, index);
-    const words = getNextWords(prefix, config);
+    const words = getNextWordsFlat(prefix, config);
     setNextWords(words);
 
     // Find correct word index for highlighting

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AcknowledgmentModal from './AcknowledgmentModal';
+import type { GenerationConfig } from '../generation-config';
 import './VaultModal.css';
 import './AddCreditsModal.css';
 
@@ -14,11 +15,12 @@ interface AddCreditsModalProps {
   onClose: () => void;
   addressHash: string;
   includeSalt: boolean;
+  fullConfig?: GenerationConfig;
 }
 
 type ModalStep = 'acknowledgment' | 'payment';
 
-export default function AddCreditsModal({ isOpen, onClose, addressHash, includeSalt }: AddCreditsModalProps) {
+export default function AddCreditsModal({ isOpen, onClose, addressHash, includeSalt, fullConfig }: AddCreditsModalProps) {
   const [step, setStep] = useState<ModalStep>('acknowledgment');
   const [credits, setCredits] = useState(5);
   const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
@@ -41,6 +43,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
         includeSalt={includeSalt}
         title="Add Credits"
         confirmText="Continue"
+        fullConfig={fullConfig}
       />
     );
   }

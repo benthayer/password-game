@@ -4,9 +4,9 @@ import { downloadConfigAsJson } from '../config-json';
 import './VaultModal.css';
 import './AcknowledgmentModal.css';
 
+type Stage = 'password' | 'config' | 'acknowledgments';
+
 const ACKNOWLEDGMENTS = [
-  "I have written down my configuration information",
-  "I have memorized my password",
   "I understand that the password should be private but the configuration can be public and should be accessible to me when I want to download my data",
   "I understand that if I lose the configuration information or forget my password that my data will be unrecoverable",
   "I understand that my payment only applies to this password and configuration and cannot be transferred, even if I forget my password or lose my configuration information",
@@ -35,7 +35,10 @@ export default function AcknowledgmentModal({
   confirmText = "Continue",
   fullConfig,
 }: AcknowledgmentModalProps) {
-  const [checked, setChecked] = useState<boolean[]>([]);
+  const [stage, setStage] = useState<Stage>('password');
+  const [passwordConfirmed, setPasswordConfirmed] = useState(false);
+  const [configConfirmed, setConfigConfirmed] = useState(false);
+  const [acknowledgmentChecks, setAcknowledgmentChecks] = useState<boolean[]>([]);
 
   const allAcknowledgments = includeSalt 
     ? ACKNOWLEDGMENTS 
@@ -43,39 +46,108 @@ export default function AcknowledgmentModal({
 
   useEffect(() => {
     if (isOpen) {
-      setChecked(new Array(allAcknowledgments.length).fill(false));
+      setStage('password');
+      setPasswordConfirmed(false);
+      setConfigConfirmed(false);
+      setAcknowledgmentChecks(new Array(allAcknowledgments.length).fill(false));
     }
   }, [isOpen, allAcknowledgments.length]);
 
   if (!isOpen) return null;
 
-  const toggleCheckbox = (index: number) => {
-    setChecked(prev => {
+  const handleDownload = () => {
+    if (fullConfig) {
+      downloadConfigAsJson(fullConfig);
+    }
+  };
+
+  const toggleAcknowledgment = (index: number) => {
+    setAcknowledgmentChecks(prev => {
       const next = [...prev];
       next[index] = !next[index];
       return next;
     });
   };
 
-  const handleDownloadConfig = () => {
-    if (fullConfig) {
-      downloadConfigAsJson(fullConfig);
-    }
-  };
+  const allAcknowledged = acknowledgmentChecks.length === allAcknowledgments.length 
+    && acknowledgmentChecks.every(Boolean);
 
-  const allChecked = checked.length === allAcknowledgments.length && checked.every(Boolean);
+  // Step 1: Password confirmation
+  if (stage === 'password') {
+    return (
+      <div className="vault-modal-overlay" onClick={onClose}>
+        <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
+          <h2>{title}</h2>
+          <div className="acknowledgment-stage-content">
+            <label className="acknowledgment-checkbox-item">
+              <input
+                type="checkbox"
+                checked={passwordConfirmed}
+                onChange={() => setPasswordConfirmed(!passwordConfirmed)}
+              />
+              <span>I have memorized my password</span>
+            </label>
+          </div>
+          <div className="vault-modal-buttons single-button">
+            <button 
+              className="vault-modal-confirm"
+              onClick={() => setStage('config')}
+              disabled={!passwordConfirmed}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // Step 2: Config confirmation
+  if (stage === 'config') {
+    return (
+      <div className="vault-modal-overlay" onClick={onClose}>
+        <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
+          <h2>{title}</h2>
+          <div className="acknowledgment-stage-content">
+            <label className="acknowledgment-checkbox-item">
+              <input
+                type="checkbox"
+                checked={configConfirmed}
+                onChange={() => setConfigConfirmed(!configConfirmed)}
+              />
+              <span>I have downloaded or written down my configuration and will be able to easily access it when I need to recover</span>
+            </label>
+          </div>
+          {fullConfig && (
+            <button className="acknowledgment-download-button" onClick={handleDownload}>
+              Download Configuration (JSON)
+            </button>
+          )}
+          <div className="vault-modal-buttons">
+            <button className="vault-modal-cancel" onClick={() => setStage('password')}>
+              Back
+            </button>
+            <button 
+              className="vault-modal-confirm"
+              onClick={() => setStage('acknowledgments')}
+              disabled={!configConfirmed}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Final acknowledgments
   return (
     <div className="vault-modal-overlay" onClick={onClose}>
-      <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-x" onClick={onClose} aria-label="Close">
-          ×
-        </button>
+      <div className="vault-modal acknowledgment-modal acknowledgments-stage" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
         <h2>{title}</h2>
-        <p className="acknowledgment-intro">
-          Please acknowledge that you understand the following:
-        </p>
-        
         <div className="acknowledgment-list">
           {allAcknowledgments.map((text, index) => (
             <label 
@@ -84,25 +156,21 @@ export default function AcknowledgmentModal({
             >
               <input
                 type="checkbox"
-                checked={checked[index] || false}
-                onChange={() => toggleCheckbox(index)}
+                checked={acknowledgmentChecks[index] || false}
+                onChange={() => toggleAcknowledgment(index)}
               />
               <span>{text}</span>
             </label>
           ))}
         </div>
-
-        {fullConfig && (
-          <button className="acknowledgment-download-button" onClick={handleDownloadConfig}>
-            Download Configuration (JSON)
+        <div className="vault-modal-buttons">
+          <button className="vault-modal-cancel" onClick={() => setStage('config')}>
+            Back
           </button>
-        )}
-
-        <div className="vault-modal-buttons single-button">
           <button 
-            className="vault-modal-confirm" 
+            className="vault-modal-confirm"
             onClick={onConfirm}
-            disabled={!allChecked}
+            disabled={!allAcknowledged}
           >
             {confirmText}
           </button>
@@ -111,4 +179,3 @@ export default function AcknowledgmentModal({
     </div>
   );
 }
-

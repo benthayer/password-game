@@ -22,7 +22,7 @@ export default function UploadConfirmModal({
       onConfirm={onConfirm}
       onClose={onCancel}
       includeSalt={includeSalt}
-      title="Confirm Upload"
+      title="Upload"
       confirmText="Upload"
       {...(fullConfig && { fullConfig })}
     />
