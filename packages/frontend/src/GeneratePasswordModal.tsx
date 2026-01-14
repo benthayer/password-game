@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { calculateEntropyPerWord, PERSIST_DESIRED_NUM_WORDS } from './generation-config';
 import { generatePassword, generateSalt } from './crypto-utils';
+import { prefetchVaultKeys } from './vault/vault-keys-cache';
 import { calculateCostToCrack } from './cost-calculation';
 import { useConfigForm } from './hooks/useConfigForm';
 import { downloadConfigAsJson } from './config-json';
@@ -133,8 +134,10 @@ export default function GeneratePasswordModal({
   const handleConfirmContinue = () => {
     if (!generatedConfig) return;
     
+    const password = generatePassword(desiredNumWords, generatedConfig);
     setConfig(generatedConfig);
-    setSubpassword(generatePassword(desiredNumWords, generatedConfig));
+    setSubpassword(password);
+    prefetchVaultKeys(password, generatedConfig);
     navigate('/practice');
     onClose();
   };

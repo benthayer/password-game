@@ -7,36 +7,30 @@ import TextUploadModal from './TextUploadModal';
 import TextDisplayModal from './TextDisplayModal';
 import UploadConfirmModal from './UploadConfirmModal';
 import AddCreditsModal from './AddCreditsModal';
-import { 
-  getAddressHash, 
-  getSecondaryKey, 
-  encryptFile, 
-  decryptFile
-} from './vault-crypto-streaming';
+import { encryptFile, decryptFile } from './vault-crypto-streaming';
 import { getBlob, setBlob, deleteBlob } from './vault-api';
-import type { FullHashConfig } from '../hash-config';
-import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
+import { getVaultKeys, hasVaultKeysCached } from './vault-keys-cache';
 import type { GenerationConfig } from '../generation-config';
+import { getHashConfig } from '../generation-config';
 import './VaultCard.css';
 
 interface VaultCardProps {
   password: string[];
-  hashConfig?: FullHashConfig;
-  fullConfig?: GenerationConfig;
+  fullConfig: GenerationConfig;
 }
 
 /**
  * Vault card for upload/download operations.
  * 
- * Key optimization: Address hash is computed LAZILY when needed,
- * not on every password change. This avoids running expensive
- * Argon2id (~2.5s) on every word selection.
+ * Key optimization: Vault keys are computed in the background on word selection,
+ * so operations are instant when the user clicks. Uses promise-based caching
+ * keyed by identity hash.
  */
 export default function VaultCard({ 
   password, 
-  hashConfig = DEFAULT_FULL_HASH_CONFIG,
   fullConfig,
 }: VaultCardProps) {
+  const hashConfig = getHashConfig(fullConfig);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [textUploadModalOpen, setTextUploadModalOpen] = useState(false);
@@ -76,12 +70,11 @@ export default function VaultCard({
     setUploadConfirmOpen(false);
     
     try {
-      setStatusMessage('Computing keys...');
-      const [hash, secondaryKey] = await Promise.all([
-        getAddressHash(password, hashConfig),
-        getSecondaryKey(password, hashConfig),
-      ]);
-      setAddressHash(hash);
+      if (!hasVaultKeysCached(password, fullConfig)) {
+        setStatusMessage('Preparing...');
+      }
+      const keys = await getVaultKeys(password, fullConfig);
+      setAddressHash(keys.addressHash);
       
       const file = pendingUpload.type === 'file' 
         ? pendingUpload.file 
@@ -91,7 +84,7 @@ export default function VaultCard({
       const encrypted = await encryptFile(file, password, hashConfig);
       
       setStatusMessage('Uploading...');
-      await setBlob(hash, encrypted, secondaryKey);
+      await setBlob(keys.addressHash, encrypted, keys.secondaryKey);
       setStatusMessage(null);
     } catch (err: unknown) {
       setStatusMessage(null);
@@ -110,12 +103,14 @@ export default function VaultCard({
     if (password.length === 0) return;
     
     try {
-      setStatusMessage('Computing address...');
-      const hash = await getAddressHash(password, hashConfig);
-      setAddressHash(hash);
+      if (!hasVaultKeysCached(password, fullConfig)) {
+        setStatusMessage('Preparing...');
+      }
+      const keys = await getVaultKeys(password, fullConfig);
+      setAddressHash(keys.addressHash);
       
       setStatusMessage('Downloading...');
-      const data = await getBlob(hash);
+      const data = await getBlob(keys.addressHash);
       if (!data) {
         setStatusMessage(null);
         setErrorMessage('No file found at this address');
@@ -162,9 +157,11 @@ export default function VaultCard({
     if (password.length === 0) return;
     
     try {
-      setStatusMessage('Computing address...');
-      const hash = await getAddressHash(password, hashConfig);
-      setAddressHash(hash);
+      if (!hasVaultKeysCached(password, fullConfig)) {
+        setStatusMessage('Preparing...');
+      }
+      const keys = await getVaultKeys(password, fullConfig);
+      setAddressHash(keys.addressHash);
       setStatusMessage(null);
       setModalOpen(true);
     } catch (err: unknown) {
@@ -177,9 +174,11 @@ export default function VaultCard({
     if (password.length === 0) return;
     
     try {
-      setStatusMessage('Computing address...');
-      const hash = await getAddressHash(password, hashConfig);
-      setAddressHash(hash);
+      if (!hasVaultKeysCached(password, fullConfig)) {
+        setStatusMessage('Preparing...');
+      }
+      const keys = await getVaultKeys(password, fullConfig);
+      setAddressHash(keys.addressHash);
       setStatusMessage(null);
       setAddCreditsModalOpen(true);
     } catch (err: unknown) {
@@ -192,9 +191,11 @@ export default function VaultCard({
     if (password.length === 0) return;
     
     try {
-      setStatusMessage('Computing address...');
-      const hash = await getAddressHash(password, hashConfig);
-      setAddressHash(hash);
+      if (!hasVaultKeysCached(password, fullConfig)) {
+        setStatusMessage('Preparing...');
+      }
+      const keys = await getVaultKeys(password, fullConfig);
+      setAddressHash(keys.addressHash);
       setStatusMessage(null);
       setConfirmDeleteOpen(true);
     } catch (err: unknown) {
@@ -268,7 +269,7 @@ export default function VaultCard({
         onConfirm={handleUploadConfirmed}
         onCancel={handleUploadCancelled}
         includeSalt={hashConfig.includeSalt}
-        {...(fullConfig && { fullConfig })}
+        fullConfig={fullConfig}
       />
       {addressHash && (
         <AddCreditsModal
@@ -276,6 +277,7 @@ export default function VaultCard({
           onClose={() => setAddCreditsModalOpen(false)}
           addressHash={addressHash}
           includeSalt={hashConfig.includeSalt}
+          fullConfig={fullConfig}
         />
       )}
     </>

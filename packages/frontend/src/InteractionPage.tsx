@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
-import { DEFAULT_PRACTICE_DISPLAY_CONFIG, getHashConfig, getGridSize, calculateEntropyPerWord } from './generation-config';
+import { DEFAULT_PRACTICE_DISPLAY_CONFIG, getGridSize, calculateEntropyPerWord } from './generation-config';
 import { SecurityEstimate } from './config-modal';
 import { useRecoveryMode } from './hooks/useRecoveryMode';
 import { usePracticeMode } from './hooks/usePracticeMode';
@@ -119,7 +119,7 @@ export default function InteractionPage({
 
         <DownloadConfigButton config={config} />
       </div>
-      <VaultCard password={subpassword} hashConfig={getHashConfig(config)} fullConfig={config} />
+      <VaultCard password={subpassword} fullConfig={config} />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 /**
  * Recovery mode state management.
  * Handles word selection for building/recovering a password.
+ * 
+ * Prefetches vault keys on word selection for instant vault operations.
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getNextWords } from '../crypto-utils';
+import { getNextWordsFlat } from '../crypto-utils';
 import type { GenerationConfig } from '../generation-config';
+import { prefetchVaultKeys } from '../vault/vault-keys-cache';
 
 export interface UseRecoveryModeResult {
   // State
@@ -27,12 +29,14 @@ export function useRecoveryMode(
 
   // Load next words whenever subpassword or config changes
   useEffect(() => {
-    setNextWords(getNextWords(subpassword, config));
+    setNextWords(getNextWordsFlat(subpassword, config));
   }, [subpassword, config]);
 
   const selectWord = useCallback((word: string) => {
-    setSubpassword([...subpassword, word]);
-  }, [subpassword, setSubpassword]);
+    const newPassword = [...subpassword, word];
+    setSubpassword(newPassword);
+    prefetchVaultKeys(newPassword, config);
+  }, [subpassword, setSubpassword, config]);
 
   const deleteLastWord = useCallback(() => {
     if (subpassword.length > 0) {

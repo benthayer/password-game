@@ -86,6 +86,46 @@ export async function getSecondaryKey(
 }
 
 /**
+ * Derive the primary encryption key (CryptoKey) from password.
+ * This is the main key used for AES-GCM encryption of vault contents.
+ */
+export async function getPrimaryKey(
+  password: string[],
+  config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
+): Promise<CryptoKey> {
+  return deriveKey(password, config);
+}
+
+/**
+ * Derive the primary encryption key material as hex.
+ * Used by Web Workers since CryptoKey can't be transferred between threads.
+ */
+export async function getPrimaryKeyHex(
+  password: string[],
+  config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
+): Promise<string> {
+  const hashFn = createHashFunction(config);
+  const input = formatPasswordForHash(password, SUFFIX_PRIMARY_KEY);
+  const keyHex = await hashFn(input);
+  // Return first 64 hex chars (32 bytes for AES-256)
+  return keyHex.slice(0, 64);
+}
+
+/**
+ * Import a primary key from hex (for use after receiving from Worker).
+ */
+export async function importPrimaryKeyFromHex(keyHex: string): Promise<CryptoKey> {
+  const keyBytes = hexToBytes(keyHex);
+  return crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+/**
  * Derive a CryptoKey from password for AES-GCM encryption.
  * Uses the configurable hash function to derive key material.
  */
