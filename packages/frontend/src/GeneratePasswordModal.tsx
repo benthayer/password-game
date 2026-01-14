@@ -158,7 +158,7 @@ export default function GeneratePasswordModal({
       <div className="generate-modal-overlay" onClick={onClose}>
         <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
           <ConfirmHeader onClose={onClose} />
-          <ConfirmBody config={generatedConfig} onDownload={handleDownloadConfig} />
+          <ConfirmBody config={generatedConfig} onDownload={handleDownloadConfig} alreadyDownloaded={downloadOnGenerate} />
           <ConfirmFooter onBack={handleBack} onContinue={handleConfirmContinue} />
         </div>
       </div>
@@ -307,10 +307,12 @@ function ConfirmHeader({ onClose }: { onClose: () => void }) {
 
 function ConfirmBody({ 
   config, 
-  onDownload 
+  onDownload,
+  alreadyDownloaded,
 }: { 
   config: GenerationConfig;
   onDownload: () => void;
+  alreadyDownloaded: boolean;
 }) {
   return (
     <div className="generate-modal-body confirm-body">
@@ -338,9 +340,15 @@ function ConfirmBody({
         </div>
       </div>
 
-      <button className="confirm-download-button" onClick={onDownload}>
-        Download Configuration (JSON)
-      </button>
+      {alreadyDownloaded ? (
+        <div className="confirm-downloaded-message">
+          ✓ Your configuration was automatically downloaded
+        </div>
+      ) : (
+        <button className="confirm-download-button" onClick={onDownload}>
+          Download Configuration (JSON)
+        </button>
+      )}
     </div>
   );
 }
