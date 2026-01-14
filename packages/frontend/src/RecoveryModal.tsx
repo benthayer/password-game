@@ -3,11 +3,12 @@
  * Configure grid before starting password recovery.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
 import { parseConfigFromJson, ConfigParseError } from './config-json';
+import { CloseConfirmModal } from './shared';
 import {
   GridSettingsSection,
   HashSettingsSection,
@@ -33,8 +34,28 @@ export default function RecoveryModal({
   const form = useConfigForm(config, isOpen);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowCloseConfirm(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleCloseAttempt = () => {
+    setShowCloseConfirm(true);
+  };
+
+  const handleConfirmClose = () => {
+    setShowCloseConfirm(false);
+    onClose();
+  };
+
+  const handleCancelClose = () => {
+    setShowCloseConfirm(false);
+  };
 
   const handleRecover = () => {
     setConfig(form.toConfig());
@@ -70,56 +91,63 @@ export default function RecoveryModal({
   };
 
   return (
-    <div className="recovery-modal-overlay" onClick={onClose}>
-      <div className="recovery-modal-content" onClick={(e) => e.stopPropagation()}>
-        <ModalHeader onClose={onClose} onImport={handleImportClick} />
+    <>
+      <div className="recovery-modal-overlay" onClick={handleCloseAttempt}>
+        <div className="recovery-modal-content" onClick={(e) => e.stopPropagation()}>
+          <ModalHeader onClose={handleCloseAttempt} onImport={handleImportClick} />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
 
-        {importError && (
-          <div className="import-error">
-            <span className="import-error-icon">⚠</span>
-            <span>{importError}</span>
-            <button className="import-error-dismiss" onClick={() => setImportError(null)}>×</button>
+          {importError && (
+            <div className="import-error">
+              <span className="import-error-icon">⚠</span>
+              <span>{importError}</span>
+              <button className="import-error-dismiss" onClick={() => setImportError(null)}>×</button>
+            </div>
+          )}
+
+          <div className="recovery-modal-body">
+            <GridSettingsSection
+              seedPhrase={form.seedPhrase}
+              onSeedPhraseChange={form.setSeedPhrase}
+              gridRows={form.gridRows}
+              gridCols={form.gridCols}
+              onIncrementRows={form.incrementRows}
+              onDecrementRows={form.decrementRows}
+              onIncrementCols={form.incrementCols}
+              onDecrementCols={form.decrementCols}
+              gridSize={form.gridSize}
+            />
+
+            <HashSettingsSection
+              algorithm={form.hashAlgorithm}
+              onAlgorithmChange={form.changeAlgorithm}
+              onConfigChange={form.setHashAlgorithm}
+              useRecommended={form.useRecommendedHash}
+              onUseRecommendedChange={form.setUseRecommendedHash}
+              includeSalt={form.includeSalt}
+              onIncludeSaltChange={form.setIncludeSalt}
+              saltMode="recovery"
+              salt={form.salt}
+              onSaltChange={form.setSalt}
+            />
           </div>
-        )}
 
-        <div className="recovery-modal-body">
-          <GridSettingsSection
-            seedPhrase={form.seedPhrase}
-            onSeedPhraseChange={form.setSeedPhrase}
-            gridRows={form.gridRows}
-            gridCols={form.gridCols}
-            onIncrementRows={form.incrementRows}
-            onDecrementRows={form.decrementRows}
-            onIncrementCols={form.incrementCols}
-            onDecrementCols={form.decrementCols}
-            gridSize={form.gridSize}
-          />
-
-          <HashSettingsSection
-            algorithm={form.hashAlgorithm}
-            onAlgorithmChange={form.changeAlgorithm}
-            onConfigChange={form.setHashAlgorithm}
-            useRecommended={form.useRecommendedHash}
-            onUseRecommendedChange={form.setUseRecommendedHash}
-            includeSalt={form.includeSalt}
-            onIncludeSaltChange={form.setIncludeSalt}
-            saltMode="recovery"
-            salt={form.salt}
-            onSaltChange={form.setSalt}
-          />
+          <ModalFooter onCancel={handleCloseAttempt} onRecover={handleRecover} />
         </div>
-
-        <ModalFooter onCancel={onClose} onRecover={handleRecover} />
       </div>
-    </div>
+      <CloseConfirmModal
+        isOpen={showCloseConfirm}
+        onConfirm={handleConfirmClose}
+        onCancel={handleCancelClose}
+      />
+    </>
   );
 }
 

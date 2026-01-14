@@ -17,9 +17,10 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
+  // No click-outside dismiss - user must explicitly choose
   return (
-    <div className="vault-modal-overlay" onClick={onCancel}>
-      <div className="vault-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="vault-modal-overlay">
+      <div className="vault-modal">
         <h2>{title}</h2>
         <p style={{ color: '#94a3b8', marginBottom: '20px' }}>{message}</p>
         <div className="vault-modal-buttons">

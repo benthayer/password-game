@@ -13,6 +13,7 @@ import { prefetchVaultKeys } from './vault/vault-keys-cache';
 import { calculateCostToCrack } from './cost-calculation';
 import { useConfigForm } from './hooks/useConfigForm';
 import { downloadConfigAsJson } from './config-json';
+import { CloseConfirmModal } from './shared';
 import {
   GridSettingsSection,
   HashSettingsSection,
@@ -80,17 +81,30 @@ export default function GeneratePasswordModal({
 
   // Two-stage flow: configure -> confirm
   const [stage, setStage] = useState<ModalStage>('configure');
-  const [downloadOnGenerate, setDownloadOnGenerate] = useState(true);
   const [generatedConfig, setGeneratedConfig] = useState<GenerationConfig | null>(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   // Reset stage when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setStage('configure');
-      setDownloadOnGenerate(true);
       setGeneratedConfig(null);
+      setShowCloseConfirm(false);
     }
   }, [isOpen]);
+
+  const handleCloseAttempt = () => {
+    setShowCloseConfirm(true);
+  };
+
+  const handleConfirmClose = () => {
+    setShowCloseConfirm(false);
+    onClose();
+  };
+
+  const handleCancelClose = () => {
+    setShowCloseConfirm(false);
+  };
 
   useEffect(() => {
     if (PERSIST_DESIRED_NUM_WORDS) {
@@ -122,11 +136,6 @@ export default function GeneratePasswordModal({
       newConfig.salt = generateSalt();
     }
     
-    // Download config if checkbox is checked (pre-generate)
-    if (downloadOnGenerate) {
-      downloadConfigAsJson(newConfig);
-    }
-    
     setGeneratedConfig(newConfig);
     setStage('confirm');
   };
@@ -155,20 +164,32 @@ export default function GeneratePasswordModal({
 
   if (stage === 'confirm' && generatedConfig) {
     return (
-      <div className="generate-modal-overlay" onClick={onClose}>
-        <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
-          <ConfirmHeader onClose={onClose} />
-          <ConfirmBody config={generatedConfig} onDownload={handleDownloadConfig} alreadyDownloaded={downloadOnGenerate} />
-          <ConfirmFooter onBack={handleBack} onContinue={handleConfirmContinue} />
+      <>
+        <div className="generate-modal-overlay" onClick={handleCloseAttempt}>
+          <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
+            <ConfirmStage 
+              config={generatedConfig}
+              onClose={handleCloseAttempt}
+              onBack={handleBack}
+              onContinue={handleConfirmContinue}
+            />
+          </div>
         </div>
-      </div>
+        <CloseConfirmModal
+          isOpen={showCloseConfirm}
+          onConfirm={handleConfirmClose}
+          onCancel={handleCancelClose}
+          message="Are you sure? Your generated password will be lost if you haven't saved your configuration."
+        />
+      </>
     );
   }
 
   return (
-    <div className="generate-modal-overlay" onClick={onClose}>
-      <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
-        <ModalHeader onClose={onClose} />
+    <>
+      <div className="generate-modal-overlay" onClick={handleCloseAttempt}>
+        <div className="generate-modal-content" onClick={(e) => e.stopPropagation()}>
+          <ModalHeader onClose={handleCloseAttempt} />
 
         <div className="generate-modal-body">
           <GridSettingsSection
@@ -204,16 +225,20 @@ export default function GeneratePasswordModal({
         </div>
 
         <ModalFooter
-          onCancel={onClose}
+          onCancel={handleCloseAttempt}
           onGenerate={handleGenerateClick}
           numWords={desiredNumWords}
           disabled={blockReason.blocked}
           disabledReason={blockReason.reason}
-          downloadOnGenerate={downloadOnGenerate}
-          onDownloadOnGenerateChange={setDownloadOnGenerate}
         />
       </div>
     </div>
+    <CloseConfirmModal
+      isOpen={showCloseConfirm}
+      onConfirm={handleConfirmClose}
+      onCancel={handleCancelClose}
+    />
+    </>
   );
 }
 
@@ -241,29 +266,15 @@ function ModalFooter({
   numWords,
   disabled,
   disabledReason,
-  downloadOnGenerate,
-  onDownloadOnGenerateChange,
 }: {
   onCancel: () => void;
   onGenerate: () => void;
   numWords: number;
   disabled?: boolean;
   disabledReason?: string | null;
-  downloadOnGenerate: boolean;
-  onDownloadOnGenerateChange: (value: boolean) => void;
 }) {
   return (
     <div className="generate-modal-footer">
-      <div className="generate-footer-options">
-        <label className="download-checkbox">
-          <input
-            type="checkbox"
-            checked={downloadOnGenerate}
-            onChange={(e) => onDownloadOnGenerateChange(e.target.checked)}
-          />
-          <span>Download configuration file</span>
-        </label>
-      </div>
       <div className="generate-footer-buttons">
         <button onClick={onCancel} className="generate-button cancel-button">
           Cancel
@@ -293,81 +304,103 @@ function ModalFooter({
 }
 
 // ============================================================
-// Confirmation Stage Components
+// Confirmation Stage Component
 // ============================================================
 
-function ConfirmHeader({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="generate-modal-header confirm-header">
-      <h2>⚠️ Save Your Configuration</h2>
-      <button className="generate-modal-close" onClick={onClose}>×</button>
-    </div>
-  );
-}
-
-function ConfirmBody({ 
-  config, 
-  onDownload,
-  alreadyDownloaded,
-}: { 
+function ConfirmStage({
+  config,
+  onClose,
+  onBack,
+  onContinue,
+}: {
   config: GenerationConfig;
-  onDownload: () => void;
-  alreadyDownloaded: boolean;
-}) {
-  return (
-    <div className="generate-modal-body confirm-body">
-      <div className="confirm-warning">
-        <p><strong>Your password has been generated!</strong></p>
-        <p>
-          Before continuing, make sure you have saved your configuration. 
-          Without it, you will <strong>permanently lose access</strong> to any data 
-          encrypted with this password.
-        </p>
-      </div>
-
-      <div className="confirm-config-summary">
-        <div className="config-summary-item">
-          <span className="config-summary-label">Seed Phrase:</span>
-          <span className="config-summary-value">{config.seedPhrase || '(none)'}</span>
-        </div>
-        <div className="config-summary-item">
-          <span className="config-summary-label">Grid:</span>
-          <span className="config-summary-value">{config.gridRows} × {config.gridCols}</span>
-        </div>
-        <div className="config-summary-item">
-          <span className="config-summary-label">Salt:</span>
-          <span className="config-summary-value">{config.includeSalt ? 'Enabled' : 'Disabled'}</span>
-        </div>
-      </div>
-
-      {alreadyDownloaded ? (
-        <div className="confirm-downloaded-message">
-          ✓ Your configuration was automatically downloaded
-        </div>
-      ) : (
-        <button className="confirm-download-button" onClick={onDownload}>
-          Download Configuration (JSON)
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ConfirmFooter({ 
-  onBack, 
-  onContinue 
-}: { 
+  onClose: () => void;
   onBack: () => void;
   onContinue: () => void;
 }) {
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+  const [hasSavedAcknowledgment, setHasSavedAcknowledgment] = useState(false);
+
+  const canContinue = hasSavedAcknowledgment;
+
+  const handleDownload = () => {
+    downloadConfigAsJson(config);
+    setHasDownloaded(true);
+  };
+
+  const hashDisplay = config.useRecommendedHash 
+    ? 'Recommended (argon2id)' 
+    : config.hashAlgorithm.algorithm;
+
   return (
-    <div className="generate-modal-footer confirm-footer">
-      <button onClick={onBack} className="generate-button cancel-button">
-        ← Back
-      </button>
-      <button onClick={onContinue} className="generate-button generate-button-primary">
-        I've Saved My Config → Continue
-      </button>
-    </div>
+    <>
+      <div className="generate-modal-header confirm-header">
+        <h2>⚠️ Save Your Configuration</h2>
+        <button className="generate-modal-close" onClick={onClose}>×</button>
+      </div>
+
+      <div className="generate-modal-body confirm-body">
+        <div className="confirm-warning">
+          <p><strong>Your password has been generated!</strong></p>
+          <p>
+            Before continuing, make sure you have saved your configuration. 
+            Without it, you will <strong>permanently lose access</strong> to any data 
+            encrypted with this password.
+          </p>
+        </div>
+
+        <div className="confirm-config-summary">
+          <div className="config-summary-item">
+            <span className="config-summary-label">Seed Phrase:</span>
+            <span className="config-summary-value">{config.seedPhrase || '(none)'}</span>
+          </div>
+          <div className="config-summary-item">
+            <span className="config-summary-label">Grid:</span>
+            <span className="config-summary-value">{config.gridRows} × {config.gridCols}</span>
+          </div>
+          <div className="config-summary-item">
+            <span className="config-summary-label">Hash:</span>
+            <span className="config-summary-value">{hashDisplay}</span>
+          </div>
+          <div className="config-summary-item">
+            <span className="config-summary-label">Salt:</span>
+            <span className="config-summary-value">{config.includeSalt ? config.salt : 'Disabled'}</span>
+          </div>
+        </div>
+
+        <button 
+          className={`confirm-download-button ${hasDownloaded ? 'downloaded' : ''}`}
+          onClick={handleDownload}
+          disabled={hasDownloaded}
+        >
+          {hasDownloaded ? '✓ Downloaded' : 'Download Configuration (JSON)'}
+        </button>
+
+        <label className="confirm-acknowledgment">
+          <input
+            type="checkbox"
+            checked={hasSavedAcknowledgment}
+            onChange={(e) => setHasSavedAcknowledgment(e.target.checked)}
+          />
+          <span>
+            I've saved all the configuration details somewhere I'll be able to access 
+            when trying to recover my information
+          </span>
+        </label>
+      </div>
+
+      <div className="generate-modal-footer confirm-footer">
+        <button onClick={onBack} className="generate-button cancel-button">
+          ← Back
+        </button>
+        <button 
+          onClick={onContinue} 
+          className={`generate-button generate-button-primary ${!canContinue ? 'disabled' : ''}`}
+          disabled={!canContinue}
+        >
+          Continue
+        </button>
+      </div>
+    </>
   );
 }

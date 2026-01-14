@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { GenerationConfig } from '../generation-config';
 import { downloadConfigAsJson } from '../config-json';
+import { CloseConfirmModal } from '../shared';
 import './VaultModal.css';
 import './AcknowledgmentModal.css';
 
@@ -39,6 +40,7 @@ export default function AcknowledgmentModal({
   const [passwordConfirmed, setPasswordConfirmed] = useState(false);
   const [configConfirmed, setConfigConfirmed] = useState(false);
   const [acknowledgmentChecks, setAcknowledgmentChecks] = useState<boolean[]>([]);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const allAcknowledgments = includeSalt 
     ? ACKNOWLEDGMENTS 
@@ -50,10 +52,24 @@ export default function AcknowledgmentModal({
       setPasswordConfirmed(false);
       setConfigConfirmed(false);
       setAcknowledgmentChecks(new Array(allAcknowledgments.length).fill(false));
+      setShowCloseConfirm(false);
     }
   }, [isOpen, allAcknowledgments.length]);
 
   if (!isOpen) return null;
+
+  const handleCloseAttempt = () => {
+    setShowCloseConfirm(true);
+  };
+
+  const handleConfirmClose = () => {
+    setShowCloseConfirm(false);
+    onClose();
+  };
+
+  const handleCancelClose = () => {
+    setShowCloseConfirm(false);
+  };
 
   const handleDownload = () => {
     if (fullConfig) {
@@ -75,107 +91,128 @@ export default function AcknowledgmentModal({
   // Step 1: Password confirmation
   if (stage === 'password') {
     return (
-      <div className="vault-modal-overlay" onClick={onClose}>
-        <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
-          <h2>{title}</h2>
-          <div className="acknowledgment-stage-content">
-            <label className="acknowledgment-checkbox-item">
-              <input
-                type="checkbox"
-                checked={passwordConfirmed}
-                onChange={() => setPasswordConfirmed(!passwordConfirmed)}
-              />
-              <span>I have memorized my password</span>
-            </label>
-          </div>
-          <div className="vault-modal-buttons single-button">
-            <button 
-              className="vault-modal-confirm"
-              onClick={() => setStage('config')}
-              disabled={!passwordConfirmed}
-            >
-              Continue
-            </button>
+      <>
+        <div className="vault-modal-overlay" onClick={handleCloseAttempt}>
+          <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">×</button>
+            <h2>{title}</h2>
+            <div className="acknowledgment-stage-content">
+              <label className="acknowledgment-checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={passwordConfirmed}
+                  onChange={() => setPasswordConfirmed(!passwordConfirmed)}
+                />
+                <span>I have memorized my password</span>
+              </label>
+            </div>
+            <div className="vault-modal-buttons single-button">
+              <button 
+                className="vault-modal-confirm"
+                onClick={() => setStage('config')}
+                disabled={!passwordConfirmed}
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+        <CloseConfirmModal
+          isOpen={showCloseConfirm}
+          onConfirm={handleConfirmClose}
+          onCancel={handleCancelClose}
+        />
+      </>
     );
   }
 
   // Step 2: Config confirmation
   if (stage === 'config') {
     return (
-      <div className="vault-modal-overlay" onClick={onClose}>
-        <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
-          <h2>{title}</h2>
-          <div className="acknowledgment-stage-content">
-            <label className="acknowledgment-checkbox-item">
-              <input
-                type="checkbox"
-                checked={configConfirmed}
-                onChange={() => setConfigConfirmed(!configConfirmed)}
-              />
-              <span>I have downloaded or written down my configuration and will be able to easily access it when I need to recover</span>
-            </label>
-          </div>
-          {fullConfig && (
-            <button className="acknowledgment-download-button" onClick={handleDownload}>
-              Download Configuration (JSON)
-            </button>
-          )}
-          <div className="vault-modal-buttons">
-            <button className="vault-modal-cancel" onClick={() => setStage('password')}>
-              Back
-            </button>
-            <button 
-              className="vault-modal-confirm"
-              onClick={() => setStage('acknowledgments')}
-              disabled={!configConfirmed}
-            >
-              Continue
-            </button>
+      <>
+        <div className="vault-modal-overlay" onClick={handleCloseAttempt}>
+          <div className="vault-modal acknowledgment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">×</button>
+            <h2>{title}</h2>
+            <div className="acknowledgment-stage-content">
+              <label className="acknowledgment-checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={configConfirmed}
+                  onChange={() => setConfigConfirmed(!configConfirmed)}
+                />
+                <span>I have downloaded or written down my configuration and will be able to easily access it when I need to recover</span>
+              </label>
+            </div>
+            {fullConfig && (
+              <button className="acknowledgment-download-button" onClick={handleDownload}>
+                Download Configuration (JSON)
+              </button>
+            )}
+            <div className="vault-modal-buttons">
+              <button className="vault-modal-cancel" onClick={() => setStage('password')}>
+                Back
+              </button>
+              <button 
+                className="vault-modal-confirm"
+                onClick={() => setStage('acknowledgments')}
+                disabled={!configConfirmed}
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+        <CloseConfirmModal
+          isOpen={showCloseConfirm}
+          onConfirm={handleConfirmClose}
+          onCancel={handleCancelClose}
+        />
+      </>
     );
   }
 
   // Step 3: Final acknowledgments
   return (
-    <div className="vault-modal-overlay" onClick={onClose}>
-      <div className="vault-modal acknowledgment-modal acknowledgments-stage" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-x" onClick={onClose} aria-label="Close">×</button>
-        <h2>{title}</h2>
-        <div className="acknowledgment-list">
-          {allAcknowledgments.map((text, index) => (
-            <label 
-              key={index} 
-              className={`acknowledgment-item ${index >= ACKNOWLEDGMENTS.length ? 'salt-warning' : ''}`}
+    <>
+      <div className="vault-modal-overlay" onClick={handleCloseAttempt}>
+        <div className="vault-modal acknowledgment-modal acknowledgments-stage" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">×</button>
+          <h2>{title}</h2>
+          <div className="acknowledgment-list">
+            {allAcknowledgments.map((text, index) => (
+              <label 
+                key={index} 
+                className={`acknowledgment-item ${index >= ACKNOWLEDGMENTS.length ? 'salt-warning' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={acknowledgmentChecks[index] || false}
+                  onChange={() => toggleAcknowledgment(index)}
+                />
+                <span>{text}</span>
+              </label>
+            ))}
+          </div>
+          <div className="vault-modal-buttons">
+            <button className="vault-modal-cancel" onClick={() => setStage('config')}>
+              Back
+            </button>
+            <button 
+              className="vault-modal-confirm"
+              onClick={onConfirm}
+              disabled={!allAcknowledged}
             >
-              <input
-                type="checkbox"
-                checked={acknowledgmentChecks[index] || false}
-                onChange={() => toggleAcknowledgment(index)}
-              />
-              <span>{text}</span>
-            </label>
-          ))}
-        </div>
-        <div className="vault-modal-buttons">
-          <button className="vault-modal-cancel" onClick={() => setStage('config')}>
-            Back
-          </button>
-          <button 
-            className="vault-modal-confirm"
-            onClick={onConfirm}
-            disabled={!allAcknowledged}
-          >
-            {confirmText}
-          </button>
+              {confirmText}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+      <CloseConfirmModal
+        isOpen={showCloseConfirm}
+        onConfirm={handleConfirmClose}
+        onCancel={handleCancelClose}
+      />
+    </>
   );
 }
