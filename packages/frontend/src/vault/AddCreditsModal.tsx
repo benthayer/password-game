@@ -148,10 +148,12 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
             <span className="breakdown-label">Storage</span>
             <span className="breakdown-value">{gbYears} GB-year{gbYears !== 1 ? 's' : ''}</span>
             <span className="breakdown-note">Files under 1 GB are billed as if they are 1 GB for the purposes of storage</span>
+            <span className="breakdown-note breakdown-note-red">Your file will automatically be deleted when you run out of credits.</span>
           </div>
           <div className="breakdown-item">
             <span className="breakdown-label">Download</span>
             <span className="breakdown-value">{egressGb} GB</span>
+            <span className="breakdown-note breakdown-note-green">Your file will NOT be deleted if you run out of download. Just add more credits.</span>
           </div>
         </div>
 
