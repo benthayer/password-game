@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import type { GenerationConfig } from '../generation-config';
+import { downloadConfigAsJson } from '../config-json';
 import './VaultModal.css';
 import './AcknowledgmentModal.css';
 
@@ -21,6 +23,7 @@ interface AcknowledgmentModalProps {
   includeSalt: boolean;
   title?: string;
   confirmText?: string;
+  fullConfig?: GenerationConfig;
 }
 
 export default function AcknowledgmentModal({ 
@@ -30,6 +33,7 @@ export default function AcknowledgmentModal({
   includeSalt,
   title = "Confirm",
   confirmText = "Continue",
+  fullConfig,
 }: AcknowledgmentModalProps) {
   const [checked, setChecked] = useState<boolean[]>([]);
 
@@ -51,6 +55,12 @@ export default function AcknowledgmentModal({
       next[index] = !next[index];
       return next;
     });
+  };
+
+  const handleDownloadConfig = () => {
+    if (fullConfig) {
+      downloadConfigAsJson(fullConfig);
+    }
   };
 
   const allChecked = checked.length === allAcknowledgments.length && checked.every(Boolean);
@@ -81,6 +91,12 @@ export default function AcknowledgmentModal({
             </label>
           ))}
         </div>
+
+        {fullConfig && (
+          <button className="acknowledgment-download-button" onClick={handleDownloadConfig}>
+            Download Configuration (JSON)
+          </button>
+        )}
 
         <div className="vault-modal-buttons single-button">
           <button 

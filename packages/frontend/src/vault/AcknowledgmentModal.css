@@ -64,6 +64,27 @@
   color: #fbbf24;
 }
 
+/* Download config button */
+.acknowledgment-download-button {
+  width: 100%;
+  padding: 14px 20px;
+  margin: 20px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 8px;
+  color: #34d399;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.acknowledgment-download-button:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.15);
+}
+
 /* Single button layout */
 .vault-modal-buttons.single-button {
   justify-content: flex-end;

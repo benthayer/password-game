@@ -36,6 +36,9 @@ export interface UseConfigFormResult {
   
   // Convert form state back to config
   toConfig: () => GenerationConfig;
+  
+  // Load form state from config
+  loadFromConfig: (config: GenerationConfig) => void;
 }
 
 export function useConfigForm(
@@ -103,6 +106,17 @@ export function useConfigForm(
     salt: includeSalt ? salt : '',
   });
 
+  // Load form state from external config
+  const loadFromConfig = (config: GenerationConfig) => {
+    setSeedPhrase(config.seedPhrase);
+    setGridRows(config.gridRows);
+    setGridCols(config.gridCols);
+    setHashAlgorithm(config.hashAlgorithm);
+    setUseRecommendedHashState(config.useRecommendedHash);
+    setIncludeSalt(config.includeSalt);
+    setSalt(config.salt);
+  };
+
   return {
     // Grid
     seedPhrase,
@@ -132,6 +146,9 @@ export function useConfigForm(
     
     // Export
     toConfig,
+    
+    // Import
+    loadFromConfig,
   };
 }
 

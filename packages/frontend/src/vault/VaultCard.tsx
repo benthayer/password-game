@@ -16,11 +16,13 @@ import {
 import { getBlob, setBlob, deleteBlob } from './vault-api';
 import type { FullHashConfig } from '../hash-config';
 import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
+import type { GenerationConfig } from '../generation-config';
 import './VaultCard.css';
 
 interface VaultCardProps {
   password: string[];
   hashConfig?: FullHashConfig;
+  fullConfig?: GenerationConfig;
 }
 
 /**
@@ -32,7 +34,8 @@ interface VaultCardProps {
  */
 export default function VaultCard({ 
   password, 
-  hashConfig = DEFAULT_FULL_HASH_CONFIG 
+  hashConfig = DEFAULT_FULL_HASH_CONFIG,
+  fullConfig,
 }: VaultCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -265,6 +268,7 @@ export default function VaultCard({
         onConfirm={handleUploadConfirmed}
         onCancel={handleUploadCancelled}
         includeSalt={hashConfig.includeSalt}
+        {...(fullConfig && { fullConfig })}
       />
       {addressHash && (
         <AddCreditsModal

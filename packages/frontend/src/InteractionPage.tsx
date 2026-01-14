@@ -26,6 +26,7 @@ import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import PracticeConfigDisplay from './PracticeConfigDisplay';
 import VaultCard from './vault/VaultCard';
+import { downloadConfigAsJson } from './config-json';
 import './InteractionPage.css';
 import './PracticePage.css';
 
@@ -115,8 +116,10 @@ export default function InteractionPage({
           onSave={handleConfigSave}
           wordCount={subpassword.length || 8}
         />
+
+        <DownloadConfigButton config={config} />
       </div>
-      <VaultCard password={subpassword} hashConfig={getHashConfig(config)} />
+      <VaultCard password={subpassword} hashConfig={getHashConfig(config)} fullConfig={config} />
     </div>
   );
 }
@@ -298,6 +301,18 @@ function WordSelectionSection({
           gridRows={config.gridRows}
         />
       )}
+    </div>
+  );
+}
+
+function DownloadConfigButton({ config }: { config: GenerationConfig }) {
+  const handleDownload = () => downloadConfigAsJson(config);
+
+  return (
+    <div className="download-config-section">
+      <button className="download-config-button" onClick={handleDownload}>
+        Download Configuration (JSON)
+      </button>
     </div>
   );
 }

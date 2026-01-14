@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GenerationConfig, HashAlgorithmConfig } from './generation-config';
+import { downloadConfigAsJson } from './config-json';
 import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
@@ -7,11 +8,22 @@ interface ConfigDisplayProps {
 }
 
 export default function ConfigDisplay({ config }: ConfigDisplayProps) {
+  const handleDownload = () => downloadConfigAsJson(config);
+
   return (
     <div className="config-display">
-      <h3 className="config-title">Configuration</h3>
+      <div className="config-header">
+        <h3 className="config-title">Configuration</h3>
+        <button 
+          className="config-download-button" 
+          onClick={handleDownload}
+          title="Download configuration as JSON"
+        >
+          Download
+        </button>
+      </div>
       <div className="config-notice">
-        Write this down! You need it for recovery. It does not need to be private.
+        Download this or write this down! You need it for recovery. It does not need to be private.
       </div>
       <SeedPhraseDisplay seedPhrase={config.seedPhrase || ''} />
       <div className="config-display-item">

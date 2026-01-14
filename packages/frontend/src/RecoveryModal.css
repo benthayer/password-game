@@ -61,6 +61,29 @@
   letter-spacing: 0.02em;
 }
 
+.recovery-modal-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recovery-import-button {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 4px;
+  color: #34d399;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.recovery-import-button:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
 .recovery-modal-close {
   background: none;
   border: none;
@@ -83,6 +106,42 @@
   background: #1e2a3a;
   color: #94a3b8;
   box-shadow: none;
+}
+
+/* Import error message */
+.import-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 24px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.import-error-icon {
+  color: #f87171;
+  font-size: 1.1rem;
+}
+
+.import-error-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.import-error-dismiss:hover {
+  opacity: 1;
 }
 
 .recovery-modal-body {

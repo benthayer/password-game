@@ -1,10 +1,12 @@
 import AcknowledgmentModal from './AcknowledgmentModal';
+import type { GenerationConfig } from '../generation-config';
 
 interface UploadConfirmModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   includeSalt: boolean;
+  fullConfig?: GenerationConfig;
 }
 
 export default function UploadConfirmModal({ 
@@ -12,6 +14,7 @@ export default function UploadConfirmModal({
   onConfirm, 
   onCancel,
   includeSalt,
+  fullConfig,
 }: UploadConfirmModalProps) {
   return (
     <AcknowledgmentModal
@@ -21,6 +24,7 @@ export default function UploadConfirmModal({
       includeSalt={includeSalt}
       title="Confirm Upload"
       confirmText="Upload"
+      {...(fullConfig && { fullConfig })}
     />
   );
 }
