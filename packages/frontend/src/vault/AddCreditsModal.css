@@ -45,7 +45,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   padding: 8px 0;
+}
+
+.breakdown-note {
+  width: 100%;
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  color: #eab308;
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  margin-top: 8px;
+  border-radius: 4px;
 }
 
 .breakdown-item:not(:last-child) {

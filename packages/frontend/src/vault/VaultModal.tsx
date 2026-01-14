@@ -34,7 +34,7 @@ export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalP
               <span>{info.gbYearsRemaining.toFixed(2)} GB-years</span>
             </div>
             <div className="vault-info-row">
-              <span>Egress:</span>
+              <span>Download:</span>
               <span>{info.egressGbRemaining.toFixed(2)} GB</span>
             </div>
             <div className="vault-info-row">

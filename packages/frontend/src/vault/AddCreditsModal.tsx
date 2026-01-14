@@ -132,7 +132,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
         <h2>Add Credits</h2>
 
         <div className="credits-input-section">
-          <label htmlFor="credits-input">Credits (USD)</label>
+          <label htmlFor="credits-input">Credits</label>
           <input
             id="credits-input"
             type="number"
@@ -147,9 +147,10 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
           <div className="breakdown-item">
             <span className="breakdown-label">Storage</span>
             <span className="breakdown-value">{gbYears} GB-year{gbYears !== 1 ? 's' : ''}</span>
+            <span className="breakdown-note">Files under 1 GB are billed as if they are 1 GB for the purposes of storage</span>
           </div>
           <div className="breakdown-item">
-            <span className="breakdown-label">Egress</span>
+            <span className="breakdown-label">Download</span>
             <span className="breakdown-value">{egressGb} GB</span>
           </div>
         </div>
