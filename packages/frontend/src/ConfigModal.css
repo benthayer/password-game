@@ -283,11 +283,10 @@
 }
 
 /* Checkbox field */
-.checkbox-field label {
+.checkbox-field .checkbox-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
   color: #94a3b8;
 }
 

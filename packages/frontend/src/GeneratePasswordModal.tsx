@@ -376,7 +376,7 @@ function ConfirmStage({
           {hasDownloaded ? '✓ Downloaded' : 'Download Configuration (JSON)'}
         </button>
 
-        <label className="confirm-acknowledgment">
+        <div className="confirm-acknowledgment">
           <input
             type="checkbox"
             checked={hasSavedAcknowledgment}
@@ -386,7 +386,7 @@ function ConfirmStage({
             I've saved all the configuration details somewhere I'll be able to access 
             when trying to recover my information
           </span>
-        </label>
+        </div>
       </div>
 
       <div className="generate-modal-footer confirm-footer">

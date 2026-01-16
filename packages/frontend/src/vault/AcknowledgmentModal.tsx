@@ -97,14 +97,14 @@ export default function AcknowledgmentModal({
             <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">×</button>
             <h2>{title}</h2>
             <div className="acknowledgment-stage-content">
-              <label className="acknowledgment-checkbox-item">
+              <div className="acknowledgment-checkbox-item">
                 <input
                   type="checkbox"
                   checked={passwordConfirmed}
                   onChange={() => setPasswordConfirmed(!passwordConfirmed)}
                 />
                 <span>I have memorized my password</span>
-              </label>
+              </div>
             </div>
             <div className="vault-modal-buttons single-button">
               <button 
@@ -135,14 +135,14 @@ export default function AcknowledgmentModal({
             <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">×</button>
             <h2>{title}</h2>
             <div className="acknowledgment-stage-content">
-              <label className="acknowledgment-checkbox-item">
+              <div className="acknowledgment-checkbox-item">
                 <input
                   type="checkbox"
                   checked={configConfirmed}
                   onChange={() => setConfigConfirmed(!configConfirmed)}
                 />
                 <span>I have downloaded or written down my configuration and will be able to easily access it when I need to recover</span>
-              </label>
+              </div>
             </div>
             {fullConfig && (
               <button className="acknowledgment-download-button" onClick={handleDownload}>
@@ -181,7 +181,7 @@ export default function AcknowledgmentModal({
           <h2>{title}</h2>
           <div className="acknowledgment-list">
             {allAcknowledgments.map((text, index) => (
-              <label 
+              <div 
                 key={index} 
                 className={`acknowledgment-item ${index >= ACKNOWLEDGMENTS.length ? 'salt-warning' : ''}`}
               >
@@ -191,7 +191,7 @@ export default function AcknowledgmentModal({
                   onChange={() => toggleAcknowledgment(index)}
                 />
                 <span>{text}</span>
-              </label>
+              </div>
             ))}
           </div>
           <div className="vault-modal-buttons">

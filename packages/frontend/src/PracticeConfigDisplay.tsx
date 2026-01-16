@@ -62,22 +62,22 @@ export default function PracticeConfigDisplay({ config, onConfigChange }: Practi
         </div>
         
         <div className="practice-config-sub-items">
-          <label className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+          <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
             <input
               type="checkbox"
               checked={config.highlightCurrentWord}
               onChange={handleHighlightCurrentWordChange}
             />
             <span>Highlight current word</span>
-          </label>
-          <label className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+          </div>
+          <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
             <input
               type="checkbox"
               checked={config.hint}
               onChange={handleHintChange}
             />
             <span>Hint</span>
-          </label>
+          </div>
         </div>
       </div>
     </div>

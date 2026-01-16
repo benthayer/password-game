@@ -93,14 +93,14 @@ function SaltSettings({
   if (mode === 'recovery') {
     return (
       <div className="config-field checkbox-field salt-field">
-        <label onClick={() => onIncludeSaltChange(!includeSalt)}>
+        <div className="checkbox-row">
           <input
             type="checkbox"
             checked={includeSalt}
             onChange={(e) => onIncludeSaltChange(e.target.checked)}
           />
-          Include Salt
-        </label>
+          <span>Include Salt</span>
+        </div>
         {includeSalt && onSaltChange && (
           <div className="salt-input-field">
             <label htmlFor="salt-value">Salt Value</label>
@@ -121,14 +121,14 @@ function SaltSettings({
   return (
     <>
       <div className="config-field checkbox-field salt-field">
-        <label onClick={() => onIncludeSaltChange(!includeSalt)}>
+        <div className="checkbox-row">
           <input
             type="checkbox"
             checked={includeSalt}
             onChange={(e) => onIncludeSaltChange(e.target.checked)}
           />
-          Include Salt - You will have to copy this!
-        </label>
+          <span>Include Salt - You will have to copy this!</span>
+        </div>
         <div className="salt-status-inline salt-info">
           <span className="salt-status-icon">⚠</span>
           <span className="salt-status-text">
@@ -161,14 +161,14 @@ function UseRecommendedCheckbox({
 }) {
   return (
     <div className="config-field checkbox-field">
-      <label onClick={() => onChange(!checked)}>
+      <div className="checkbox-row">
         <input
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
-        Use Recommended (Argon2id)
-      </label>
+        <span>Use Recommended (Argon2id)</span>
+      </div>
       <div className="field-hint">
         {checked 
           ? 'Using Argon2id with secure defaults (64MB memory, 3 iterations).'
