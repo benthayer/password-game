@@ -1,5 +1,11 @@
 # Password Game
 
+
+## Polish
+- [ ] Streamline payment flow
+- [ ] When finishing practice, buttons are the wrong color
+
+
 ## MVP
 
 - [ ] Perform a thorough code review
@@ -38,4 +44,5 @@
 - [ ] Save encrypted file to Filecoin
 - [ ] Save encrypted pointer to some other decentralized service
 - [ ] Pointer name/address = 256 bit hash from password + fixed suffix, pointer contents = encrypted(filecoin address, 256 bit hash from password + a different fixed suffix)
+
 
