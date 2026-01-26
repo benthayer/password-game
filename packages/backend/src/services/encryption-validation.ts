@@ -41,8 +41,9 @@ const ENT_THRESHOLDS = {
   MIN_ENTROPY: 3.0,
   // Chi-squared above 500 catches patterns and repetition
   MAX_CHI_SQUARED: 500,
-  // Serial correlation magnitude above 0.5 catches sequential patterns
-  MAX_SERIAL_CORRELATION: 0.5,
+  // Serial correlation magnitude above 0.7 catches sequential patterns
+  // (random 32-byte samples can hit ~0.53, sequential pattern is 0.82)
+  MAX_SERIAL_CORRELATION: 0.7,
 };
 
 interface EntResult {
