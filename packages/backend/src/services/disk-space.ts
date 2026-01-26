@@ -14,3 +14,5 @@ export async function hasSpaceForUpload(contentLength: number): Promise<boolean>
   return contentLength <= available;
 }
 
+
+

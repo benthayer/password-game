@@ -18,7 +18,6 @@
  */
 
 import { getIdentityHash } from '../crypto-utils';
-import { importPrimaryKeyFromHex } from './vault-crypto-streaming';
 import type { GenerationConfig } from '../generation-config';
 import type { WorkerInput, WorkerOutput } from './vault-keys.worker';
 
@@ -29,7 +28,7 @@ import type { WorkerInput, WorkerOutput } from './vault-keys.worker';
 export interface VaultKeys {
   addressHash: string;
   secondaryKey: string;
-  primaryKey: CryptoKey;
+  primaryKeyHex: string;
 }
 
 // =============================================================================
@@ -50,7 +49,7 @@ function computeVaultKeysInWorker(
       { type: 'module' }
     );
     
-    worker.onmessage = async (e: MessageEvent<WorkerOutput & { error?: string }>) => {
+    worker.onmessage = (e: MessageEvent<WorkerOutput & { error?: string }>) => {
       worker.terminate();
       
       if (e.data.error) {
@@ -58,13 +57,10 @@ function computeVaultKeysInWorker(
         return;
       }
       
-      // Reconstruct CryptoKey from hex (can't transfer CryptoKey between threads)
-      const primaryKey = await importPrimaryKeyFromHex(e.data.primaryKeyHex);
-      
       resolve({
         addressHash: e.data.addressHash,
         secondaryKey: e.data.secondaryKey,
-        primaryKey,
+        primaryKeyHex: e.data.primaryKeyHex,
       });
     };
     
@@ -139,4 +135,3 @@ export function hasVaultKeysCached(
 export function clearVaultKeysCache(): void {
   cache.clear();
 }
-

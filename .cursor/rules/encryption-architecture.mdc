@@ -140,8 +140,30 @@ The hash function is configurable (stored alongside the password config). Defaul
 
 ### Encryption Algorithm
 
-AES is used for symmetric encryption. CryptoJS handles the primary encryption, Web Crypto API can be used for secondary.
+Both encryption layers use **libsodium `crypto_secretstream_xchacha20poly1305`** for streaming authenticated encryption. This is a standard, audited format that handles nonce management internally.
+
+- **Primary encryption (client-side):** Encrypts user data with primary key
+- **Secondary encryption (server-side):** Wraps already-encrypted data with secondary key
 
 ### Key Format
 
 Keys are represented as hex strings when transmitted. The secondary key sent to server should be 32 bytes (256 bits) as hex = 64 characters.
+
+### Encrypted File Format (v2)
+
+**Primary layer (client encrypts):**
+```
+[24 bytes]  Stream header (from crypto_secretstream_init_push)
+[4 bytes]   Metadata ciphertext length (uint32 BE)
+[N bytes]   Encrypted metadata chunk (MESSAGE tag)
+[chunks]    Encrypted file content (MESSAGE tag, last is FINAL)
+```
+
+**Secondary layer (server wraps):**
+```
+[24 bytes]  Stream header
+[chunks]    Encrypted chunks of the primary-encrypted data (MESSAGE tag, last is FINAL)
+```
+
+Each encrypted chunk = plaintext + 17 bytes overhead (1 tag + 16 auth).
+Content chunks are 64KB plaintext, so 64KB + 17 bytes ciphertext.

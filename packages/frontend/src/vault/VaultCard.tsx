@@ -7,7 +7,7 @@ import TextUploadModal from './TextUploadModal';
 import TextDisplayModal from './TextDisplayModal';
 import UploadConfirmModal from './UploadConfirmModal';
 import AddCreditsModal from './AddCreditsModal';
-import { encryptFile, decryptFile } from './vault-crypto-streaming';
+import { encryptFile, decryptDownloadedFile } from './vault-crypto-streaming';
 import { getBlob, setBlob, deleteBlob } from './vault-api';
 import { getVaultKeys, hasVaultKeysCached } from './vault-keys-cache';
 import type { GenerationConfig } from '../generation-config';
@@ -118,7 +118,7 @@ export default function VaultCard({
       }
       
       setStatusMessage('Decrypting...');
-      const { metadata, content } = await decryptFile(new Uint8Array(data), password, hashConfig);
+      const { metadata, content } = await decryptDownloadedFile(new Uint8Array(data), password, hashConfig);
       setStatusMessage(null);
       
       // If it's plaintext, show in modal

@@ -9,23 +9,10 @@ import {
   checkInputStats, 
   checkDecryptedStats,
   createEncryptionStream,
+  calculateSecretstreamSize,
   buildValidationResult,
   type EncryptionValidationResult 
 } from './encryption-validation.js';
-
-// =============================================================================
-// SIZE CALCULATION
-// =============================================================================
-
-/**
- * Calculate the encrypted output size for AES-256-CBC.
- * Output = IV (16 bytes) + padded ciphertext
- * PKCS7 padding always adds at least 1 byte, up to 16.
- */
-function calculateEncryptedSize(inputSize: number): number {
-  const paddedSize = (Math.floor(inputSize / 16) + 1) * 16;
-  return paddedSize + 16; // +16 for IV prefix
-}
 
 // =============================================================================
 // BLOB SERVICE
@@ -105,8 +92,8 @@ export class BlobService {
       );
       
       // 6. Stream from temp → encrypt with secondary key → B2
-      const encryptedSize = calculateEncryptedSize(size);
-      const { stream: encryptionStream } = createEncryptionStream(secondaryKey);
+      const encryptedSize = calculateSecretstreamSize(size);
+      const { stream: encryptionStream } = await createEncryptionStream(secondaryKey);
       const sourceStream = tempFile.createDecryptedReadStream();
       
       // Create a passthrough that pipes through encryption

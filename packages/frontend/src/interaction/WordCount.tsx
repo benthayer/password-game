@@ -32,3 +32,5 @@ export function PracticeWordCount({ current, total, isCompleted }: PracticeWordC
   );
 }
 
+
+

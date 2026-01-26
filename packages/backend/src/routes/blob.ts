@@ -2,6 +2,7 @@ import { Router, Request } from 'express';
 import { BlobService } from '../services/blob-service.js';
 import { CreditService } from '../services/credit-service.js';
 import { hasSpaceForUpload } from '../services/disk-space.js';
+import { calculateSecretstreamSize } from '../services/encryption-validation.js';
 import { getAccount } from '../storage/db.js';
 
 export const blobRoutes = Router();
@@ -24,14 +25,6 @@ function getSecondaryKey(req: Request): string | null {
     return key;
   }
   return null;
-}
-
-/**
- * Calculate encrypted output size for AES-256-CBC.
- */
-function calculateEncryptedSize(inputSize: number): number {
-  const paddedSize = (Math.floor(inputSize / 16) + 1) * 16;
-  return paddedSize + 16;
 }
 
 // =============================================================================
@@ -99,7 +92,7 @@ blobRoutes.put('/:addressHash', async (req, res) => {
   
   try {
     const validation = await blobService.upload(addressHash, req, contentLength, secondaryKey);
-    const storedSize = calculateEncryptedSize(contentLength);
+    const storedSize = calculateSecretstreamSize(contentLength);
     res.json({ 
       success: true, 
       storedSize,

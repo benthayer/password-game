@@ -1,22 +1,20 @@
 /**
- * Streaming Encrypted Vault Format v1
+ * Streaming Encrypted Vault Format v2
  * 
- * Uses chunked AES-256-GCM for memory-bounded encryption of arbitrary files.
- * Metadata (filename, mimetype) is encrypted alongside content.
+ * Uses libsodium crypto_secretstream_xchacha20poly1305 for streaming encryption.
+ * This is a standard, audited format that handles nonce management internally.
  * 
  * Format:
- * [1 byte]   Version (0x01)
- * [12 bytes] Base nonce
- * [4 bytes]  Chunk size (uint32 BE)
- * [4 bytes]  Total chunks (uint32 BE)
- * [4 bytes]  Metadata chunk length
- * [chunks...]
+ * [24 bytes]  Stream header (from crypto_secretstream_init_push)
+ * [4 bytes]   Metadata ciphertext length (uint32 BE)
+ * [N bytes]   Encrypted metadata chunk (MESSAGE tag)
+ * [chunks]    Encrypted file content chunks (MESSAGE tag, except last is FINAL)
  * 
- * Each chunk: [ciphertext][16-byte auth tag]
- * Chunk 0 = encrypted metadata JSON
- * Chunk 1+ = encrypted file content
+ * Each encrypted chunk = plaintext + 17 bytes overhead (1 tag byte + 16 auth bytes)
+ * Content chunks are CHUNK_SIZE plaintext (64KB), so CHUNK_SIZE + 17 ciphertext.
  */
 
+import sodium from 'libsodium-wrappers';
 import { createHashFunction } from '../hash-function';
 import type { FullHashConfig } from '../hash-config';
 import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
@@ -25,11 +23,15 @@ import { DEFAULT_FULL_HASH_CONFIG } from '../hash-config';
 // CONSTANTS
 // =============================================================================
 
-const VERSION = 0x01;
 const CHUNK_SIZE = 64 * 1024; // 64KB plaintext per chunk
-const NONCE_SIZE = 12;
-const TAG_SIZE = 16;
-const HEADER_SIZE = 25; // 1 + 12 + 4 + 4 + 4
+
+// libsodium crypto_secretstream constants (hardcoded to avoid accessing sodium before ready)
+// These are fixed values for XChaCha20-Poly1305:
+const STREAM_HEADER_SIZE = 24; // crypto_secretstream_xchacha20poly1305_HEADERBYTES
+const ABYTES = 17;             // crypto_secretstream_xchacha20poly1305_ABYTES (1 tag + 16 auth)
+
+// Our custom header addition (to store metadata chunk length)
+const METADATA_LENGTH_SIZE = 4; // uint32 BE
 
 // Key derivation suffixes (must match vault-crypto.ts)
 const SUFFIX_ADDRESS = ':+address';
@@ -49,6 +51,19 @@ export interface FileMetadata {
 export interface DecryptedFile {
   metadata: FileMetadata;
   content: Uint8Array;
+}
+
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+
+let sodiumReady = false;
+
+async function ensureSodiumReady(): Promise<void> {
+  if (!sodiumReady) {
+    await sodium.ready;
+    sodiumReady = true;
+  }
 }
 
 // =============================================================================
@@ -86,19 +101,22 @@ export async function getSecondaryKey(
 }
 
 /**
- * Derive the primary encryption key (CryptoKey) from password.
- * This is the main key used for AES-GCM encryption of vault contents.
+ * Derive the primary encryption key from password.
+ * Returns 32 bytes for XChaCha20-Poly1305.
  */
-export async function getPrimaryKey(
+async function derivePrimaryKey(
   password: string[],
   config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
-): Promise<CryptoKey> {
-  return deriveKey(password, config);
+): Promise<Uint8Array> {
+  const hashFn = createHashFunction(config);
+  const input = formatPasswordForHash(password, SUFFIX_PRIMARY_KEY);
+  const keyHex = await hashFn(input);
+  return hexToBytes(keyHex.slice(0, 64)); // 32 bytes = 64 hex chars
 }
 
 /**
- * Derive the primary encryption key material as hex.
- * Used by Web Workers since CryptoKey can't be transferred between threads.
+ * Get the primary encryption key as hex.
+ * Used by Web Workers since Uint8Array can be transferred but this is cleaner.
  */
 export async function getPrimaryKeyHex(
   password: string[],
@@ -107,46 +125,14 @@ export async function getPrimaryKeyHex(
   const hashFn = createHashFunction(config);
   const input = formatPasswordForHash(password, SUFFIX_PRIMARY_KEY);
   const keyHex = await hashFn(input);
-  // Return first 64 hex chars (32 bytes for AES-256)
   return keyHex.slice(0, 64);
 }
 
 /**
- * Import a primary key from hex (for use after receiving from Worker).
+ * Import a primary key from hex.
  */
-export async function importPrimaryKeyFromHex(keyHex: string): Promise<CryptoKey> {
-  const keyBytes = hexToBytes(keyHex);
-  return crypto.subtle.importKey(
-    'raw',
-    keyBytes.buffer as ArrayBuffer,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-/**
- * Derive a CryptoKey from password for AES-GCM encryption.
- * Uses the configurable hash function to derive key material.
- */
-async function deriveKey(
-  password: string[],
-  config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
-): Promise<CryptoKey> {
-  const hashFn = createHashFunction(config);
-  const input = formatPasswordForHash(password, SUFFIX_PRIMARY_KEY);
-  const keyHex = await hashFn(input);
-  
-  // Convert hex to bytes (first 32 bytes for AES-256)
-  const keyBytes = hexToBytes(keyHex).slice(0, 32);
-  
-  return crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt', 'decrypt']
-  );
+export function importPrimaryKeyFromHex(keyHex: string): Uint8Array {
+  return hexToBytes(keyHex);
 }
 
 // =============================================================================
@@ -179,35 +165,6 @@ function readUint32BE(buffer: Uint8Array, offset: number): number {
   ) >>> 0;
 }
 
-/**
- * Derive per-chunk nonce by XORing base nonce with chunk index.
- */
-function deriveChunkNonce(baseNonce: Uint8Array, chunkIndex: number): Uint8Array {
-  const nonce = new Uint8Array(baseNonce);
-  // XOR last 4 bytes with chunk index (big-endian)
-  const indexBytes = writeUint32BE(chunkIndex);
-  nonce[8] = (nonce[8] ?? 0) ^ (indexBytes[0] ?? 0);
-  nonce[9] = (nonce[9] ?? 0) ^ (indexBytes[1] ?? 0);
-  nonce[10] = (nonce[10] ?? 0) ^ (indexBytes[2] ?? 0);
-  nonce[11] = (nonce[11] ?? 0) ^ (indexBytes[3] ?? 0);
-  return nonce;
-}
-
-/**
- * Create AAD (Additional Authenticated Data) for a chunk.
- * Includes chunk index and is_final flag to prevent reordering/truncation.
- */
-function createAAD(chunkIndex: number, isFinal: boolean): Uint8Array {
-  const aad = new Uint8Array(5);
-  const indexBytes = writeUint32BE(chunkIndex);
-  aad.set(indexBytes, 0);
-  aad[4] = isFinal ? 0x01 : 0x00;
-  return aad;
-}
-
-/**
- * Concatenate multiple Uint8Arrays.
- */
 function concat(...arrays: Uint8Array[]): Uint8Array {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
   const result = new Uint8Array(totalLength);
@@ -219,46 +176,12 @@ function concat(...arrays: Uint8Array[]): Uint8Array {
   return result;
 }
 
-/**
- * Ensure Uint8Array has a proper ArrayBuffer (not SharedArrayBuffer).
- * Required for Web Crypto API compatibility.
- */
-function toBuffer(arr: Uint8Array): Uint8Array<ArrayBuffer> {
-  const buffer = new ArrayBuffer(arr.length);
-  const result = new Uint8Array(buffer);
-  result.set(arr);
-  return result;
-}
-
 // =============================================================================
 // ENCRYPTION
 // =============================================================================
 
 /**
- * Encrypt a chunk with AES-256-GCM.
- */
-async function encryptChunk(
-  key: CryptoKey,
-  baseNonce: Uint8Array,
-  chunkIndex: number,
-  plaintext: Uint8Array,
-  totalChunks: number
-): Promise<Uint8Array> {
-  const nonce = toBuffer(deriveChunkNonce(baseNonce, chunkIndex));
-  const isFinal = chunkIndex === totalChunks - 1;
-  const aad = toBuffer(createAAD(chunkIndex, isFinal));
-  
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce, additionalData: aad },
-    key,
-    toBuffer(plaintext)
-  );
-  
-  return new Uint8Array(ciphertext);
-}
-
-/**
- * Encrypt a file with streaming chunked AES-256-GCM.
+ * Encrypt a file with libsodium crypto_secretstream.
  * Returns the complete encrypted blob.
  * 
  * Memory usage: O(CHUNK_SIZE), not O(file.size)
@@ -268,54 +191,90 @@ export async function encryptFile(
   password: string[],
   config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
 ): Promise<Uint8Array> {
-  const key = await deriveKey(password, config);
-  const baseNonce = crypto.getRandomValues(new Uint8Array(NONCE_SIZE));
+  await ensureSodiumReady();
   
-  // Calculate total chunks: 1 for metadata + ceil(file.size / CHUNK_SIZE) for content
-  const contentChunks = Math.ceil(file.size / CHUNK_SIZE) || 1; // At least 1 for empty files
-  const totalChunks = 1 + contentChunks;
+  const key = await derivePrimaryKey(password, config);
+  return encryptFileWithKeyBytes(file, key);
+}
+
+/**
+ * Encrypt a file using a pre-derived key hex (for worker usage).
+ */
+export async function encryptFileWithKey(
+  file: File,
+  keyHex: string
+): Promise<Uint8Array> {
+  await ensureSodiumReady();
   
-  const chunks: Uint8Array[] = [];
+  const key = importPrimaryKeyFromHex(keyHex);
+  return encryptFileWithKeyBytes(file, key);
+}
+
+/**
+ * Core encryption logic with raw key bytes.
+ */
+async function encryptFileWithKeyBytes(
+  file: File,
+  key: Uint8Array
+): Promise<Uint8Array> {
+  // Initialize the secretstream
+  const { state, header } = sodium.crypto_secretstream_xchacha20poly1305_init_push(key);
   
-  // Chunk 0: encrypted metadata (need to encrypt first to know length)
+  // Encrypt metadata first (to know its ciphertext length)
   const metadata: FileMetadata = {
     filename: file.name,
     mimetype: file.type || 'application/octet-stream',
     size: file.size,
   };
   const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata));
-  const encryptedMetadata = await encryptChunk(key, baseNonce, 0, metadataBytes, totalChunks);
+  const encryptedMetadata = sodium.crypto_secretstream_xchacha20poly1305_push(
+    state,
+    metadataBytes,
+    null,
+    sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE
+  );
   
-  // File header (unencrypted)
-  const header = new Uint8Array(HEADER_SIZE);
-  header[0] = VERSION;
-  header.set(baseNonce, 1);
-  header.set(writeUint32BE(CHUNK_SIZE), 13);
-  header.set(writeUint32BE(totalChunks), 17);
-  header.set(writeUint32BE(encryptedMetadata.length), 21);
-  chunks.push(header);
+  // Build header: stream header + metadata ciphertext length
+  const metadataLengthBytes = writeUint32BE(encryptedMetadata.length);
   
-  // Add encrypted metadata
-  chunks.push(encryptedMetadata);
+  const chunks: Uint8Array[] = [
+    header,
+    metadataLengthBytes,
+    encryptedMetadata
+  ];
   
-  // Chunks 1+: encrypted file content
+  // Encrypt file content in chunks
   let offset = 0;
-  let chunkIndex = 1;
   while (offset < file.size) {
     const end = Math.min(offset + CHUNK_SIZE, file.size);
+    const isLastChunk = end >= file.size;
+    
     const slice = file.slice(offset, end);
     const plaintext = new Uint8Array(await slice.arrayBuffer());
     
-    const encryptedChunk = await encryptChunk(key, baseNonce, chunkIndex, plaintext, totalChunks);
+    const tag = isLastChunk 
+      ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+      : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
+    
+    const encryptedChunk = sodium.crypto_secretstream_xchacha20poly1305_push(
+      state,
+      plaintext,
+      null,
+      tag
+    );
     chunks.push(encryptedChunk);
     
     offset = end;
-    chunkIndex++;
   }
   
-  // Handle empty files (still need one content chunk)
+  // Handle empty files (still need a final chunk)
   if (file.size === 0) {
-    const encryptedChunk = await encryptChunk(key, baseNonce, 1, new Uint8Array(0), totalChunks);
+    const encryptedChunk = sodium.crypto_secretstream_xchacha20poly1305_push(
+      state,
+      new Uint8Array(0),
+      null,
+      sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+    );
     chunks.push(encryptedChunk);
   }
   
@@ -327,153 +286,157 @@ export async function encryptFile(
 // =============================================================================
 
 /**
- * Decrypt a chunk with AES-256-GCM.
- */
-async function decryptChunk(
-  key: CryptoKey,
-  baseNonce: Uint8Array,
-  chunkIndex: number,
-  ciphertext: Uint8Array,
-  totalChunks: number
-): Promise<Uint8Array> {
-  const nonce = toBuffer(deriveChunkNonce(baseNonce, chunkIndex));
-  const isFinal = chunkIndex === totalChunks - 1;
-  const aad = toBuffer(createAAD(chunkIndex, isFinal));
-  
-  const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: nonce, additionalData: aad },
-    key,
-    toBuffer(ciphertext)
-  );
-  
-  return new Uint8Array(plaintext);
-}
-
-/**
- * Decrypt outer layer with secondary key (server-side encryption).
- * Input: doubly-encrypted binary data (IV prepended, AES-CBC)
- * Output: singly-encrypted data (our chunked format)
- */
-async function decryptOuterLayer(
-  doublyEncrypted: Uint8Array,
-  password: string[],
-  config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
-): Promise<Uint8Array> {
-  const secondaryKeyHex = await getSecondaryKey(password, config);
-  const secondaryKey = hexToBytes(secondaryKeyHex);
-  
-  // Extract IV (first 16 bytes) and ciphertext
-  const iv = doublyEncrypted.slice(0, 16);
-  const ciphertext = doublyEncrypted.slice(16);
-  
-  // Import key for Web Crypto (AES-256-CBC)
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    secondaryKey.slice(0, 32),
-    { name: 'AES-CBC' },
-    false,
-    ['decrypt']
-  );
-  
-  // Decrypt
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-CBC', iv },
-    cryptoKey,
-    ciphertext
-  );
-  
-  return new Uint8Array(decrypted);
-}
-
-/**
- * Decrypt an encrypted vault file.
- * Handles both the outer layer (server encryption) and inner chunked format.
- * Returns metadata and content separately.
+ * Decrypt a file encrypted with crypto_secretstream.
+ * Returns the decrypted file with metadata.
  */
 export async function decryptFile(
-  doublyEncrypted: Uint8Array,
+  encrypted: Uint8Array,
   password: string[],
   config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
 ): Promise<DecryptedFile> {
-  // First strip the outer encryption layer
-  const encryptedData = await decryptOuterLayer(doublyEncrypted, password, config);
+  await ensureSodiumReady();
   
-  const key = await deriveKey(password, config);
+  const key = await derivePrimaryKey(password, config);
+  return decryptFileWithKeyBytes(encrypted, key);
+}
+
+/**
+ * Decrypt a file using a pre-derived key hex (for worker usage).
+ */
+export async function decryptFileWithKey(
+  encrypted: Uint8Array,
+  keyHex: string
+): Promise<DecryptedFile> {
+  await ensureSodiumReady();
   
-  // Parse header
-  if (encryptedData.length < HEADER_SIZE) {
-    throw new Error('Invalid encrypted file: too short');
-  }
+  const key = importPrimaryKeyFromHex(keyHex);
+  return decryptFileWithKeyBytes(encrypted, key);
+}
+
+/**
+ * Core decryption logic with raw key bytes.
+ */
+function decryptFileWithKeyBytes(
+  encrypted: Uint8Array,
+  key: Uint8Array
+): DecryptedFile {
+  let offset = 0;
   
-  const version = encryptedData[0];
-  if (version !== VERSION) {
-    throw new Error(`Unsupported vault format version: ${version}`);
-  }
+  // Read stream header
+  const streamHeader = encrypted.slice(offset, offset + STREAM_HEADER_SIZE);
+  offset += STREAM_HEADER_SIZE;
   
-  const baseNonce = encryptedData.slice(1, 13);
-  const chunkSize = readUint32BE(encryptedData, 13);
-  const totalChunks = readUint32BE(encryptedData, 17);
-  const metadataLength = readUint32BE(encryptedData, 21);
+  // Read metadata ciphertext length
+  const metadataLength = readUint32BE(encrypted, offset);
+  offset += METADATA_LENGTH_SIZE;
   
-  let offset = HEADER_SIZE;
+  // Initialize decryption state
+  const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(streamHeader, key);
   
-  // Decrypt chunk 0: metadata
-  const encryptedMetadata = encryptedData.slice(offset, offset + metadataLength);
+  // Decrypt metadata
+  const metadataChunk = encrypted.slice(offset, offset + metadataLength);
   offset += metadataLength;
   
-  const metadataBytes = await decryptChunk(key, baseNonce, 0, encryptedMetadata, totalChunks);
-  const metadata: FileMetadata = JSON.parse(new TextDecoder().decode(metadataBytes));
+  const metadataResult = sodium.crypto_secretstream_xchacha20poly1305_pull(state, metadataChunk, null);
+  if (!metadataResult) {
+    throw new Error('Failed to decrypt metadata');
+  }
+  
+  const metadata: FileMetadata = JSON.parse(new TextDecoder().decode(metadataResult.message));
   
   // Decrypt content chunks
   const contentChunks: Uint8Array[] = [];
-  const encryptedChunkSize = chunkSize + TAG_SIZE;
+  const expectedChunkSize = CHUNK_SIZE + ABYTES;
   
-  for (let chunkIndex = 1; chunkIndex < totalChunks; chunkIndex++) {
-    const isFinal = chunkIndex === totalChunks - 1;
+  while (offset < encrypted.length) {
+    const remainingBytes = encrypted.length - offset;
+    const chunkSize = Math.min(expectedChunkSize, remainingBytes);
     
-    // Last chunk may be smaller
-    let thisChunkSize: number;
-    if (isFinal) {
-      thisChunkSize = encryptedData.length - offset;
-    } else {
-      thisChunkSize = encryptedChunkSize;
+    const chunk = encrypted.slice(offset, offset + chunkSize);
+    offset += chunkSize;
+    
+    const result = sodium.crypto_secretstream_xchacha20poly1305_pull(state, chunk, null);
+    if (!result) {
+      throw new Error('Failed to decrypt content chunk');
     }
     
-    const encryptedChunk = encryptedData.slice(offset, offset + thisChunkSize);
-    offset += thisChunkSize;
+    contentChunks.push(result.message);
     
-    const decryptedChunk = await decryptChunk(key, baseNonce, chunkIndex, encryptedChunk, totalChunks);
-    contentChunks.push(decryptedChunk);
+    // Check if this was the final chunk
+    if (result.tag === sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
+      break;
+    }
   }
   
+  // Combine content chunks
   const content = concat(...contentChunks);
   
   return { metadata, content };
 }
 
 // =============================================================================
-// CONVENIENCE FUNCTIONS
+// OUTER LAYER DECRYPTION (server-added crypto_secretstream layer)
 // =============================================================================
 
 /**
- * Decrypt and trigger download.
+ * Decrypt the outer encryption layer added by the server.
+ * Server uses crypto_secretstream_xchacha20poly1305 with chunked streaming.
+ * 
+ * Input: doubly-encrypted data (header + encrypted chunks)
+ * Output: singly-encrypted data (our crypto_secretstream format)
  */
-export async function decryptAndDownload(
-  encryptedData: ArrayBuffer,
+export async function decryptOuterLayer(
+  doublyEncrypted: Uint8Array,
+  secondaryKeyHex: string
+): Promise<Uint8Array> {
+  await ensureSodiumReady();
+  
+  const secondaryKey = hexToBytes(secondaryKeyHex).slice(0, 32);
+  
+  // Extract stream header
+  const streamHeader = doublyEncrypted.slice(0, STREAM_HEADER_SIZE);
+  let offset = STREAM_HEADER_SIZE;
+  
+  // Initialize decryption state
+  const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(streamHeader, secondaryKey);
+  
+  // Decrypt all chunks
+  const decryptedChunks: Uint8Array[] = [];
+  const expectedChunkSize = CHUNK_SIZE + ABYTES;
+  
+  while (offset < doublyEncrypted.length) {
+    const remainingBytes = doublyEncrypted.length - offset;
+    const chunkSize = Math.min(expectedChunkSize, remainingBytes);
+    
+    const chunk = doublyEncrypted.slice(offset, offset + chunkSize);
+    offset += chunkSize;
+    
+    const result = sodium.crypto_secretstream_xchacha20poly1305_pull(state, chunk, null);
+    if (!result) {
+      throw new Error('Failed to decrypt outer layer chunk');
+    }
+    
+    decryptedChunks.push(result.message);
+    
+    // Check if this was the final chunk
+    if (result.tag === sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
+      break;
+    }
+  }
+  
+  return concat(...decryptedChunks);
+}
+
+/**
+ * Full download decryption: strip outer layer, then decrypt inner layer.
+ * This is the convenience function for the complete download flow.
+ */
+export async function decryptDownloadedFile(
+  doublyEncrypted: Uint8Array,
   password: string[],
   config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
-): Promise<void> {
-  const { metadata, content } = await decryptFile(
-    new Uint8Array(encryptedData), 
-    password,
-    config
-  );
-  
-  const blob = new Blob([toBuffer(content)], { type: metadata.mimetype });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = metadata.filename;
-  a.click();
-  URL.revokeObjectURL(url);
+): Promise<DecryptedFile> {
+  const secondaryKeyHex = await getSecondaryKey(password, config);
+  const singlyEncrypted = await decryptOuterLayer(doublyEncrypted, secondaryKeyHex);
+  return decryptFile(singlyEncrypted, password, config);
 }
