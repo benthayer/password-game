@@ -198,6 +198,12 @@
   font-style: italic;
 }
 
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .word-selection-section {
   margin-bottom: 24px;
 }
@@ -207,6 +213,17 @@
   color: #e2e8f0;
   margin-bottom: 20px;
   font-weight: 400;
+}
+
+.word-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.word-selection-header h2 {
+  margin-bottom: 0;
 }
 
 .loading {

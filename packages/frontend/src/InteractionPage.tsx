@@ -24,7 +24,7 @@ import PasswordProgressDisplay from './PasswordProgressDisplay';
 import WordSelectionGrid from './WordSelectionGrid';
 import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
-import PracticeConfigDisplay from './PracticeConfigDisplay';
+import { DisplayModeSelect, HighlightCurrentWordCheckbox, HintCheckbox } from './PracticeConfigDisplay';
 import VaultCard from './vault/VaultCard';
 import { downloadConfigAsJson } from './config-json';
 import './InteractionPage.css';
@@ -89,8 +89,6 @@ export default function InteractionPage({
           mode={mode}
           config={config}
           wordCount={subpassword.length}
-          practiceDisplayConfig={practiceDisplayConfig}
-          onPracticeConfigChange={setPracticeDisplayConfig}
         />
 
         <PasswordSection
@@ -99,14 +97,17 @@ export default function InteractionPage({
           recovery={recovery}
           practice={practice}
           practiceDisplayConfig={practiceDisplayConfig}
+          onPracticeConfigChange={setPracticeDisplayConfig}
         />
 
         <WordSelectionSection
           mode={mode}
           config={config}
+          subpassword={subpassword}
           recovery={recovery}
           practice={practice}
           practiceDisplayConfig={practiceDisplayConfig}
+          onPracticeConfigChange={setPracticeDisplayConfig}
         />
 
         <ConfigModal
@@ -166,19 +167,15 @@ function ConfigSection({
   mode,
   config,
   wordCount,
-  practiceDisplayConfig,
-  onPracticeConfigChange,
 }: {
   mode: Mode;
   config: GenerationConfig;
   wordCount: number;
-  practiceDisplayConfig: PracticeDisplayConfig;
-  onPracticeConfigChange: (config: PracticeDisplayConfig) => void;
 }) {
   if (mode === 'practice') {
     const gridSize = getGridSize(config);
     const entropyPerWord = calculateEntropyPerWord(config);
-    
+
     return (
       <div className="config-section-container practice-configs-container">
         <ConfigDisplay config={config} />
@@ -188,10 +185,6 @@ function ConfigSection({
           entropyPerWord={entropyPerWord}
           hashConfig={config.hashAlgorithm}
           includeSalt={config.includeSalt}
-        />
-        <PracticeConfigDisplay
-          config={practiceDisplayConfig}
-          onConfigChange={onPracticeConfigChange}
         />
       </div>
     );
@@ -209,17 +202,33 @@ function PasswordSection({
   recovery,
   practice,
   practiceDisplayConfig,
+  onPracticeConfigChange,
 }: {
   mode: Mode;
   subpassword: string[];
   recovery: ReturnType<typeof useRecoveryMode>;
   practice: ReturnType<typeof usePracticeMode>;
   practiceDisplayConfig: PracticeDisplayConfig;
+  onPracticeConfigChange: (config: PracticeDisplayConfig) => void;
 }) {
   return (
     <div className="current-password-section">
       <div className="current-password-header">
-        <h2>{mode === 'recovery' ? 'Recovered Password' : 'Password Progress'}</h2>
+        <div className="section-header-left">
+          <h2>{mode === 'recovery' ? 'Recovered Password' : 'Password Progress'}</h2>
+          {mode === 'practice' && (
+            <>
+              <DisplayModeSelect
+                config={practiceDisplayConfig}
+                onConfigChange={onPracticeConfigChange}
+              />
+              <HighlightCurrentWordCheckbox
+                config={practiceDisplayConfig}
+                onConfigChange={onPracticeConfigChange}
+              />
+            </>
+          )}
+        </div>
         {mode === 'recovery' && (
           <RecoveryControls
             onReset={recovery.reset}
@@ -269,19 +278,42 @@ function PasswordSection({
 function WordSelectionSection({
   mode,
   config,
+  subpassword,
   recovery,
   practice,
   practiceDisplayConfig,
+  onPracticeConfigChange,
 }: {
   mode: Mode;
   config: GenerationConfig;
+  subpassword: string[];
   recovery: ReturnType<typeof useRecoveryMode>;
   practice: ReturnType<typeof usePracticeMode>;
   practiceDisplayConfig: PracticeDisplayConfig;
+  onPracticeConfigChange: (config: PracticeDisplayConfig) => void;
 }) {
   return (
     <div className="word-selection-section">
-      <h2>Select Next Word</h2>
+      {mode === 'practice' ? (
+        <div className="word-selection-header">
+          <div className="section-header-left">
+            <h2>Select Next Word</h2>
+            <HintCheckbox
+              config={practiceDisplayConfig}
+              onConfigChange={onPracticeConfigChange}
+            />
+          </div>
+          <PracticeControls
+            onReset={practice.reset}
+            onPrevious={practice.goToPreviousWord}
+            onNext={practice.goToNextWord}
+            canGoPrevious={practice.activeWordIndex > 0}
+            canGoNext={practice.activeWordIndex < subpassword.length}
+          />
+        </div>
+      ) : (
+        <h2>Select Next Word</h2>
+      )}
       {mode === 'practice' ? (
         <WordSelectionGrid
           words={practice.isCompleted ? [] : practice.nextWords}

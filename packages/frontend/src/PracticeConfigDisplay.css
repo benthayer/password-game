@@ -1,23 +1,21 @@
-.practice-config-display {
-  background: #0a0a0f;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #1e2a3a;
-  width: fit-content;
-  min-width: 250px;
-  margin-left: auto;
+.practice-config-select {
+  background: #1a1a24;
+  border: 1px solid #2d2d3d;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  accent-color: #0891b2;
 }
 
-.practice-config-item {
-  margin-bottom: 12px;
+.practice-config-select:hover {
+  border-color: #0891b2;
 }
 
-.practice-config-item:last-child {
-  margin-bottom: 0;
-}
-
-.practice-config-sub-item:last-child {
-  margin-bottom: 0;
+.practice-config-select:focus {
+  outline: none;
+  border-color: #0891b2;
 }
 
 .practice-config-checkbox-label {
@@ -26,6 +24,7 @@
   gap: 8px;
   font-size: 0.9rem;
   color: #94a3b8;
+  white-space: nowrap;
 }
 
 .practice-config-checkbox-label.disabled {
@@ -42,58 +41,4 @@
 
 .practice-config-checkbox-label input[type="checkbox"]:disabled {
   cursor: not-allowed;
-}
-
-.practice-config-checkbox-label span {
-  flex: 1;
-}
-
-.practice-config-section-title {
-  font-weight: 500;
-  font-size: 1rem;
-  color: #67e8f9;
-  margin-bottom: 12px;
-}
-
-.practice-config-radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.practice-config-radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #94a3b8;
-  user-select: none;
-}
-
-.practice-config-radio-label input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #0891b2;
-}
-
-.practice-config-radio-label span {
-  flex: 1;
-}
-
-.practice-config-sub-items {
-  margin-left: 24px;
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.practice-config-sub-item {
-  margin-bottom: 8px;
-}
-
-.practice-config-display > .practice-config-item:last-child {
-  margin-bottom: 0;
 }

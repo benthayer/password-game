@@ -1,86 +1,54 @@
 import type { PracticeDisplayConfig } from './generation-config';
 import './PracticeConfigDisplay.css';
 
-interface PracticeConfigDisplayProps {
+interface PracticeConfigControlProps {
   config: PracticeDisplayConfig;
   onConfigChange: (config: PracticeDisplayConfig) => void;
 }
 
-export default function PracticeConfigDisplay({ config, onConfigChange }: PracticeConfigDisplayProps) {
-  const handleDisplayModeChange = (mode: 'none' | 'previous' | 'all') => {
-    onConfigChange({
-      ...config,
-      displayMode: mode,
-    });
-  };
-
-  const handleHighlightCurrentWordChange = () => {
-    onConfigChange({
-      ...config,
-      highlightCurrentWord: !config.highlightCurrentWord,
-    });
-  };
-
-  const handleHintChange = () => {
-    onConfigChange({
-      ...config,
-      hint: !config.hint,
-    });
-  };
-
+export function DisplayModeSelect({ config, onConfigChange }: PracticeConfigControlProps) {
   return (
-    <div className="practice-config-display">
-      <div className="practice-config-item">
-        <div className="practice-config-radio-group">
-          <label className="practice-config-radio-label">
-            <input
-              type="radio"
-              name="displayMode"
-              checked={config.displayMode === 'none'}
-              onChange={() => handleDisplayModeChange('none')}
-            />
-            <span>Display no words</span>
-          </label>
-          <label className="practice-config-radio-label">
-            <input
-              type="radio"
-              name="displayMode"
-              checked={config.displayMode === 'previous'}
-              onChange={() => handleDisplayModeChange('previous')}
-            />
-            <span>Display previous words</span>
-          </label>
-          <label className="practice-config-radio-label">
-            <input
-              type="radio"
-              name="displayMode"
-              checked={config.displayMode === 'all'}
-              onChange={() => handleDisplayModeChange('all')}
-            />
-            <span>Display all words</span>
-          </label>
-        </div>
-        
-        <div className="practice-config-sub-items">
-          <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
-            <input
-              type="checkbox"
-              checked={config.highlightCurrentWord}
-              onChange={handleHighlightCurrentWordChange}
-            />
-            <span>Highlight current word</span>
-          </div>
-          <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
-            <input
-              type="checkbox"
-              checked={config.hint}
-              onChange={handleHintChange}
-            />
-            <span>Hint</span>
-          </div>
-        </div>
-      </div>
+    <select
+      className="practice-config-select"
+      value={config.displayMode}
+      onChange={(e) =>
+        onConfigChange({
+          ...config,
+          displayMode: e.target.value as 'none' | 'previous' | 'all',
+        })
+      }
+    >
+      <option value="none">Display no words</option>
+      <option value="previous">Display previous words</option>
+      <option value="all">Display all words</option>
+    </select>
+  );
+}
+
+export function HighlightCurrentWordCheckbox({ config, onConfigChange }: PracticeConfigControlProps) {
+  return (
+    <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+      <input
+        type="checkbox"
+        checked={config.highlightCurrentWord}
+        onChange={() =>
+          onConfigChange({ ...config, highlightCurrentWord: !config.highlightCurrentWord })
+        }
+      />
+      <span>Highlight current word</span>
     </div>
   );
 }
 
+export function HintCheckbox({ config, onConfigChange }: PracticeConfigControlProps) {
+  return (
+    <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+      <input
+        type="checkbox"
+        checked={config.hint}
+        onChange={() => onConfigChange({ ...config, hint: !config.hint })}
+      />
+      <span>Hint</span>
+    </div>
+  );
+}
