@@ -154,16 +154,6 @@ Returns 402 if insufficient storage credits, 409 if file already exists at addre
 #### DELETE /blob/:address
 Delete the blob at this address.
 
-Payments (Coinbase)
-
-#### POST /payments/create-charge
-Create a crypto payment via Coinbase Commerce.
-
-Body: { address: string, amountUsd: number }
-Amount must be between 1 and 100.
-
-Returns: { chargeUrl, chargeId, chargeCode }
-
 ### Payments
 
 Privacy note: the address is never sent to the payment provider. The server generates a random token, maps it locally to the address, so the payment provider has no way to correlate the payment to your blob address.
