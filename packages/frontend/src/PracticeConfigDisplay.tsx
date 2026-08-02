@@ -35,7 +35,7 @@ export function HighlightCurrentWordCheckbox({ config, onConfigChange }: Practic
           onConfigChange({ ...config, highlightCurrentWord: !config.highlightCurrentWord })
         }
       />
-      <span>Highlight current word</span>
+      <span>Highlight next word</span>
     </div>
   );
 }
@@ -48,7 +48,7 @@ export function HintCheckbox({ config, onConfigChange }: PracticeConfigControlPr
         checked={config.hint}
         onChange={() => onConfigChange({ ...config, hint: !config.hint })}
       />
-      <span>Hint</span>
+      <span>Highlight next word</span>
     </div>
   );
 }
