@@ -1,0 +1,31 @@
+.github-link {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  /* above modal overlays (1000/1100) so it stays clickable when one is open */
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(18, 18, 26, 0.96);
+  border: 1px solid #1e2a3a;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.github-link:hover {
+  transform: translateY(-1px);
+  border-color: #2e4258;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.github-link svg {
+  fill: #e2e8f0;
+  display: block;
+}
