@@ -58,6 +58,8 @@ async function createCoinbaseCharge(
       metadata: {
         payment_token: token,  // Random token, not the account address
       },
+      redirect_url: 'https://passwordgame.apps.benthayer.com/?payment=success',
+      cancel_url: 'https://passwordgame.apps.benthayer.com/?payment=cancelled',
     }),
   });
   

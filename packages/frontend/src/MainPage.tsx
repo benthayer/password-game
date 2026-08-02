@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GenerationConfig } from './generation-config';
 import GeneratePasswordModal from './GeneratePasswordModal';
 import RecoveryModal from './RecoveryModal';
 import PracticeModal from './PracticeModal';
 import AboutModal from './AboutModal';
+import PaymentResultModal, { type PaymentResult } from './PaymentResultModal';
 import './MainPage.css';
 
 interface MainPageProps {
@@ -21,6 +22,17 @@ export default function MainPage({
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(() => {
+    const value = new URLSearchParams(window.location.search).get('payment');
+    return value === 'success' || value === 'cancelled' ? value : null;
+  });
+
+  useEffect(() => {
+    // Strip the ?payment= param so a refresh doesn't re-show the modal
+    if (paymentResult) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [paymentResult]);
 
   const handlePractice = () => {
     setPracticeModalOpen(true);
@@ -66,6 +78,10 @@ export default function MainPage({
       <AboutModal
         isOpen={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
+      />
+      <PaymentResultModal
+        result={paymentResult}
+        onClose={() => setPaymentResult(null)}
       />
     </div>
   );
