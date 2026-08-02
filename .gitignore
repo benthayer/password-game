@@ -8,6 +8,11 @@ src/**/*.js.map
 src/**/*.d.ts
 src/**/*.d.ts.map
 SECRETS.txt
-packages/backend/data/*.db
-packages/backend/data/*.db-shm
-packages/backend/data/*.db-wal
+
+# Backend runtime data: account records, audit logs, SQLite db, temp uploads.
+# Ignore the whole directory - never commit anything that lands here.
+packages/backend/data/*
+!packages/backend/data/.gitkeep
+
+# Docker volume mount target for the same data (see docker-compose.yml)
+/data/
