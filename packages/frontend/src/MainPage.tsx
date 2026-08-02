@@ -9,13 +9,15 @@ import './MainPage.css';
 
 interface MainPageProps {
   config: GenerationConfig;
-  setConfig: (config: GenerationConfig) => void;
+  configImportedFromJson: boolean;
+  setConfig: (config: GenerationConfig, importedFromJson?: boolean) => void;
   setSubpassword: (subpassword: string[]) => void;
 }
 
-export default function MainPage({ 
-  config, 
-  setConfig, 
+export default function MainPage({
+  config,
+  configImportedFromJson,
+  setConfig,
   setSubpassword,
 }: MainPageProps) {
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
@@ -68,6 +70,7 @@ export default function MainPage({
         isOpen={recoveryModalOpen}
         onClose={() => setRecoveryModalOpen(false)}
         config={config}
+        configImportedFromJson={configImportedFromJson}
         setConfig={setConfig}
         setSubpassword={setSubpassword}
       />

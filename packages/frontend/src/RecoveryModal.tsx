@@ -19,7 +19,8 @@ interface RecoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: GenerationConfig;
-  setConfig: (config: GenerationConfig) => void;
+  configImportedFromJson: boolean;
+  setConfig: (config: GenerationConfig, importedFromJson?: boolean) => void;
   setSubpassword: (password: string[]) => void;
 }
 
@@ -27,6 +28,7 @@ export default function RecoveryModal({
   isOpen,
   onClose,
   config,
+  configImportedFromJson,
   setConfig,
   setSubpassword,
 }: RecoveryModalProps) {
@@ -41,9 +43,9 @@ export default function RecoveryModal({
     if (isOpen) {
       setShowCloseConfirm(false);
       setImportError(null);
-      setBoundToImport(!!config.importedFromJson);
+      setBoundToImport(configImportedFromJson);
     }
-  }, [isOpen, config.importedFromJson]);
+  }, [isOpen, configImportedFromJson]);
 
   if (!isOpen) return null;
 
@@ -61,7 +63,7 @@ export default function RecoveryModal({
   };
 
   const handleRecover = () => {
-    setConfig({ ...form.toConfig(), importedFromJson: boundToImport });
+    setConfig(form.toConfig(), boundToImport);
     setSubpassword([]);
     navigate('/recovery');
     onClose();

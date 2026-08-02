@@ -42,32 +42,16 @@ export function canonicalStringify(obj: unknown): string {
 }
 
 /**
- * The exact set of GenerationConfig fields that define the derivation
- * algorithm. ONLY these fields may ever influence hashConfig; UI metadata
- * (e.g. importedFromJson) must never reach the hash, or every derived grid
- * word changes for every existing password. This list is pinned by the
- * golden-vector tests in derivation-lock.test.ts — do not add or remove
- * fields without understanding that it breaks all previously generated
- * passwords.
- */
-export function getHashedConfig(config: GenerationConfig) {
-  return {
-    seedPhrase: config.seedPhrase,
-    gridRows: config.gridRows,
-    gridCols: config.gridCols,
-    hashAlgorithm: config.hashAlgorithm,
-    useRecommendedHash: config.useRecommendedHash,
-    includeSalt: config.includeSalt,
-    salt: config.salt,
-  };
-}
-
-/**
  * Hash the config to produce a config identity.
  * This captures "what game/rules are we using".
+ *
+ * Every field of GenerationConfig feeds this hash, and the hash decides
+ * which words every existing password replays to — so GenerationConfig may
+ * only ever contain derivation inputs, never UI metadata. The shape and the
+ * resulting hashes are pinned by derivation-lock.test.ts.
  */
 export function hashConfig(config: GenerationConfig): string {
-  return hash(canonicalStringify(getHashedConfig(config)));
+  return hash(canonicalStringify(config));
 }
 
 /**

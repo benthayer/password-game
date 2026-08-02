@@ -34,13 +34,15 @@ type Mode = 'recovery' | 'practice';
 
 interface InteractionPageProps {
   config: GenerationConfig;
-  setConfig: (config: GenerationConfig) => void;
+  configImportedFromJson: boolean;
+  setConfig: (config: GenerationConfig, importedFromJson?: boolean) => void;
   subpassword: string[];
   setSubpassword: (subpassword: string[]) => void;
 }
 
 export default function InteractionPage({
   config,
+  configImportedFromJson,
   setConfig,
   subpassword,
   setSubpassword,
@@ -67,8 +69,8 @@ export default function InteractionPage({
   const goToRecoveryMode = () => navigate('/recovery');
 
   // Config save resets everything
-  const handleConfigSave = (newConfig: GenerationConfig) => {
-    setConfig(newConfig);
+  const handleConfigSave = (newConfig: GenerationConfig, importedFromJson: boolean) => {
+    setConfig(newConfig, importedFromJson);
     setSubpassword([]);
     navigate('/recovery');
   };
@@ -88,6 +90,7 @@ export default function InteractionPage({
         <ConfigSection
           mode={mode}
           config={config}
+          configImportedFromJson={configImportedFromJson}
           wordCount={subpassword.length}
         />
 
@@ -114,6 +117,7 @@ export default function InteractionPage({
           isOpen={configModalOpen}
           onClose={() => setConfigModalOpen(false)}
           config={config}
+          configImportedFromJson={configImportedFromJson}
           onSave={handleConfigSave}
           wordCount={subpassword.length || 8}
         />
@@ -166,10 +170,12 @@ function PageHeader({
 function ConfigSection({
   mode,
   config,
+  configImportedFromJson,
   wordCount,
 }: {
   mode: Mode;
   config: GenerationConfig;
+  configImportedFromJson: boolean;
   wordCount: number;
 }) {
   if (mode === 'practice') {
@@ -178,7 +184,7 @@ function ConfigSection({
 
     return (
       <div className="config-section-container practice-configs-container">
-        <ConfigDisplay config={config} />
+        <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
         <SecurityEstimate
           gridSize={gridSize}
           wordCount={wordCount}
@@ -191,7 +197,7 @@ function ConfigSection({
   }
   return (
     <div className="config-section-container">
-      <ConfigDisplay config={config} />
+      <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
     </div>
   );
 }

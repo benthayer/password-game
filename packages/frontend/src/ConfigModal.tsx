@@ -18,7 +18,8 @@ interface ConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: GenerationConfig;
-  onSave: (config: GenerationConfig) => void;
+  configImportedFromJson: boolean;
+  onSave: (config: GenerationConfig, importedFromJson: boolean) => void;
   wordCount?: number;
 }
 
@@ -26,6 +27,7 @@ export default function ConfigModal({
   isOpen,
   onClose,
   config,
+  configImportedFromJson,
   onSave,
 }: ConfigModalProps) {
   const form = useConfigForm(config, isOpen);
@@ -38,9 +40,9 @@ export default function ConfigModal({
     if (isOpen) {
       setShowCloseConfirm(false);
       setImportError(null);
-      setBoundToImport(!!config.importedFromJson);
+      setBoundToImport(configImportedFromJson);
     }
-  }, [isOpen, config.importedFromJson]);
+  }, [isOpen, configImportedFromJson]);
 
   if (!isOpen) return null;
 
@@ -58,7 +60,7 @@ export default function ConfigModal({
   };
 
   const handleSave = () => {
-    onSave({ ...form.toConfig(), importedFromJson: boundToImport });
+    onSave(form.toConfig(), boundToImport);
     onClose();
   };
 

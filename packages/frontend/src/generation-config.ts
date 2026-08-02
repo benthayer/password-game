@@ -30,9 +30,6 @@ export interface GenerationConfig {
   useRecommendedHash: boolean;
   includeSalt: boolean;
   salt: string;
-
-  // True when this config was loaded from an uploaded JSON file
-  importedFromJson?: boolean;
 }
 
 export const DEFAULT_CONFIG: GenerationConfig = {

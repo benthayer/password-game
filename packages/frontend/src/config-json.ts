@@ -135,7 +135,6 @@ function validateAndParseConfig(json: unknown): GenerationConfig {
     useRecommendedHash: obj.useRecommendedHash,
     includeSalt: obj.includeSalt,
     salt: obj.salt,
-    importedFromJson: true,
   };
 }
 

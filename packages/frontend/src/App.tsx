@@ -6,7 +6,7 @@ import GitHubLink from './GitHubLink';
 import { DEFAULT_CONFIG, PERSIST_CONFIG, type GenerationConfig } from './generation-config';
 
 function AppRouter() {
-  const [config, setConfig] = useState<GenerationConfig>(() => {
+  const [config, setConfigState] = useState<GenerationConfig>(() => {
     if (PERSIST_CONFIG) {
       const saved = localStorage.getItem('config');
       if (saved) {
@@ -24,6 +24,15 @@ function AppRouter() {
     }
     return DEFAULT_CONFIG;
   });
+
+  // UI metadata about where the config came from — deliberately NOT part of
+  // GenerationConfig, which must contain only derivation inputs.
+  const [configImportedFromJson, setConfigImportedFromJson] = useState(false);
+
+  const setConfig = (newConfig: GenerationConfig, importedFromJson: boolean = false) => {
+    setConfigState(newConfig);
+    setConfigImportedFromJson(importedFromJson);
+  };
 
   useEffect(() => {
     if (PERSIST_CONFIG) {
@@ -46,6 +55,7 @@ function AppRouter() {
           element={
             <MainPage
               config={config}
+              configImportedFromJson={configImportedFromJson}
               setConfig={setConfig}
               setSubpassword={setSubpassword}
             />
@@ -56,6 +66,7 @@ function AppRouter() {
           element={
             <InteractionPage
               config={config}
+              configImportedFromJson={configImportedFromJson}
               setConfig={setConfig}
               subpassword={subpassword}
               setSubpassword={setSubpassword}
@@ -70,6 +81,7 @@ function AppRouter() {
             ) : (
               <InteractionPage
                 config={config}
+                configImportedFromJson={configImportedFromJson}
                 setConfig={setConfig}
                 subpassword={subpassword}
                 setSubpassword={setSubpassword}

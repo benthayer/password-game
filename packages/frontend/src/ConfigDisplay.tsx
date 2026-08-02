@@ -5,16 +5,17 @@ import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
   config: GenerationConfig;
+  importedFromJson?: boolean;
 }
 
-export default function ConfigDisplay({ config }: ConfigDisplayProps) {
+export default function ConfigDisplay({ config, importedFromJson }: ConfigDisplayProps) {
   const handleDownload = () => downloadConfigAsJson(config);
 
   return (
     <div className="config-display">
       <div className="config-header">
         <h3 className="config-title">Configuration</h3>
-        {config.importedFromJson && (
+        {importedFromJson && (
           <span className="config-imported-badge" title="This configuration was loaded from an uploaded JSON file">
             🔒 From uploaded JSON
           </span>

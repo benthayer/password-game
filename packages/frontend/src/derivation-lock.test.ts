@@ -3,11 +3,13 @@
  * vectors so it can NEVER change silently again.
  *
  * Context: on 2026-08-02, commit cbf37b3 added a UI flag (importedFromJson)
- * to GenerationConfig. hashConfig() hashed the whole config object, so the
+ * to GenerationConfig. hashConfig() hashes the whole config object, so the
  * flag leaked into the identity hash and every grid showed different words
- * for the same password. These tests exist so that any change to the
- * derivation — config hashing, word hashing, position derivation, corpus,
- * or canonical serialization — fails CI loudly.
+ * for the same password. The invariant is that GenerationConfig contains
+ * ONLY derivation inputs — nothing else may ever live on it. These tests
+ * exist so that any change to the derivation — the config shape, config
+ * hashing, word hashing, position derivation, corpus, or canonical
+ * serialization — fails loudly.
  *
  * The golden vectors were generated from the algorithm as of commit 19bd1a0
  * (the last commit before the regression) via an independent
@@ -21,12 +23,11 @@ import CryptoJS from 'crypto-js';
 import * as corpus from '../corpus.json';
 import {
   hashConfig,
-  getHashedConfig,
   getIdentityHash,
   getNextWordsFlat,
   canonicalStringify,
 } from './crypto-utils';
-import type { GenerationConfig } from './generation-config';
+import { DEFAULT_CONFIG, type GenerationConfig } from './generation-config';
 import { DEFAULT_ARGON2ID_CONFIG } from './hash-config';
 
 const DEFAULT_VECTOR_CONFIG: GenerationConfig = {
@@ -105,38 +106,33 @@ describe('golden vectors (algorithm as of 19bd1a0)', () => {
   });
 });
 
-describe('config hash contamination guard', () => {
-  const extraFieldVariants: Array<Record<string, unknown>> = [
-    { importedFromJson: true },
-    { importedFromJson: false },
-    { importedFromJson: undefined },
-    { someFutureUiFlag: 'yes' },
-    { nested: { a: 1 } },
-  ];
+describe('GenerationConfig shape lock', () => {
+  // hashConfig hashes the WHOLE config object, so GenerationConfig may only
+  // ever contain derivation inputs. Adding any field (even optional UI
+  // metadata) changes every derived word for every existing password.
+  //
+  // Compile-time lock: adding or removing a GenerationConfig field makes
+  // this assignment a type error (caught by `tsc` in the build).
+  type DerivationFields =
+    | 'seedPhrase'
+    | 'gridRows'
+    | 'gridCols'
+    | 'hashAlgorithm'
+    | 'useRecommendedHash'
+    | 'includeSalt'
+    | 'salt';
+  type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
+  const configHasExactlyTheDerivationFields: Exact<keyof GenerationConfig, DerivationFields> = true;
 
-  for (const extra of extraFieldVariants) {
-    const label = JSON.stringify(extra);
-    it(`extra field ${label} does not change the config hash or the words`, () => {
-      const contaminated = { ...DEFAULT_VECTOR_CONFIG, ...extra } as GenerationConfig;
-      expect(hashConfig(contaminated)).toBe(hashConfig(DEFAULT_VECTOR_CONFIG));
-      expect(getNextWordsFlat(['gush'], contaminated)).toEqual(
-        getNextWordsFlat(['gush'], DEFAULT_VECTOR_CONFIG)
-      );
-    });
-  }
-
-  it('getHashedConfig picks exactly the seven algorithm fields', () => {
-    const picked = getHashedConfig({
-      ...DEFAULT_VECTOR_CONFIG,
-      importedFromJson: true,
-    });
-    expect(Object.keys(picked).sort()).toEqual([
+  it('GenerationConfig has exactly the seven derivation fields', () => {
+    expect(configHasExactlyTheDerivationFields).toBe(true);
+    expect(Object.keys(DEFAULT_CONFIG).sort()).toEqual([
       'gridCols', 'gridRows', 'hashAlgorithm', 'includeSalt',
       'salt', 'seedPhrase', 'useRecommendedHash',
     ]);
   });
 
-  it('algorithm-relevant fields DO change the hash', () => {
+  it('every derivation field DOES change the hash', () => {
     for (const change of [
       { seedPhrase: 'x' },
       { gridRows: 5 },
@@ -154,7 +150,7 @@ describe('config hash contamination guard', () => {
 
 describe('primitive locks', () => {
   it('canonicalStringify output is pinned', () => {
-    expect(canonicalStringify(getHashedConfig(SALTED_VECTOR_CONFIG))).toBe(
+    expect(canonicalStringify(SALTED_VECTOR_CONFIG)).toBe(
       '{"gridCols":4,"gridRows":3,"hashAlgorithm":{"algorithm":"argon2id","memoryCost":65536,"parallelism":1,"timeCost":3},"includeSalt":true,"salt":"c2FsdHkgc2FsdA==","seedPhrase":"correct horse","useRecommendedHash":false}'
     );
   });
