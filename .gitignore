@@ -2,6 +2,7 @@ node_modules/
 dist/
 
 .env*
+.claude/
 # TypeScript compiled output (shouldn't exist with noEmit, but just in case)
 src/**/*.js
 src/**/*.js.map
