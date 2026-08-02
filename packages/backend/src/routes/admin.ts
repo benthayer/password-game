@@ -1,17 +1,36 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { timingSafeEqual } from 'crypto';
 import { getAccount, getAllAccounts, grantStorageAndEgressFromPayment } from '../storage/db.js';
 
 export const adminRoutes = Router();
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'dev-secret';
+// No fallback value. If ADMIN_SECRET is unset the admin API is unreachable
+// rather than guarded by a default that anyone reading this file would know.
+const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+if (!ADMIN_SECRET) {
+  console.warn('ADMIN_SECRET is not set - /admin endpoints are disabled');
+}
+
+/** Constant-time compare so the secret can't be recovered a byte at a time. */
+function secretMatches(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 // =============================================================================
 // MIDDLEWARE
 // =============================================================================
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!ADMIN_SECRET) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
   const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ') || auth.slice(7) !== ADMIN_SECRET) {
+  if (!auth?.startsWith('Bearer ') || !secretMatches(auth.slice(7), ADMIN_SECRET)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
