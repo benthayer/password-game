@@ -220,21 +220,7 @@ function PasswordSection({
   return (
     <div className="current-password-section">
       <div className="current-password-header">
-        <div className="section-header-left">
-          <h2>{mode === 'recovery' ? 'Recovered Password' : 'Password Progress'}</h2>
-          {mode === 'practice' && (
-            <>
-              <DisplayModeSelect
-                config={practiceDisplayConfig}
-                onConfigChange={onPracticeConfigChange}
-              />
-              <HighlightCurrentWordCheckbox
-                config={practiceDisplayConfig}
-                onConfigChange={onPracticeConfigChange}
-              />
-            </>
-          )}
-        </div>
+        <h2>{mode === 'recovery' ? 'Recovered Password' : 'Password Progress'}</h2>
         {mode === 'recovery' && (
           <RecoveryControls
             onReset={recovery.reset}
@@ -243,13 +229,23 @@ function PasswordSection({
           />
         )}
         {mode === 'practice' && (
-          <PracticeControls
-            onReset={practice.reset}
-            onPrevious={practice.goToPreviousWord}
-            onNext={practice.goToNextWord}
-            canGoPrevious={practice.activeWordIndex > 0}
-            canGoNext={practice.activeWordIndex < subpassword.length}
-          />
+          <div className="section-header-right">
+            <HighlightCurrentWordCheckbox
+              config={practiceDisplayConfig}
+              onConfigChange={onPracticeConfigChange}
+            />
+            <DisplayModeSelect
+              config={practiceDisplayConfig}
+              onConfigChange={onPracticeConfigChange}
+            />
+            <PracticeControls
+              onReset={practice.reset}
+              onPrevious={practice.goToPreviousWord}
+              onNext={practice.goToNextWord}
+              canGoPrevious={practice.activeWordIndex > 0}
+              canGoNext={practice.activeWordIndex < subpassword.length}
+            />
+          </div>
         )}
       </div>
 
@@ -302,20 +298,20 @@ function WordSelectionSection({
     <div className="word-selection-section">
       {mode === 'practice' ? (
         <div className="word-selection-header">
-          <div className="section-header-left">
-            <h2>Select Next Word</h2>
+          <h2>Select Next Word</h2>
+          <div className="section-header-right">
             <HintCheckbox
               config={practiceDisplayConfig}
               onConfigChange={onPracticeConfigChange}
             />
+            <PracticeControls
+              onReset={practice.reset}
+              onPrevious={practice.goToPreviousWord}
+              onNext={practice.goToNextWord}
+              canGoPrevious={practice.activeWordIndex > 0}
+              canGoNext={practice.activeWordIndex < subpassword.length}
+            />
           </div>
-          <PracticeControls
-            onReset={practice.reset}
-            onPrevious={practice.goToPreviousWord}
-            onNext={practice.goToNextWord}
-            canGoPrevious={practice.activeWordIndex > 0}
-            canGoNext={practice.activeWordIndex < subpassword.length}
-          />
         </div>
       ) : (
         <h2>Select Next Word</h2>

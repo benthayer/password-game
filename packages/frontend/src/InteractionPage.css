@@ -197,7 +197,7 @@
   font-style: italic;
 }
 
-.section-header-left {
+.section-header-right {
   display: flex;
   align-items: center;
   gap: 16px;

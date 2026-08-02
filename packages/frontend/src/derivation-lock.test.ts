@@ -15,7 +15,8 @@
  * (the last commit before the regression) via an independent
  * node:crypto implementation. DO NOT regenerate them from current code to
  * make a failing test pass: a failure here means existing users' passwords
- * no longer replay to the same words.
+ * no longer replay to the same words. If the hash changed, you fucked up;
+ * fix the code, not the vectors.
  */
 
 import { describe, it, expect } from 'vitest';

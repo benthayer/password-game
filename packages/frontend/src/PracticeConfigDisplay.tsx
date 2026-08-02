@@ -26,8 +26,12 @@ export function DisplayModeSelect({ config, onConfigChange }: PracticeConfigCont
 }
 
 export function HighlightCurrentWordCheckbox({ config, onConfigChange }: PracticeConfigControlProps) {
+  if (config.displayMode !== 'all') {
+    return null;
+  }
   return (
-    <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+    <div className="practice-config-checkbox-label">
+      <span>Highlight next word</span>
       <input
         type="checkbox"
         checked={config.highlightCurrentWord}
@@ -35,20 +39,19 @@ export function HighlightCurrentWordCheckbox({ config, onConfigChange }: Practic
           onConfigChange({ ...config, highlightCurrentWord: !config.highlightCurrentWord })
         }
       />
-      <span>Highlight next word</span>
     </div>
   );
 }
 
 export function HintCheckbox({ config, onConfigChange }: PracticeConfigControlProps) {
   return (
-    <div className={`practice-config-checkbox-label ${config.displayMode !== 'all' ? 'disabled' : ''}`}>
+    <div className="practice-config-checkbox-label">
+      <span>Highlight next word</span>
       <input
         type="checkbox"
         checked={config.hint}
         onChange={() => onConfigChange({ ...config, hint: !config.hint })}
       />
-      <span>Highlight next word</span>
     </div>
   );
 }
