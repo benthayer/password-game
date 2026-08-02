@@ -3,9 +3,10 @@
  * Orchestrates the config sections.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
+import { parseConfigFromJson, ConfigParseError } from './config-json';
 import { CloseConfirmModal } from './shared';
 import {
   GridSettingsSection,
@@ -29,10 +30,13 @@ export default function ConfigModal({
 }: ConfigModalProps) {
   const form = useConfigForm(config, isOpen);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setShowCloseConfirm(false);
+      setImportError(null);
     }
   }, [isOpen]);
 
@@ -56,12 +60,54 @@ export default function ConfigModal({
     onClose();
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setImportError(null);
+      const importedConfig = await parseConfigFromJson(file);
+      form.loadFromConfig(importedConfig);
+    } catch (err) {
+      if (err instanceof ConfigParseError) {
+        setImportError(err.message);
+      } else {
+        setImportError('Failed to read configuration file');
+      }
+    }
+
+    // Reset file input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <>
       <div className="config-modal-overlay" onClick={handleCloseAttempt}>
         <div className="config-modal-content" onClick={(e) => e.stopPropagation()}>
-          <ModalHeader onClose={handleCloseAttempt} />
-          
+          <ModalHeader onClose={handleCloseAttempt} onImport={handleImportClick} />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+
+          {importError && (
+            <div className="import-error">
+              <span className="import-error-icon">⚠</span>
+              <span>{importError}</span>
+              <button className="import-error-dismiss" onClick={() => setImportError(null)}>×</button>
+            </div>
+          )}
+
           <div className="config-modal-body">
             <GridSettingsSection
               seedPhrase={form.seedPhrase}
@@ -102,11 +148,16 @@ export default function ConfigModal({
 // Modal Chrome Components
 // ============================================================
 
-function ModalHeader({ onClose }: { onClose: () => void }) {
+function ModalHeader({ onClose, onImport }: { onClose: () => void; onImport: () => void }) {
   return (
     <div className="config-modal-header">
       <h2>Configuration</h2>
-      <button className="config-modal-close" onClick={onClose}>×</button>
+      <div className="config-modal-header-buttons">
+        <button className="config-import-button" onClick={onImport} title="Import configuration from JSON file">
+          ↑ Import JSON
+        </button>
+        <button className="config-modal-close" onClick={onClose}>×</button>
+      </div>
     </div>
   );
 }

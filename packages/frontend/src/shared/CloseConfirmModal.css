@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
+  /* Must sit above every modal overlay (config/recovery/generate are 1000, info modals 1100) */
+  z-index: 1200;
 }
 
 .close-confirm-modal {
