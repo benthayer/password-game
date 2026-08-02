@@ -38,7 +38,7 @@ function createTestFile(content: string, filename = 'test.txt', type = 'text/pla
 }
 
 // Helper to create a File from Uint8Array
-function createBinaryFile(data: Uint8Array, filename = 'test.bin', type = 'application/octet-stream'): File {
+function createBinaryFile(data: Uint8Array<ArrayBuffer>, filename = 'test.bin', type = 'application/octet-stream'): File {
   const blob = new Blob([data], { type });
   return new File([blob], filename, { type });
 }
@@ -242,7 +242,7 @@ describe('vault-crypto-streaming', () => {
       
       // Corrupt the auth tag (last 16 bytes of the last chunk)
       // This should always trigger authentication failure
-      encrypted[encrypted.length - 5] ^= 0xff;
+      encrypted[encrypted.length - 5]! ^= 0xff;
       
       await expect(
         decryptFile(encrypted, password, TEST_CONFIG)
