@@ -101,15 +101,34 @@ function runEnt(data: Buffer): EntResult | null {
 
 /**
  * Entropy threshold for encrypted data validation.
- * Encrypted data should have high entropy. Slightly lower threshold for 
- * small samples due to measurement variance, but still expect high values.
+ *
+ * Byte-histogram entropy on N bytes is capped at log2(N) bits/byte, so fixed
+ * thresholds falsely reject genuine ciphertext at small sizes (a 122-byte
+ * ciphertext of random data averages 6.50 and fails a 6.5 bar half the time;
+ * anything under 91 bytes could never pass at all).
+ *
+ * This uses the method-of-types bound, which is exact (non-asymptotic):
+ *   P(H_emp <= t) <= C(N+255, 255) * 2^(-N * (8 - t))
+ * Solving for a false-reject probability of 2^-128 gives
+ *   t(N) = 8 - (128 + log2 C(N+255, 255)) / N
+ * so uniform random data (i.e. real ciphertext) fails with probability
+ * <= 2^-128 at every size. The bound is conservative: measured entropy of
+ * random 122-byte buffers never dropped below 6.1 across 3M trials vs a
+ * threshold of 4.18 here.
+ *
+ * Trade-off (information-theoretic, not fixable by tuning): below ~512 bytes
+ * the threshold sits inside the plaintext range, so small non-encrypted
+ * payloads (base64, CJK text, at 122B even some English) are accepted. The
+ * check only discriminates plaintext from ciphertext for larger payloads.
  */
 function getMinEncryptedEntropyThreshold(sampleSize: number): number {
-  if (sampleSize >= 4096) return 7.5;
-  if (sampleSize >= 1024) return 7.2;
-  if (sampleSize >= 256) return 6.8;
-  if (sampleSize >= 64) return 6.5;
-  return 6.0; // Even small encrypted data should have high entropy
+  if (sampleSize <= 0) return 0;
+  // log2 C(sampleSize + 255, 255) = sum_{i=1..255} log2((sampleSize + i) / i)
+  let logTypes = 0;
+  for (let i = 1; i <= 255; i++) {
+    logTypes += Math.log2((sampleSize + i) / i);
+  }
+  return Math.max(0, 8 - (128 + logTypes) / sampleSize);
 }
 
 /**
@@ -119,10 +138,10 @@ function getMinEncryptedEntropyThreshold(sampleSize: number): number {
 function getMinUniformityThreshold(sampleSize: number): number {
   // Chi-squared needs at least 256 bytes for meaningful results
   if (sampleSize < 256) return 0; // Skip uniformity check for small samples
-  if (sampleSize >= 4096) return 0.5;
-  if (sampleSize >= 1024) return 0.4;
-  if (sampleSize >= 512) return 0.3;
-  return 0.2;
+  // 0.1 normalized = raw chi-squared <= 705, ~2^-140 false-reject rate for
+  // uniform random data (the old 0.5 at >=4096 was ~2^-56). Real plaintext
+  // scores in the thousands, so nothing meaningful is lost.
+  return 0.1;
 }
 
 // =============================================================================
