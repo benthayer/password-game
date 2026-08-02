@@ -12,7 +12,7 @@ import {
   encryptFileWithKey,
   decryptFileWithKey,
   getPrimaryKeyHex,
-  getAddressHash,
+  getSigningKeys,
   getSecondaryKey,
   decryptOuterLayer,
   decryptDownloadedFile,
@@ -50,20 +50,31 @@ describe('vault-crypto-streaming', () => {
   });
 
   describe('key derivation', () => {
-    it('should derive consistent address hash', async () => {
+    it('should derive a consistent signing keypair', async () => {
       const password = ['hello', 'world'];
-      const hash1 = await getAddressHash(password, TEST_CONFIG);
-      const hash2 = await getAddressHash(password, TEST_CONFIG);
+      const keys1 = await getSigningKeys(password, TEST_CONFIG);
+      const keys2 = await getSigningKeys(password, TEST_CONFIG);
       
-      expect(hash1).toBe(hash2);
-      expect(hash1).toHaveLength(64); // 32 bytes = 64 hex
+      expect(keys1.address).toBe(keys2.address);
+      expect(keys1.signingSecretKeyHex).toBe(keys2.signingSecretKeyHex);
+      expect(keys1.address).toHaveLength(64); // 32-byte Ed25519 pubkey = 64 hex
+      expect(keys1.signingSecretKeyHex).toHaveLength(128); // 64-byte secret key
     });
 
-    it('should derive different hashes for different passwords', async () => {
-      const hash1 = await getAddressHash(['hello', 'world'], TEST_CONFIG);
-      const hash2 = await getAddressHash(['hello', 'there'], TEST_CONFIG);
+    it('should derive different addresses for different passwords', async () => {
+      const keys1 = await getSigningKeys(['hello', 'world'], TEST_CONFIG);
+      const keys2 = await getSigningKeys(['hello', 'there'], TEST_CONFIG);
       
-      expect(hash1).not.toBe(hash2);
+      expect(keys1.address).not.toBe(keys2.address);
+    });
+
+    it('signature by derived key verifies against the address', async () => {
+      const keys = await getSigningKeys(['hello', 'world'], TEST_CONFIG);
+      const message = '1700000000:00112233445566778899aabbccddeeff';
+      const sig = sodium.crypto_sign_detached(message, sodium.from_hex(keys.signingSecretKeyHex));
+      
+      expect(sodium.crypto_sign_verify_detached(sig, message, sodium.from_hex(keys.address))).toBe(true);
+      expect(sodium.crypto_sign_verify_detached(sig, message + 'x', sodium.from_hex(keys.address))).toBe(false);
     });
 
     it('should derive primary key as hex', async () => {
@@ -84,13 +95,13 @@ describe('vault-crypto-streaming', () => {
 
     it('should derive different keys with different suffixes', async () => {
       const password = ['test', 'password'];
-      const addressHash = await getAddressHash(password, TEST_CONFIG);
+      const { address } = await getSigningKeys(password, TEST_CONFIG);
       const primaryKey = await getPrimaryKeyHex(password, TEST_CONFIG);
       const secondaryKey = await getSecondaryKey(password, TEST_CONFIG);
       
       // All three should be different
-      expect(addressHash).not.toBe(primaryKey);
-      expect(addressHash).not.toBe(secondaryKey);
+      expect(address).not.toBe(primaryKey);
+      expect(address).not.toBe(secondaryKey);
       expect(primaryKey).not.toBe(secondaryKey);
     });
   });

@@ -41,14 +41,16 @@ The password is constrained to only the options displayed in the grid, therefore
 
 ### Crypto - Data Storage
 
-See `packages/frontend/src/vault/vault-crypto.ts` for specifics
+See `packages/frontend/src/vault/vault-crypto-streaming.ts` for specifics
 
 At it's core, the model is this
-- address = hash(config + password + ':address')
+- signing keypair = ed25519 keypair seeded from hash(config + password + ':signing-key')
+- address = the signing public key
 - primary encryption key = hash(config + password + ':primary-key')
 - secondary encryption key = hash(config + password + ':secondary-key')
 - data you send to me = encrypt(file, primary encryption key)
 - data I store = encrypt(data you send to me, seconary encryption key)
+- every request = signed with the signing key, so the address alone is not a capability
 
 
 ## Memory fidelity
@@ -77,11 +79,11 @@ The system gives you a config file containing your salt and other information. Y
 
 ### Your Account Is Your Hash Address
 
-Your account consists only of your address hash. There is no way to link an email, a username or anything else. If someone has access to your address hash, they can download your encrypted file, delete it, view your credits and total amount downloaded. However, they cannot decrypt your file or obtain your password.
+Your account consists only of your address, which is an Ed25519 public key derived from your password. There is no way to link an email, a username or anything else. Every operation (download, upload, delete, account info) must be signed with the corresponding private key, which is derived from your password and never leaves your device — so knowing the address grants no capabilities at all. The server stores no credentials: a full database leak reveals only addresses, balances, and encrypted blobs, none of which can be used to read or destroy anything.
 
 ### The Hashing Algorithm is Argon Where It Counts
 
-For generating the grid deterministically, SHA-256 is used, but for determining your address hash, Argon2 is used. This prevents people from being able to brute force your password from the hash since Argon is a hashing algorithm specifically designed to be difficult for brute forcing. Using SHA-256 for the grid generation is not a problem because it is only ever used client-side and the server only ever sees Argon hashes, which is the relevant thing for security.
+For generating the grid deterministically, SHA-256 is used, but the signing keypair (and therefore your address) is derived through Argon2. This prevents people from being able to brute force your password from the address since Argon is a hashing algorithm specifically designed to be difficult for brute forcing. Using SHA-256 for the grid generation is not a problem because it is only ever used client-side and the server only ever sees the Argon-derived public key, which is the relevant thing for security.
 
 ### Dragnet/Rainbow Table Attacks
 
@@ -94,9 +96,19 @@ You and I both have a trivially crackable length 4 passwords based on a 4x4 grid
 
 If you want to set up a terminal UI or do your own integration with my backend, you can. Here are the endpoints that I provide.
 
+### Authentication
+
+The address is a hex-encoded Ed25519 public key. Every account and blob request must carry three headers proving possession of the corresponding private key:
+
+    X-Auth-Timestamp — unix seconds
+    X-Auth-Nonce — 16 random bytes, hex-encoded (32 chars)
+    X-Auth-Signature — hex-encoded Ed25519 detached signature over the string "{timestamp}:{nonce}"
+
+The timestamp must be within 5 minutes of server time, and each nonce is single-use. If your clock is off, the 401 response includes serverTime so you can correct and retry. Payment endpoints require no authentication — anyone may add credits to an address.
+
 ### Account
 
-#### GET /account/:addressHash
+#### GET /account/:address
 Check account status and balances.
 
 Returns:
@@ -105,14 +117,14 @@ Returns:
     egressGbRemaining — download bandwidth remaining
     fileSize — size of stored file (null if none)
     exists — boolean, whether a file exists at this address
-    verificationMessage — string for payment verification (payment:{addressHash})
+    verificationMessage — string for payment verification (payment:{address})
 
 ### Blob Storage
 
-#### GET /blob/:addressHash
+#### GET /blob/:address
 Download the encrypted blob at this address. Charges egress credits based on file size. Returns 402 if insufficient egress, 404 if no file exists.
 
-#### PUT /blob/:addressHash
+#### PUT /blob/:address
 Upload an encrypted blob.
 
 Required headers:
@@ -122,7 +134,7 @@ Required headers:
 
 Returns 402 if insufficient storage credits, 409 if file already exists at address.
 
-#### DELETE /blob/:addressHash
+#### DELETE /blob/:address
 Delete the blob at this address.
 
 Payments (Coinbase)
@@ -130,19 +142,19 @@ Payments (Coinbase)
 #### POST /payments/create-charge
 Create a crypto payment via Coinbase Commerce.
 
-Body: { addressHash: string, amountUsd: number }
+Body: { address: string, amountUsd: number }
 Amount must be between 1 and 100.
 
 Returns: { chargeUrl, chargeId, chargeCode }
 
 ### Payments
 
-Privacy note: the addressHash is never sent to the payment provider. The server generates a random token, maps it locally to the addressHash, so the payment provider has no way to correlate the payment to your blob address.
+Privacy note: the address is never sent to the payment provider. The server generates a random token, maps it locally to the address, so the payment provider has no way to correlate the payment to your blob address.
 
 #### POST /payments/create-charge
 Create a cryptocurrency payment via Coinbase Commerce.
 
-Body: { addressHash: string, amountUsd: number (1-100) }
+Body: { address: string, amountUsd: number (1-100) }
 
 Returns: { chargeUrl, chargeId, chargeCode }
 
@@ -151,7 +163,7 @@ Redirect chargeUrl to complete payment. The chargeUrl is a hosted Coinbase page 
 #### POST /stripe/create-checkout
 Create a card payment via Stripe Checkout.
 
-Body: { addressHash: string, amountUsd: number }
+Body: { address: string, amountUsd: number }
 Amount must be between 1 and 100.
 
 Returns: { checkoutUrl, sessionId }

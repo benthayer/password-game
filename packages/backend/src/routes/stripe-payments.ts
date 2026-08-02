@@ -20,7 +20,7 @@ function generatePaymentToken(): string {
 // =============================================================================
 
 interface CreateChargeRequest {
-  addressHash: string;
+  address: string;
   amountUsd: number;
 }
 
@@ -75,10 +75,10 @@ async function createStripeCheckoutSession(
 // Creates a Stripe Checkout Session for the user to pay
 stripePaymentRoutes.post('/create-checkout', async (req: Request, res: Response) => {
   try {
-    const { addressHash, amountUsd } = req.body as CreateChargeRequest;
+    const { address, amountUsd } = req.body as CreateChargeRequest;
     
-    if (!addressHash || typeof addressHash !== 'string') {
-      return res.status(400).json({ error: 'addressHash is required' });
+    if (!address || typeof address !== 'string') {
+      return res.status(400).json({ error: 'address is required' });
     }
     
     if (!amountUsd || typeof amountUsd !== 'number' || amountUsd <= 0) {
@@ -90,11 +90,11 @@ stripePaymentRoutes.post('/create-checkout', async (req: Request, res: Response)
       return res.status(400).json({ error: 'amountUsd must be between 1 and 100' });
     }
     
-    // Generate random token for privacy (Stripe never sees addressHash)
+    // Generate random token for privacy (Stripe never sees the address)
     const token = generatePaymentToken();
     
-    // Store token → addressHash mapping locally
-    await createPendingCharge(token, addressHash, amountUsd);
+    // Store token → address mapping locally
+    await createPendingCharge(token, address, amountUsd);
     
     // Create checkout session with only the token in metadata
     const session = await createStripeCheckoutSession(token, amountUsd);

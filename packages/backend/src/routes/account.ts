@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { getAccount } from '../storage/db.js';
+import { requireSignature } from '../auth.js';
 
 export const accountRoutes = Router();
 
-// GET /account/:addressHash
-// Returns account info: storage, egress, file size
-accountRoutes.get('/:addressHash', async (req, res) => {
-  const { addressHash } = req.params;
+// GET /account/:address
+// Returns account info: storage, egress, file size.
+// Signed like everything else — balances are not public.
+accountRoutes.get('/:address', requireSignature, async (req, res) => {
+  const addressHash = req.params.address;
   
   const account = await getAccount(addressHash);
   

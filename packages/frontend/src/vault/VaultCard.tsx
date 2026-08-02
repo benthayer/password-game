@@ -9,7 +9,7 @@ import UploadConfirmModal from './UploadConfirmModal';
 import AddCreditsModal from './AddCreditsModal';
 import { encryptFile, decryptDownloadedFile } from './vault-crypto-streaming';
 import { getBlob, setBlob, deleteBlob } from './vault-api';
-import { getVaultKeys, hasVaultKeysCached } from './vault-keys-cache';
+import { getVaultKeys, hasVaultKeysCached, type VaultKeys } from './vault-keys-cache';
 import type { GenerationConfig } from '../generation-config';
 import { getHashConfig } from '../generation-config';
 import './VaultCard.css';
@@ -41,7 +41,7 @@ export default function VaultCard({
   const [displayedText, setDisplayedText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [addressHash, setAddressHash] = useState<string | null>(null);
+  const [keys, setKeys] = useState<VaultKeys | null>(null);
   const [lastDecryptedData, setLastDecryptedData] = useState<{ filename: string; mimetype: string; content: Uint8Array } | null>(null);
 
   const handleUpload = () => {
@@ -74,7 +74,7 @@ export default function VaultCard({
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
-      setAddressHash(keys.addressHash);
+      setKeys(keys);
       
       const file = pendingUpload.type === 'file' 
         ? pendingUpload.file 
@@ -84,7 +84,7 @@ export default function VaultCard({
       const encrypted = await encryptFile(file, password, hashConfig);
       
       setStatusMessage('Uploading...');
-      await setBlob(keys.addressHash, encrypted, keys.secondaryKey);
+      await setBlob(keys, encrypted, keys.secondaryKey);
       setStatusMessage(null);
     } catch (err: unknown) {
       setStatusMessage(null);
@@ -107,10 +107,10 @@ export default function VaultCard({
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
-      setAddressHash(keys.addressHash);
+      setKeys(keys);
       
       setStatusMessage('Downloading...');
-      const data = await getBlob(keys.addressHash);
+      const data = await getBlob(keys);
       if (!data) {
         setStatusMessage(null);
         setErrorMessage('No file found at this address');
@@ -161,7 +161,7 @@ export default function VaultCard({
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
-      setAddressHash(keys.addressHash);
+      setKeys(keys);
       setStatusMessage(null);
       setModalOpen(true);
     } catch (err: unknown) {
@@ -178,7 +178,7 @@ export default function VaultCard({
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
-      setAddressHash(keys.addressHash);
+      setKeys(keys);
       setStatusMessage(null);
       setAddCreditsModalOpen(true);
     } catch (err: unknown) {
@@ -195,7 +195,7 @@ export default function VaultCard({
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
-      setAddressHash(keys.addressHash);
+      setKeys(keys);
       setStatusMessage(null);
       setConfirmDeleteOpen(true);
     } catch (err: unknown) {
@@ -205,12 +205,12 @@ export default function VaultCard({
   };
 
   const confirmDelete = async () => {
-    if (!addressHash) return;
+    if (!keys) return;
     setConfirmDeleteOpen(false);
     
     try {
       setStatusMessage('Deleting...');
-      await deleteBlob(addressHash);
+      await deleteBlob(keys);
       setStatusMessage(null);
     } catch (err: unknown) {
       setStatusMessage(null);
@@ -235,7 +235,7 @@ export default function VaultCard({
       <VaultModal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        addressHash={addressHash}
+        keys={keys}
       />
       <ErrorModal
         isOpen={!!errorMessage}
@@ -271,11 +271,11 @@ export default function VaultCard({
         includeSalt={hashConfig.includeSalt}
         fullConfig={fullConfig}
       />
-      {addressHash && (
+      {keys && (
         <AddCreditsModal
           isOpen={addCreditsModalOpen}
           onClose={() => setAddCreditsModalOpen(false)}
-          addressHash={addressHash}
+          address={keys.address}
           includeSalt={hashConfig.includeSalt}
           fullConfig={fullConfig}
         />

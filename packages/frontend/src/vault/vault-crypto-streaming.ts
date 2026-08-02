@@ -33,8 +33,8 @@ const ABYTES = 17;             // crypto_secretstream_xchacha20poly1305_ABYTES (
 // Our custom header addition (to store metadata chunk length)
 const METADATA_LENGTH_SIZE = 4; // uint32 BE
 
-// Key derivation suffixes (must match vault-crypto.ts)
-const SUFFIX_ADDRESS = ':+address';
+// Key derivation suffixes
+const SUFFIX_SIGNING_KEY = ':+signing-key';
 const SUFFIX_PRIMARY_KEY = ':+primary-encryption-key';
 const SUFFIX_SECONDARY_KEY = ':+secondary-encryption-key';
 
@@ -74,17 +74,35 @@ function formatPasswordForHash(password: string[], suffix: string): string {
   return password.join(':') + suffix;
 }
 
+export interface SigningKeys {
+  /** Hex-encoded Ed25519 public key. This IS the account address. */
+  address: string;
+  /** Hex-encoded Ed25519 secret key (64 bytes). Never leaves the client. */
+  signingSecretKeyHex: string;
+}
+
 /**
- * Get the address hash for a password.
- * This is what the server uses to identify your storage slot.
+ * Derive the Ed25519 signing keypair for a password.
+ * The public key is the account address; the secret key signs every
+ * server operation (ts:nonce), so knowing the address grants nothing.
+ *
+ * The KDF output format varies by algorithm (hex for most, bcrypt-encoded
+ * for bcrypt), so it's normalized to a 32-byte seed with generichash.
  */
-export async function getAddressHash(
-  password: string[], 
+export async function getSigningKeys(
+  password: string[],
   config: FullHashConfig = DEFAULT_FULL_HASH_CONFIG
-): Promise<string> {
+): Promise<SigningKeys> {
+  await ensureSodiumReady();
   const hashFn = createHashFunction(config);
-  const input = formatPasswordForHash(password, SUFFIX_ADDRESS);
-  return await hashFn(input);
+  const input = formatPasswordForHash(password, SUFFIX_SIGNING_KEY);
+  const kdfOutput = await hashFn(input);
+  const seed = sodium.crypto_generichash(32, kdfOutput, null);
+  const { publicKey, privateKey } = sodium.crypto_sign_seed_keypair(seed);
+  return {
+    address: sodium.to_hex(publicKey),
+    signingSecretKeyHex: sodium.to_hex(privateKey),
+  };
 }
 
 /**

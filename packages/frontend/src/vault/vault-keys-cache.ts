@@ -26,7 +26,10 @@ import type { WorkerInput, WorkerOutput } from './vault-keys.worker';
 // =============================================================================
 
 export interface VaultKeys {
-  addressHash: string;
+  /** Hex-encoded Ed25519 public key — the account address. */
+  address: string;
+  /** Hex-encoded Ed25519 secret key for signing server operations. */
+  signingSecretKeyHex: string;
   secondaryKey: string;
   primaryKeyHex: string;
 }
@@ -58,7 +61,8 @@ function computeVaultKeysInWorker(
       }
       
       resolve({
-        addressHash: e.data.addressHash,
+        address: e.data.address,
+        signingSecretKeyHex: e.data.signingSecretKeyHex,
         secondaryKey: e.data.secondaryKey,
         primaryKeyHex: e.data.primaryKeyHex,
       });

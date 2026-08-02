@@ -5,7 +5,7 @@
  * Each worker handles one computation then terminates.
  */
 
-import { getAddressHash, getSecondaryKey, getPrimaryKeyHex } from './vault-crypto-streaming';
+import { getSigningKeys, getSecondaryKey, getPrimaryKeyHex } from './vault-crypto-streaming';
 import { getHashConfig } from '../generation-config';
 import type { GenerationConfig } from '../generation-config';
 
@@ -15,7 +15,8 @@ export interface WorkerInput {
 }
 
 export interface WorkerOutput {
-  addressHash: string;
+  address: string;
+  signingSecretKeyHex: string;
   secondaryKey: string;
   // CryptoKey can't be transferred between threads, so we return hex key material
   primaryKeyHex: string;
@@ -24,15 +25,20 @@ export interface WorkerOutput {
 self.onmessage = async (e: MessageEvent<WorkerInput>) => {
   const { password, config } = e.data;
   const hashConfig = getHashConfig(config);
-  
+
   try {
-    const [addressHash, secondaryKey, primaryKeyHex] = await Promise.all([
-      getAddressHash(password, hashConfig),
+    const [signingKeys, secondaryKey, primaryKeyHex] = await Promise.all([
+      getSigningKeys(password, hashConfig),
       getSecondaryKey(password, hashConfig),
       getPrimaryKeyHex(password, hashConfig),
     ]);
-    
-    const result: WorkerOutput = { addressHash, secondaryKey, primaryKeyHex };
+
+    const result: WorkerOutput = {
+      address: signingKeys.address,
+      signingSecretKeyHex: signingKeys.signingSecretKeyHex,
+      secondaryKey,
+      primaryKeyHex,
+    };
     self.postMessage(result);
   } catch (error) {
     self.postMessage({ error: error instanceof Error ? error.message : 'Unknown error' });

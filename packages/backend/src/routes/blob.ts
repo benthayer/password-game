@@ -4,8 +4,12 @@ import { CreditService } from '../services/credit-service.js';
 import { hasSpaceForUpload } from '../services/disk-space.js';
 import { calculateSecretstreamSize } from '../services/encryption-validation.js';
 import { getAccount } from '../storage/db.js';
+import { requireSignature } from '../auth.js';
 
 export const blobRoutes = Router();
+
+// Every blob operation requires proof of the address's secret key.
+blobRoutes.use('/:address', requireSignature);
 
 const blobService = new BlobService();
 const creditService = new CreditService();
@@ -31,8 +35,8 @@ function getSecondaryKey(req: Request): string | null {
 // ROUTES
 // =============================================================================
 
-blobRoutes.get('/:addressHash', async (req, res) => {
-  const { addressHash } = req.params;
+blobRoutes.get('/:address', async (req, res) => {
+  const addressHash = req.params.address;
   
   // Get file size from account (stored on upload)
   const account = await getAccount(addressHash);
@@ -64,8 +68,8 @@ blobRoutes.get('/:addressHash', async (req, res) => {
  * - Content-Length: size of the encrypted payload
  * - X-Secondary-Key: hex-encoded secondary encryption key
  */
-blobRoutes.put('/:addressHash', async (req, res) => {
-  const { addressHash } = req.params;
+blobRoutes.put('/:address', async (req, res) => {
+  const addressHash = req.params.address;
   
   const canUpload = await creditService.canUpload(addressHash);
   if (!canUpload) {
@@ -107,8 +111,8 @@ blobRoutes.put('/:addressHash', async (req, res) => {
   }
 });
 
-blobRoutes.delete('/:addressHash', async (req, res) => {
-  const { addressHash } = req.params;
+blobRoutes.delete('/:address', async (req, res) => {
+  const addressHash = req.params.address;
   
   if (!await blobService.exists(addressHash)) {
     return res.status(404).json({ error: 'No file found' });

@@ -20,7 +20,7 @@ function generatePaymentToken(): string {
 // =============================================================================
 
 interface CreateChargeRequest {
-  addressHash: string;
+  address: string;
   amountUsd: number;
 }
 
@@ -56,7 +56,7 @@ async function createCoinbaseCharge(
         currency: 'USD',
       },
       metadata: {
-        payment_token: token,  // Random token, not addressHash
+        payment_token: token,  // Random token, not the account address
       },
     }),
   });
@@ -84,10 +84,10 @@ async function createCoinbaseCharge(
 // Creates a Coinbase Commerce charge for the user to pay
 paymentRoutes.post('/create-charge', async (req: Request, res: Response) => {
   try {
-    const { addressHash, amountUsd } = req.body as CreateChargeRequest;
+    const { address, amountUsd } = req.body as CreateChargeRequest;
     
-    if (!addressHash || typeof addressHash !== 'string') {
-      return res.status(400).json({ error: 'addressHash is required' });
+    if (!address || typeof address !== 'string') {
+      return res.status(400).json({ error: 'address is required' });
     }
     
     if (!amountUsd || typeof amountUsd !== 'number' || amountUsd <= 0) {
@@ -99,11 +99,11 @@ paymentRoutes.post('/create-charge', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'amountUsd must be between 1 and 100' });
     }
     
-    // Generate random token for privacy (Coinbase never sees addressHash)
+    // Generate random token for privacy (Coinbase never sees the address)
     const token = generatePaymentToken();
     
-    // Store token → addressHash mapping locally
-    await createPendingCharge(token, addressHash, amountUsd);
+    // Store token → address mapping locally
+    await createPendingCharge(token, address, amountUsd);
     
     // Create charge with only the token in metadata
     const charge = await createCoinbaseCharge(token, amountUsd);

@@ -14,14 +14,14 @@ const EGRESS_GB_PER_DOLLAR = 50;
 interface AddCreditsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  addressHash: string;
+  address: string;
   includeSalt: boolean;
   fullConfig?: GenerationConfig;
 }
 
 type ModalStep = 'acknowledgment' | 'payment';
 
-export default function AddCreditsModal({ isOpen, onClose, addressHash, includeSalt, fullConfig }: AddCreditsModalProps) {
+export default function AddCreditsModal({ isOpen, onClose, address, includeSalt, fullConfig }: AddCreditsModalProps) {
   const [step, setStep] = useState<ModalStep>('acknowledgment');
   const [credits, setCredits] = useState(5);
   const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
@@ -89,7 +89,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          addressHash,
+          address,
           amountUsd: credits,
         }),
       });
@@ -125,7 +125,7 @@ export default function AddCreditsModal({ isOpen, onClose, addressHash, includeS
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          addressHash,
+          address,
           amountUsd: credits,
         }),
       });

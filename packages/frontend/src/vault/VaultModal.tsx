@@ -1,22 +1,23 @@
 import { useEffect, useState } from 'react';
 import { getAccountInfo, type AccountInfo } from './vault-api';
+import type { VaultKeys } from './vault-keys-cache';
 import './VaultModal.css';
 
 interface VaultModalProps {
   isOpen: boolean;
   onClose: () => void;
-  addressHash: string | null;
+  keys: VaultKeys | null;
 }
 
-export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalProps) {
+export default function VaultModal({ isOpen, onClose, keys }: VaultModalProps) {
   const [info, setInfo] = useState<AccountInfo | null>(null);
 
   useEffect(() => {
-    if (isOpen && addressHash) {
+    if (isOpen && keys) {
       setInfo(null); // Clear immediately so loading shows on first render
-      getAccountInfo(addressHash).then(setInfo);
+      getAccountInfo(keys).then(setInfo);
     }
-  }, [isOpen, addressHash]);
+  }, [isOpen, keys]);
 
   if (!isOpen) return null;
 
@@ -43,7 +44,7 @@ export default function VaultModal({ isOpen, onClose, addressHash }: VaultModalP
             </div>
             <div className="vault-verification">
               <span>Address:</span>
-              <code>{addressHash}</code>
+              <code>{keys?.address}</code>
             </div>
           </div>
         )}
