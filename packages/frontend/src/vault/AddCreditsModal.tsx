@@ -17,11 +17,12 @@ interface AddCreditsModalProps {
   address: string;
   includeSalt: boolean;
   fullConfig?: GenerationConfig;
+  skipAcknowledgment?: boolean;
 }
 
 type ModalStep = 'acknowledgment' | 'payment';
 
-export default function AddCreditsModal({ isOpen, onClose, address, includeSalt, fullConfig }: AddCreditsModalProps) {
+export default function AddCreditsModal({ isOpen, onClose, address, includeSalt, fullConfig, skipAcknowledgment = false }: AddCreditsModalProps) {
   const [step, setStep] = useState<ModalStep>('acknowledgment');
   const [credits, setCredits] = useState(5);
   const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
@@ -30,12 +31,12 @@ export default function AddCreditsModal({ isOpen, onClose, address, includeSalt,
 
   useEffect(() => {
     if (isOpen) {
-      setStep('acknowledgment');
+      setStep(skipAcknowledgment ? 'payment' : 'acknowledgment');
       setCredits(5);
       setError(null);
       setShowCloseConfirm(false);
     }
-  }, [isOpen]);
+  }, [isOpen, skipAcknowledgment]);
 
   const handleClose = () => {
     setStep('acknowledgment');

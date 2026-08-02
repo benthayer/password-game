@@ -5,10 +5,9 @@ import StatusModal from './StatusModal';
 import ConfirmModal from './ConfirmModal';
 import TextUploadModal from './TextUploadModal';
 import TextDisplayModal from './TextDisplayModal';
-import UploadConfirmModal from './UploadConfirmModal';
 import AddCreditsModal from './AddCreditsModal';
 import { encryptFile, decryptDownloadedFile } from './vault-crypto-streaming';
-import { getBlob, setBlob, deleteBlob } from './vault-api';
+import { getBlob, setBlob, deleteBlob, getAccountInfo } from './vault-api';
 import { getVaultKeys, hasVaultKeysCached, type VaultKeys } from './vault-keys-cache';
 import type { GenerationConfig } from '../generation-config';
 import { getHashConfig } from '../generation-config';
@@ -35,9 +34,8 @@ export default function VaultCard({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [textUploadModalOpen, setTextUploadModalOpen] = useState(false);
   const [textDisplayModalOpen, setTextDisplayModalOpen] = useState(false);
-  const [uploadConfirmOpen, setUploadConfirmOpen] = useState(false);
   const [addCreditsModalOpen, setAddCreditsModalOpen] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState<{ type: 'file'; file: File } | { type: 'text'; text: string } | null>(null);
+  const [accountHasCredits, setAccountHasCredits] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -52,8 +50,7 @@ export default function VaultCard({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      setPendingUpload({ type: 'file', file });
-      setUploadConfirmOpen(true);
+      performUpload({ type: 'file', file });
     };
     input.click();
   };
@@ -61,42 +58,31 @@ export default function VaultCard({
   const handleUploadText = (text: string) => {
     if (password.length === 0) return;
     setTextUploadModalOpen(false);
-    setPendingUpload({ type: 'text', text });
-    setUploadConfirmOpen(true);
+    performUpload({ type: 'text', text });
   };
 
-  const handleUploadConfirmed = async () => {
-    if (!pendingUpload) return;
-    setUploadConfirmOpen(false);
-    
+  const performUpload = async (upload: { type: 'file'; file: File } | { type: 'text'; text: string }) => {
     try {
       if (!hasVaultKeysCached(password, fullConfig)) {
         setStatusMessage('Preparing...');
       }
       const keys = await getVaultKeys(password, fullConfig);
       setKeys(keys);
-      
-      const file = pendingUpload.type === 'file' 
-        ? pendingUpload.file 
-        : new File([pendingUpload.text], 'text.txt', { type: 'text/plain' });
-      
+
+      const file = upload.type === 'file'
+        ? upload.file
+        : new File([upload.text], 'text.txt', { type: 'text/plain' });
+
       setStatusMessage('Encrypting...');
       const encrypted = await encryptFile(file, password, hashConfig);
-      
+
       setStatusMessage('Uploading...');
       await setBlob(keys, encrypted, keys.secondaryKey);
       setStatusMessage(null);
     } catch (err: unknown) {
       setStatusMessage(null);
       setErrorMessage(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setPendingUpload(null);
     }
-  };
-
-  const handleUploadCancelled = () => {
-    setUploadConfirmOpen(false);
-    setPendingUpload(null);
   };
 
   const handleDownload = async () => {
@@ -179,6 +165,9 @@ export default function VaultCard({
       }
       const keys = await getVaultKeys(password, fullConfig);
       setKeys(keys);
+      // Skip the acknowledgment flow if the account already has credits
+      const info = await getAccountInfo(keys).catch(() => null);
+      setAccountHasCredits(!!info && (info.gbYearsRemaining > 0 || info.egressGbRemaining > 0));
       setStatusMessage(null);
       setAddCreditsModalOpen(true);
     } catch (err: unknown) {
@@ -264,13 +253,6 @@ export default function VaultCard({
         text={displayedText}
         onDownloadAsFile={handleDownloadAsFile}
       />
-      <UploadConfirmModal
-        isOpen={uploadConfirmOpen}
-        onConfirm={handleUploadConfirmed}
-        onCancel={handleUploadCancelled}
-        includeSalt={hashConfig.includeSalt}
-        fullConfig={fullConfig}
-      />
       {keys && (
         <AddCreditsModal
           isOpen={addCreditsModalOpen}
@@ -278,6 +260,7 @@ export default function VaultCard({
           address={keys.address}
           includeSalt={hashConfig.includeSalt}
           fullConfig={fullConfig}
+          skipAcknowledgment={accountHasCredits}
         />
       )}
     </>
