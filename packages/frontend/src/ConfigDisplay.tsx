@@ -14,8 +14,13 @@ export default function ConfigDisplay({ config }: ConfigDisplayProps) {
     <div className="config-display">
       <div className="config-header">
         <h3 className="config-title">Configuration</h3>
-        <button 
-          className="config-download-button" 
+        {config.importedFromJson && (
+          <span className="config-imported-badge" title="This configuration was loaded from an uploaded JSON file">
+            🔒 From uploaded JSON
+          </span>
+        )}
+        <button
+          className="config-download-button"
           onClick={handleDownload}
           title="Download configuration as JSON"
         >

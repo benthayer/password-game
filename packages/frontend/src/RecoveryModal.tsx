@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
 import { parseConfigFromJson, ConfigParseError } from './config-json';
-import { CloseConfirmModal } from './shared';
+import { CloseConfirmModal, ImportedConfigBanner } from './shared';
 import {
   GridSettingsSection,
   HashSettingsSection,
@@ -33,14 +33,17 @@ export default function RecoveryModal({
   const navigate = useNavigate();
   const form = useConfigForm(config, isOpen);
   const [importError, setImportError] = useState<string | null>(null);
+  const [boundToImport, setBoundToImport] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setShowCloseConfirm(false);
+      setImportError(null);
+      setBoundToImport(!!config.importedFromJson);
     }
-  }, [isOpen]);
+  }, [isOpen, config.importedFromJson]);
 
   if (!isOpen) return null;
 
@@ -58,7 +61,7 @@ export default function RecoveryModal({
   };
 
   const handleRecover = () => {
-    setConfig(form.toConfig());
+    setConfig({ ...form.toConfig(), importedFromJson: boundToImport });
     setSubpassword([]);
     navigate('/recovery');
     onClose();
@@ -76,6 +79,7 @@ export default function RecoveryModal({
       setImportError(null);
       const importedConfig = await parseConfigFromJson(file);
       form.loadFromConfig(importedConfig);
+      setBoundToImport(true);
     } catch (err) {
       if (err instanceof ConfigParseError) {
         setImportError(err.message);
@@ -112,31 +116,37 @@ export default function RecoveryModal({
             </div>
           )}
 
-          <div className="recovery-modal-body">
-            <GridSettingsSection
-              seedPhrase={form.seedPhrase}
-              onSeedPhraseChange={form.setSeedPhrase}
-              gridRows={form.gridRows}
-              gridCols={form.gridCols}
-              onIncrementRows={form.incrementRows}
-              onDecrementRows={form.decrementRows}
-              onIncrementCols={form.incrementCols}
-              onDecrementCols={form.decrementCols}
-              gridSize={form.gridSize}
-            />
+          {boundToImport && (
+            <ImportedConfigBanner onEditManually={() => setBoundToImport(false)} />
+          )}
 
-            <HashSettingsSection
-              algorithm={form.hashAlgorithm}
-              onAlgorithmChange={form.changeAlgorithm}
-              onConfigChange={form.setHashAlgorithm}
-              useRecommended={form.useRecommendedHash}
-              onUseRecommendedChange={form.setUseRecommendedHash}
-              includeSalt={form.includeSalt}
-              onIncludeSaltChange={form.setIncludeSalt}
-              saltMode="recovery"
-              salt={form.salt}
-              onSaltChange={form.setSalt}
-            />
+          <div className="recovery-modal-body">
+            <fieldset className="config-fieldset" disabled={boundToImport}>
+              <GridSettingsSection
+                seedPhrase={form.seedPhrase}
+                onSeedPhraseChange={form.setSeedPhrase}
+                gridRows={form.gridRows}
+                gridCols={form.gridCols}
+                onIncrementRows={form.incrementRows}
+                onDecrementRows={form.decrementRows}
+                onIncrementCols={form.incrementCols}
+                onDecrementCols={form.decrementCols}
+                gridSize={form.gridSize}
+              />
+
+              <HashSettingsSection
+                algorithm={form.hashAlgorithm}
+                onAlgorithmChange={form.changeAlgorithm}
+                onConfigChange={form.setHashAlgorithm}
+                useRecommended={form.useRecommendedHash}
+                onUseRecommendedChange={form.setUseRecommendedHash}
+                includeSalt={form.includeSalt}
+                onIncludeSaltChange={form.setIncludeSalt}
+                saltMode="recovery"
+                salt={form.salt}
+                onSaltChange={form.setSalt}
+              />
+            </fieldset>
           </div>
 
           <ModalFooter onCancel={handleCloseAttempt} onRecover={handleRecover} />

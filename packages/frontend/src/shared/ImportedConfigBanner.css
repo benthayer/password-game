@@ -1,0 +1,55 @@
+.imported-config-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 24px 0;
+  padding: 12px 16px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 6px;
+  color: #34d399;
+  font-size: 0.9rem;
+}
+
+.imported-config-icon {
+  font-size: 1rem;
+}
+
+.imported-config-text {
+  flex: 1;
+}
+
+.imported-config-unlock {
+  background: none;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 4px;
+  color: #34d399;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.imported-config-unlock:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+/* Locked form fields while bound to an uploaded config */
+.config-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: auto;
+}
+
+.config-fieldset:disabled {
+  opacity: 0.65;
+}
+
+.config-fieldset:disabled input,
+.config-fieldset:disabled select,
+.config-fieldset:disabled button {
+  cursor: not-allowed;
+}

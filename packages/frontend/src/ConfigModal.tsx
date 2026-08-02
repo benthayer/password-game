@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
 import { parseConfigFromJson, ConfigParseError } from './config-json';
-import { CloseConfirmModal } from './shared';
+import { CloseConfirmModal, ImportedConfigBanner } from './shared';
 import {
   GridSettingsSection,
   HashSettingsSection,
@@ -31,14 +31,16 @@ export default function ConfigModal({
   const form = useConfigForm(config, isOpen);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [boundToImport, setBoundToImport] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setShowCloseConfirm(false);
       setImportError(null);
+      setBoundToImport(!!config.importedFromJson);
     }
-  }, [isOpen]);
+  }, [isOpen, config.importedFromJson]);
 
   if (!isOpen) return null;
 
@@ -56,7 +58,7 @@ export default function ConfigModal({
   };
 
   const handleSave = () => {
-    onSave(form.toConfig());
+    onSave({ ...form.toConfig(), importedFromJson: boundToImport });
     onClose();
   };
 
@@ -72,6 +74,7 @@ export default function ConfigModal({
       setImportError(null);
       const importedConfig = await parseConfigFromJson(file);
       form.loadFromConfig(importedConfig);
+      setBoundToImport(true);
     } catch (err) {
       if (err instanceof ConfigParseError) {
         setImportError(err.message);
@@ -108,28 +111,37 @@ export default function ConfigModal({
             </div>
           )}
 
-          <div className="config-modal-body">
-            <GridSettingsSection
-              seedPhrase={form.seedPhrase}
-              onSeedPhraseChange={form.setSeedPhrase}
-              gridRows={form.gridRows}
-              gridCols={form.gridCols}
-              onIncrementRows={form.incrementRows}
-              onDecrementRows={form.decrementRows}
-              onIncrementCols={form.incrementCols}
-              onDecrementCols={form.decrementCols}
-              gridSize={form.gridSize}
-            />
+          {boundToImport && (
+            <ImportedConfigBanner onEditManually={() => setBoundToImport(false)} />
+          )}
 
-            <HashSettingsSection
-              algorithm={form.hashAlgorithm}
-              onAlgorithmChange={form.changeAlgorithm}
-              onConfigChange={form.setHashAlgorithm}
-              useRecommended={form.useRecommendedHash}
-              onUseRecommendedChange={form.setUseRecommendedHash}
-              includeSalt={form.includeSalt}
-              onIncludeSaltChange={form.setIncludeSalt}
-            />
+          <div className="config-modal-body">
+            <fieldset className="config-fieldset" disabled={boundToImport}>
+              <GridSettingsSection
+                seedPhrase={form.seedPhrase}
+                onSeedPhraseChange={form.setSeedPhrase}
+                gridRows={form.gridRows}
+                gridCols={form.gridCols}
+                onIncrementRows={form.incrementRows}
+                onDecrementRows={form.decrementRows}
+                onIncrementCols={form.incrementCols}
+                onDecrementCols={form.decrementCols}
+                gridSize={form.gridSize}
+              />
+
+              <HashSettingsSection
+                algorithm={form.hashAlgorithm}
+                onAlgorithmChange={form.changeAlgorithm}
+                onConfigChange={form.setHashAlgorithm}
+                useRecommended={form.useRecommendedHash}
+                onUseRecommendedChange={form.setUseRecommendedHash}
+                includeSalt={form.includeSalt}
+                onIncludeSaltChange={form.setIncludeSalt}
+                saltMode="recovery"
+                salt={form.salt}
+                onSaltChange={form.setSalt}
+              />
+            </fieldset>
           </div>
 
           <ModalFooter onCancel={handleCloseAttempt} onSave={handleSave} />
