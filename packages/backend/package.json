@@ -7,6 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "nightly-billing": "tsx src/services/nightly-billing.ts"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^20.10.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.18"
   }
 }
