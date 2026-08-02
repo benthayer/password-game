@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "dev:frontend": "npm run dev -w packages/frontend",
+    "client": "VITE_API_URL=https://api.passwordgame.apps.benthayer.com npm run dev -w packages/frontend",
     "dev:backend": "npm run dev -w packages/backend",
     "build:frontend": "npm run build -w packages/frontend",
     "build:backend": "npm run build -w packages/backend",

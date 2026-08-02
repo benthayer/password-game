@@ -92,6 +92,23 @@ If you decide not to use a salt, you are exposed to a dragnet attack, which is r
 Concrete example:
 You and I both have a trivially crackable length 4 passwords based on a 4x4 grid and no salt. Because enropy is related to the grid size and the password length, the total entropy is log2(4 x 4) x 4 = 16 bits = 65k possibilities. We both store $1000 in a crypto wallet. An attacker decides to enumarate all length 4 passwords. The value of this attack is $2000. If instead I used a salt and the attacker chose to target me, the vaule of the attack is now $1000 because he is limited to the people using my salt, which is just me and my one file. If I use a different salt per file I want to store, then the attacker has to choose which to target rather than being able to target all of my files at once. If there are 1000 users with length 4 passwords all storing $1000, then the value of the attack is $1,000,000 while if each user had used a salt, then the attacker has to pick a target user and the value of the attack is only $1,000.
 
+## Development
+
+Run everything locally (frontend on :3000, backend on :3001):
+
+    npm install
+    npm run dev
+
+### Running the client yourself
+
+If you don't want to trust the hosted frontend, you don't have to. Run the client from this repo — code you can read — pointed at the production backend:
+
+    npm run client
+
+This serves the frontend from local source on http://localhost:3000 with `VITE_API_URL=https://api.passwordgame.apps.benthayer.com`, so you're using the real service while knowing exactly what code is handling your password. The backend allows cross-origin requests (`Access-Control-Allow-Origin: *`), so this works with no extra setup.
+
+The encryption design means that you don't need to trust the backend for your data to be secure. The data is encrypted before being sent and the backend never sees your private key or primary encryption key.
+
 ## API
 
 If you want to set up a terminal UI or do your own integration with my backend, you can. Here are the endpoints that I provide.
