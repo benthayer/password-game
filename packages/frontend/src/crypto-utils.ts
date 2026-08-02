@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
 import * as corpus from '../corpus.json';
 import type { GenerationConfig } from './generation-config';
+import { secureRandomIndex } from './secure-random';
 
 const wordList: string[] = corpus.words;
 
@@ -119,7 +120,7 @@ export function getNextWordsFlat(subpassword: string[], config: GenerationConfig
 
 export function selectRandomNextWord(subpassword: string[], config: GenerationConfig): string[] {
   const nextWords = getNextWordsFlat(subpassword, config);
-  const nextWord = nextWords[Math.floor(Math.random() * nextWords.length)] as string;
+  const nextWord = nextWords[secureRandomIndex(nextWords.length)] as string;
   return [...subpassword, nextWord];
 }
 
