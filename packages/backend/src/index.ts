@@ -20,11 +20,15 @@ const PORT = process.env.PORT || 3001;
 // Trust nginx proxy for real IP (X-Forwarded-For)
 app.set('trust proxy', 1);
 
-const dailyLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 500,
+// Global rate limit: one shared bucket for all traffic, keyed to a constant
+// rather than the client IP. This caps total load on the server; it does not
+// isolate clients from each other.
+const globalLimiter = rateLimit({
+  windowMs: 1000, // 1 second
+  limit: 10,
   standardHeaders: true,
-  message: { error: 'Too many requests, try again tomorrow' }
+  keyGenerator: () => 'global',
+  message: { error: 'Server busy, try again shortly' }
 });
 
 app.use(cors());
@@ -32,8 +36,14 @@ app.use(cors());
 // Webhooks need raw body for signature verification - must be before express.json()
 app.use('/webhooks', express.raw({ type: 'application/json' }), webhookRoutes, stripeWebhookRoutes);
 
+// Health check sits above the limiter so a traffic burst can't make the
+// service look down to the deploy check or an uptime monitor.
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use(express.json());
-app.use(dailyLimiter);
+app.use(globalLimiter);
 
 // Routes
 app.use('/account', accountRoutes);
@@ -41,11 +51,6 @@ app.use('/blob', blobRoutes);
 app.use('/admin', adminRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/stripe', stripePaymentRoutes);
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 startTempCleanup();
 
