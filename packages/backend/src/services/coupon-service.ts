@@ -621,36 +621,189 @@ export function revokeTokens(selector: string): { revoked: number; description: 
 // STATS
 // =============================================================================
 
+// =============================================================================
+// INSTANTS
+//
+// A range bound may be relative (`5m` = five minutes ago) or absolute — a clock
+// time (`1:34pm`, `13:34`), a date (`2026-08-01`, `8/1`), or a date followed by a
+// time, which spans two whitespace-separated tokens.
+//
+// Absolute forms are resolved in the process's local timezone, so TZ must be set
+// to the operator's zone or `1:34pm` silently means 1:34pm UTC. docker-compose
+// pins it for the backend; formatInstant echoes the zone so output is never
+// ambiguous about which reading it used.
+// =============================================================================
+
+const TIME_12_RE = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i;
+const TIME_24_RE = /^(\d{1,2}):(\d{2})$/;
+const DATE_ISO_RE = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+const DATE_SLASH_RE = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/;
+
+interface TimeOfDay { hours: number; minutes: number }
+
+function parseTimeOfDay(input: string): TimeOfDay | null {
+  const twelve = TIME_12_RE.exec(input);
+  if (twelve) {
+    const hour = Number(twelve[1]);
+    const minutes = twelve[2] === undefined ? 0 : Number(twelve[2]);
+    if (hour < 1 || hour > 12 || minutes > 59) return null;
+    const pm = twelve[3].toLowerCase() === 'pm';
+    return { hours: (hour % 12) + (pm ? 12 : 0), minutes };
+  }
+
+  const twentyFour = TIME_24_RE.exec(input);
+  if (twentyFour) {
+    const hours = Number(twentyFour[1]);
+    const minutes = Number(twentyFour[2]);
+    if (hours > 23 || minutes > 59) return null;
+    return { hours, minutes };
+  }
+
+  return null;
+}
+
+interface DateParts { year: number; month: number; day: number }
+
+function parseDateParts(input: string, now: Date): DateParts | null {
+  const iso = DATE_ISO_RE.exec(input);
+  if (iso) {
+    const parts = { year: Number(iso[1]), month: Number(iso[2]) - 1, day: Number(iso[3]) };
+    return isRealDate(parts) ? parts : null;
+  }
+
+  const slash = DATE_SLASH_RE.exec(input);
+  if (slash) {
+    let year = now.getFullYear();
+    if (slash[3] !== undefined) {
+      const raw = Number(slash[3]);
+      year = raw < 100 ? 2000 + raw : raw;
+    }
+    const parts = { year, month: Number(slash[1]) - 1, day: Number(slash[2]) };
+    return isRealDate(parts) ? parts : null;
+  }
+
+  return null;
+}
+
+/** Rejects 2026-02-31 and friends, which Date would silently roll over. */
+function isRealDate({ year, month, day }: DateParts): boolean {
+  if (month < 0 || month > 11 || day < 1 || day > 31) return false;
+  const d = new Date(year, month, day);
+  return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+}
+
+interface ParsedInstant { at: Date; consumed: number; relative: boolean; text: string }
+
+/**
+ * Read one bound starting at `index`. Returns how many tokens it consumed, since
+ * a date followed by a time is a single instant spelled with two tokens.
+ */
+function parseInstantAt(tokens: string[], index: number, now: Date): ParsedInstant | null {
+  const token = tokens[index];
+
+  const duration = parseDuration(token);
+  if (duration !== null) {
+    return {
+      at: new Date(now.getTime() - duration * 1000),
+      consumed: 1,
+      relative: true,
+      text: token,
+    };
+  }
+
+  const date = parseDateParts(token, now);
+  if (date) {
+    const next = tokens[index + 1] !== undefined ? parseTimeOfDay(tokens[index + 1]) : null;
+    if (next) {
+      return {
+        at: new Date(date.year, date.month, date.day, next.hours, next.minutes, 0, 0),
+        consumed: 2,
+        relative: false,
+        text: `${token} ${tokens[index + 1]}`,
+      };
+    }
+    return {
+      at: new Date(date.year, date.month, date.day, 0, 0, 0, 0),
+      consumed: 1,
+      relative: false,
+      text: token,
+    };
+  }
+
+  const time = parseTimeOfDay(token);
+  if (time) {
+    const at = new Date(now);
+    at.setHours(time.hours, time.minutes, 0, 0);
+    // A clock time with no date means the most recent occurrence: "1:34pm" asked
+    // at noon means yesterday, not four hours from now.
+    if (at.getTime() > now.getTime()) at.setDate(at.getDate() - 1);
+    return { at, consumed: 1, relative: false, text: token };
+  }
+
+  return null;
+}
+
+export function formatInstant(date: Date): string {
+  return date.toLocaleString('en-GB', {
+    year: 'numeric', month: 'short', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
+
 export interface StatsRange {
   from: string | null;
   to: string | null;
   label: string;
 }
 
-/** `<duration>` = last N; `<from> <to>` = between N ago and M ago. */
+/**
+ * `<bound>` = from then until now. `<bound> <bound>` = between the two, in either
+ * order. Each bound is relative or absolute, independently — `1:34pm 5m` means
+ * 1:34pm until five minutes ago.
+ */
 export function parseStatsRange(args: string[]): StatsRange {
-  if (args.length === 0) return { from: null, to: null, label: 'all time' };
+  const tokens = args.filter(a => a.trim() !== '');
+  if (tokens.length === 0) return { from: null, to: null, label: 'all time' };
 
-  const first = parseDuration(args[0]);
-  if (first === null) throw new CouponError('bad_request', `Can't read "${args[0]}" as a duration`);
+  const now = new Date();
+  const bounds: ParsedInstant[] = [];
+  let i = 0;
 
-  if (args.length === 1) {
+  while (i < tokens.length) {
+    const parsed = parseInstantAt(tokens, i, now);
+    if (!parsed) {
+      throw new CouponError(
+        'bad_request',
+        `Can't read "${tokens[i]}" as a time. Use a duration (5m, 2h, 7d), ` +
+        `a clock time (1:34pm, 13:34), a date (2026-08-01, 8/1), or a date and time.`
+      );
+    }
+    bounds.push(parsed);
+    i += parsed.consumed;
+
+    if (bounds.length > 2) {
+      throw new CouponError('bad_request', 'A range takes at most two bounds');
+    }
+  }
+
+  if (bounds.length === 1) {
+    const only = bounds[0];
     return {
-      from: new Date(Date.now() - first * 1000).toISOString(),
+      from: only.at.toISOString(),
       to: null,
-      label: `last ${formatDuration(first)}`,
+      label: only.relative
+        ? `last ${only.text}`
+        : `since ${formatInstant(only.at)}`,
     };
   }
 
-  const second = parseDuration(args[1]);
-  if (second === null) throw new CouponError('bad_request', `Can't read "${args[1]}" as a duration`);
-
-  const older = Math.max(first, second);
-  const newer = Math.min(first, second);
+  // Accept either order rather than erroring on a swapped range.
+  const [start, end] = bounds[0].at <= bounds[1].at ? bounds : [bounds[1], bounds[0]];
   return {
-    from: new Date(Date.now() - older * 1000).toISOString(),
-    to: new Date(Date.now() - newer * 1000).toISOString(),
-    label: `${formatDuration(older)} ago → ${formatDuration(newer)} ago`,
+    from: start.at.toISOString(),
+    to: end.at.toISOString(),
+    label: `${formatInstant(start.at)} → ${formatInstant(end.at)}`,
   };
 }
 

@@ -24,3 +24,8 @@ services:
       - ./data:/app/packages/backend/data
     env_file:
       - .env
+    environment:
+      # Absolute times in /stats ("1:34pm", "2026-08-01") are resolved in local
+      # time. The container is UTC by default, which would silently shift every
+      # such query by the UTC offset, so pin the operator's zone here.
+      - TZ=${TZ:-America/Bogota}

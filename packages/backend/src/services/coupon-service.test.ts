@@ -404,3 +404,120 @@ describe('duration parsing', () => {
     expect(svc.parseDuration('5')).toBeNull();
   });
 });
+
+describe('stats range parsing', () => {
+  const asDate = (iso: string | null) => new Date(iso!);
+
+  it('treats no arguments as all time', () => {
+    expect(svc.parseStatsRange([])).toMatchObject({ from: null, to: null, label: 'all time' });
+  });
+
+  it('reads a single duration as "since then"', () => {
+    const range = svc.parseStatsRange(['5m']);
+    expect(range.to).toBeNull();
+    expect(Date.now() - asDate(range.from).getTime()).toBeGreaterThanOrEqual(299_000);
+    expect(Date.now() - asDate(range.from).getTime()).toBeLessThan(310_000);
+    expect(range.label).toBe('last 5m');
+  });
+
+  it('reads two durations as a window between them', () => {
+    const range = svc.parseStatsRange(['2h', '5m']);
+    const from = asDate(range.from);
+    const to = asDate(range.to);
+    expect(to.getTime()).toBeGreaterThan(from.getTime());
+    expect(Date.now() - from.getTime()).toBeGreaterThan(7_100_000);
+    expect(Date.now() - to.getTime()).toBeLessThan(310_000);
+  });
+
+  it('accepts the bounds in either order', () => {
+    const a = svc.parseStatsRange(['2h', '5m']);
+    const b = svc.parseStatsRange(['5m', '2h']);
+    // Within a second — the two calls resolve "now" independently.
+    expect(Math.abs(asDate(a.from).getTime() - asDate(b.from).getTime())).toBeLessThan(1000);
+    expect(Math.abs(asDate(a.to!).getTime() - asDate(b.to!).getTime())).toBeLessThan(1000);
+  });
+
+  it('reads a 12-hour clock time as the most recent occurrence', () => {
+    const range = svc.parseStatsRange(['1:34pm']);
+    const from = asDate(range.from);
+    expect(from.getHours()).toBe(13);
+    expect(from.getMinutes()).toBe(34);
+    expect(from.getSeconds()).toBe(0);
+    // Never in the future.
+    expect(from.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it('backdates a clock time that has not happened yet today', () => {
+    const now = new Date();
+    // A time one hour ahead of now must resolve to yesterday.
+    const ahead = new Date(now.getTime() + 3600_000);
+    const token = `${String(ahead.getHours()).padStart(2, '0')}:${String(ahead.getMinutes()).padStart(2, '0')}`;
+    const from = asDate(svc.parseStatsRange([token]).from);
+
+    expect(from.getTime()).toBeLessThan(now.getTime());
+    expect(from.getDate()).toBe(new Date(now.getTime() - 86400_000).getDate());
+  });
+
+  it('reads bare am/pm hours and 24-hour times', () => {
+    expect(asDate(svc.parseStatsRange(['9am']).from).getHours()).toBe(9);
+    expect(asDate(svc.parseStatsRange(['12am']).from).getHours()).toBe(0);
+    expect(asDate(svc.parseStatsRange(['12pm']).from).getHours()).toBe(12);
+    expect(asDate(svc.parseStatsRange(['00:30']).from).getHours()).toBe(0);
+  });
+
+  it('reads ISO and slash dates as start of that day', () => {
+    const iso = asDate(svc.parseStatsRange(['2026-08-01']).from);
+    expect([iso.getFullYear(), iso.getMonth(), iso.getDate()]).toEqual([2026, 7, 1]);
+    expect([iso.getHours(), iso.getMinutes()]).toEqual([0, 0]);
+
+    const slash = asDate(svc.parseStatsRange(['8/1/2026']).from);
+    expect([slash.getFullYear(), slash.getMonth(), slash.getDate()]).toEqual([2026, 7, 1]);
+  });
+
+  it('reads a date and time together as one bound spanning two tokens', () => {
+    const range = svc.parseStatsRange(['2026-08-01', '1:34pm', '5m']);
+    const from = asDate(range.from);
+    expect([from.getFullYear(), from.getMonth(), from.getDate()]).toEqual([2026, 7, 1]);
+    expect([from.getHours(), from.getMinutes()]).toEqual([13, 34]);
+    // The trailing 5m is the second bound, not a third.
+    expect(range.to).not.toBeNull();
+    expect(Date.now() - asDate(range.to).getTime()).toBeLessThan(310_000);
+  });
+
+  it('handles the example from the spec: 1:34pm until 5 minutes ago', () => {
+    const range = svc.parseStatsRange(['1:34pm', '5m']);
+    const from = asDate(range.from);
+    expect([from.getHours(), from.getMinutes()]).toEqual([13, 34]);
+    expect(asDate(range.to).getTime()).toBeGreaterThan(from.getTime());
+  });
+
+  it('resolves absolute bounds in local time, not UTC', () => {
+    const from = asDate(svc.parseStatsRange(['2026-08-01', '13:34']).from);
+    // Constructed as local 13:34, so the stored UTC hour differs by the offset.
+    const expectedUtcHour = new Date(2026, 7, 1, 13, 34).getUTCHours();
+    expect(from.getUTCHours()).toBe(expectedUtcHour);
+    expect(from.getHours()).toBe(13);
+  });
+
+  it('rejects unparseable and impossible values', () => {
+    expect(() => svc.parseStatsRange(['soon'])).toThrow(/Can't read/);
+    expect(() => svc.parseStatsRange(['25:00'])).toThrow(/Can't read/);
+    expect(() => svc.parseStatsRange(['13pm'])).toThrow(/Can't read/);
+    expect(() => svc.parseStatsRange(['2026-02-31'])).toThrow(/Can't read/);
+    expect(() => svc.parseStatsRange(['5m', '2h', '7d'])).toThrow(/at most two bounds/);
+  });
+
+  it('filters stats to the requested window', () => {
+    liveCoupon('WINDOW', 1, 100, null);
+    const old = svc.mintFromCoupon('WINDOW');
+    const recent = svc.mintFromCoupon('WINDOW');
+    backdateToken(old.tokenId, 7200); // two hours ago
+
+    expect(svc.tokenStats(svc.parseStatsRange([])).minted).toBe(2);
+    expect(svc.tokenStats(svc.parseStatsRange(['5m'])).minted).toBe(1);
+    expect(svc.tokenStats(svc.parseStatsRange(['3h'])).minted).toBe(2);
+    // A window that ends before the recent mint sees only the old one.
+    expect(svc.tokenStats(svc.parseStatsRange(['3h', '1h'])).minted).toBe(1);
+    expect(recent.tokenId).toBeGreaterThan(old.tokenId);
+  });
+});
