@@ -41,5 +41,11 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+
+  // `npm run build` runs tsc over the whole package. e2e/ is Playwright's, and
+  // it imports better-sqlite3 to seed a test database — a backend dependency
+  // that is not installed in the frontend's Docker build stage, so leaving it in
+  // breaks the production image build. Playwright typechecks these itself.
+  "exclude": ["e2e", "dist", "test-results", "playwright-report"]
 }
