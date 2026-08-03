@@ -158,6 +158,18 @@
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
 }
 
+/* Not a payment method, so deliberately quieter than the two above it. */
+.credits-pay-coupon {
+  background: transparent;
+  border: 1px solid #1e2a3a;
+  color: #94a3b8;
+}
+
+.credits-pay-coupon:hover:not(:disabled) {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
 .credits-pay:disabled {
   opacity: 0.5;
   cursor: not-allowed;

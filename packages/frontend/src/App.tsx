@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
+import CouponPage from './CouponPage';
 import GitHubLink from './GitHubLink';
 import { DEFAULT_CONFIG, PERSIST_CONFIG, type GenerationConfig } from './generation-config';
 
@@ -89,6 +90,8 @@ function AppRouter() {
             )
           }
         />
+        <Route path="/coupons" element={<CouponPage />} />
+        <Route path="/coupon" element={<Navigate to="/coupons" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

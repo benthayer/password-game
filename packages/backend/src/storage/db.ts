@@ -41,7 +41,7 @@ export interface Payment {
 import fs from 'fs';
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const db = new Database(DB_FILE);
+const db: Database.Database = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 
 db.exec(`
@@ -96,6 +96,94 @@ db.exec(`
 `);
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_pending_charges_charge_id ON pending_charges(charge_id)`);
+
+// -----------------------------------------------------------------------------
+// COUPONS / TOKENS
+//
+// A coupon's identity is its `id`, not its `code`: removing a coupon retires the
+// row (keeping tokens' foreign key valid) so the same code can be re-added as a
+// genuinely new coupon. Uniqueness therefore applies only among live rows.
+//
+// A coupon with no mint_limits rows cannot be minted from. That is derived from
+// the row count, not stored — there is no enabled/disabled column anywhere.
+// `kind='inherit_global'` is how a coupon says "no caps of my own, just the
+// global ones" while still having a row, which is what keeps it distinguishable
+// from a never-configured coupon.
+// -----------------------------------------------------------------------------
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS coupons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL,
+    value_credits REAL NOT NULL,
+    retired_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`);
+
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_coupons_live_code
+  ON coupons(code) WHERE retired_at IS NULL
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash TEXT UNIQUE NOT NULL,
+    coupon_id INTEGER REFERENCES coupons(id),
+    source TEXT NOT NULL,
+    value_credits REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    minted_at TEXT NOT NULL,
+    redeemed_at TEXT,
+    redeemed_address_hash TEXT
+  )
+`);
+
+// Every cap count filters on exactly these three columns.
+db.exec(`CREATE INDEX IF NOT EXISTS idx_tokens_caps ON tokens(coupon_id, source, minted_at)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_tokens_status ON tokens(status)`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS mint_limits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    coupon_id INTEGER REFERENCES coupons(id),
+    kind TEXT NOT NULL,
+    max_count INTEGER,
+    window_seconds INTEGER,
+    created_at TEXT NOT NULL
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_mint_limits_coupon ON mint_limits(coupon_id)`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gates (
+    name TEXT PRIMARY KEY,
+    is_open INTEGER NOT NULL DEFAULT 1
+  )
+`);
+
+// Both gates start open; /stop closes them.
+db.prepare(`INSERT OR IGNORE INTO gates (name, is_open) VALUES ('coupon', 1)`).run();
+db.prepare(`INSERT OR IGNORE INTO gates (name, is_open) VALUES ('redemption', 1)`).run();
+
+// Telegram long-poll offset, so a restart doesn't replay commands.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS bot_state (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  )
+`);
+
+/**
+ * Raw handle for modules that own their own tables (coupon-service). Exported
+ * rather than wrapping every coupon query here so that this module stays about
+ * accounts and payments, while the schema above remains the single place any
+ * table is declared.
+ */
+export { db };
 
 // =============================================================================
 // HELPERS
@@ -209,11 +297,20 @@ export async function getAccountsWithFiles(): Promise<Account[]> {
   return rows.map(rowToAccount);
 }
 
-export async function grantStorageAndEgressFromPayment(addressHash: string, amountUsd: number): Promise<Account> {
+// Credits are the unit coupons are denominated in. One credit currently buys
+// exactly what $1 buys, but that is a pricing coincidence rather than an
+// identity — keeping the conversion here means the two can diverge later without
+// touching any caller, and the coupon path never has to name a currency.
+const CREDITS_PER_DOLLAR = 1;
+const GB_YEARS_PER_CREDIT = GB_YEARS_PER_DOLLAR / CREDITS_PER_DOLLAR;
+const EGRESS_GB_PER_CREDIT = EGRESS_GB_PER_DOLLAR / CREDITS_PER_DOLLAR;
+
+/** Grant credits directly. The coupon path uses only this. */
+export async function grantCredits(addressHash: string, credits: number): Promise<Account> {
   const now = new Date().toISOString();
-  const gbYearsToAdd = amountUsd * GB_YEARS_PER_DOLLAR;
-  const egressGbToAdd = amountUsd * EGRESS_GB_PER_DOLLAR;
-  
+  const gbYearsToAdd = credits * GB_YEARS_PER_CREDIT;
+  const egressGbToAdd = credits * EGRESS_GB_PER_CREDIT;
+
   const existing = db.prepare('SELECT * FROM accounts WHERE address_hash = ?').get(addressHash);
   
   if (existing) {
@@ -232,6 +329,11 @@ export async function grantStorageAndEgressFromPayment(addressHash: string, amou
   }
   
   return (await getAccount(addressHash))!;
+}
+
+/** Payment path: dollars in, converted to credits at the current rate. */
+export async function grantStorageAndEgressFromPayment(addressHash: string, amountUsd: number): Promise<Account> {
+  return grantCredits(addressHash, amountUsd * CREDITS_PER_DOLLAR);
 }
 
 export async function spendEgress(addressHash: string, gbAmount: number): Promise<boolean> {

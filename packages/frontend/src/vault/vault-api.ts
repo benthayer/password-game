@@ -113,3 +113,27 @@ export async function deleteBlob(keys: AuthKeys): Promise<void> {
   });
   if (!res.ok) throw new Error('Delete failed');
 }
+
+export interface RedeemResult {
+  credits: number;
+  gbYearsRemaining: number;
+  egressGbRemaining: number;
+}
+
+/**
+ * Redeem a coupon token into this account. Signed like every other account
+ * operation, so holding a token isn't enough to decide whose balance it lands in.
+ */
+export async function redeemCoupon(keys: AuthKeys, token: string): Promise<RedeemResult> {
+  const res = await signedFetch(`/coupon/redeem/${keys.address}`, keys, {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Could not redeem that token');
+  }
+  return res.json();
+}

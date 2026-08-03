@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AcknowledgmentModal from './AcknowledgmentModal';
 import type { GenerationConfig } from '../generation-config';
 import { CloseConfirmModal } from '../shared';
+import { redeemCoupon, type AuthKeys, type RedeemResult } from './vault-api';
 import './VaultModal.css';
 import './AddCreditsModal.css';
 
@@ -15,19 +16,23 @@ interface AddCreditsModalProps {
   isOpen: boolean;
   onClose: () => void;
   address: string;
+  authKeys: AuthKeys;
   includeSalt: boolean;
   fullConfig?: GenerationConfig;
   skipAcknowledgment?: boolean;
 }
 
-type ModalStep = 'acknowledgment' | 'payment';
+type ModalStep = 'acknowledgment' | 'payment' | 'coupon';
 
-export default function AddCreditsModal({ isOpen, onClose, address, includeSalt, fullConfig, skipAcknowledgment = false }: AddCreditsModalProps) {
+export default function AddCreditsModal({ isOpen, onClose, address, authKeys, includeSalt, fullConfig, skipAcknowledgment = false }: AddCreditsModalProps) {
   const [step, setStep] = useState<ModalStep>('acknowledgment');
   const [credits, setCredits] = useState(5);
   const [loading, setLoading] = useState<'stripe' | 'crypto' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [couponToken, setCouponToken] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemed, setRedeemed] = useState<RedeemResult | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +40,9 @@ export default function AddCreditsModal({ isOpen, onClose, address, includeSalt,
       setCredits(5);
       setError(null);
       setShowCloseConfirm(false);
+      setCouponToken('');
+      setRedeeming(false);
+      setRedeemed(null);
     }
   }, [isOpen, skipAcknowledgment]);
 
@@ -148,6 +156,106 @@ export default function AddCreditsModal({ isOpen, onClose, address, includeSalt,
     }
   };
 
+  const handleRedeemCoupon = async () => {
+    if (!couponToken.trim()) return;
+
+    setRedeeming(true);
+    setError(null);
+    try {
+      setRedeemed(await redeemCoupon(authKeys, couponToken.trim()));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not redeem that token');
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  if (step === 'coupon') {
+    return (
+      <>
+        <div className="vault-modal-overlay" onClick={handleCloseAttempt}>
+          <div className="vault-modal add-credits-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-x" onClick={handleCloseAttempt} aria-label="Close">
+              ×
+            </button>
+            <h2>Add credit with coupon</h2>
+
+            {redeemed ? (
+              <>
+                <div className="credits-breakdown">
+                  <div className="breakdown-item">
+                    <span className="breakdown-label">Added</span>
+                    <span className="breakdown-value">
+                      {redeemed.credits} credit{redeemed.credits === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className="breakdown-item">
+                    <span className="breakdown-label">Storage now</span>
+                    <span className="breakdown-value">
+                      {redeemed.gbYearsRemaining.toFixed(2)} GB-years
+                    </span>
+                  </div>
+                  <div className="breakdown-item">
+                    <span className="breakdown-label">Download now</span>
+                    <span className="breakdown-value">
+                      {redeemed.egressGbRemaining.toFixed(1)} GB
+                    </span>
+                  </div>
+                </div>
+                <div className="payment-methods">
+                  <button className="credits-pay" onClick={handleClose}>Done</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="credits-input-section">
+                  <label htmlFor="coupon-token-input">Token</label>
+                  <input
+                    id="coupon-token-input"
+                    type="text"
+                    value={couponToken}
+                    onChange={(e) => setCouponToken(e.target.value)}
+                    placeholder="PG-XXXXX-XXXXX-..."
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+
+                {error && <div className="credits-error">{error}</div>}
+
+                <div className="payment-methods">
+                  <button
+                    className="credits-pay"
+                    onClick={handleRedeemCoupon}
+                    disabled={!couponToken.trim() || redeeming}
+                  >
+                    {redeeming ? 'Redeeming...' : 'Redeem'}
+                  </button>
+                  <button
+                    className="credits-pay"
+                    onClick={() => { setStep('payment'); setError(null); }}
+                    disabled={redeeming}
+                  >
+                    Back
+                  </button>
+                </div>
+
+                <p className="credits-note">
+                  Don't have a token? Get one at <strong>/coupons</strong> with a coupon code.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        <CloseConfirmModal
+          isOpen={showCloseConfirm}
+          onConfirm={handleConfirmClose}
+          onCancel={handleCancelClose}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="vault-modal-overlay" onClick={handleCloseAttempt}>
@@ -198,12 +306,19 @@ export default function AddCreditsModal({ isOpen, onClose, address, includeSalt,
             >
               {loading === 'stripe' ? 'Creating...' : 'Pay with Card'}
             </button>
-            <button 
-              className="credits-pay credits-pay-crypto" 
-              onClick={handlePayWithCrypto} 
+            <button
+              className="credits-pay credits-pay-crypto"
+              onClick={handlePayWithCrypto}
               disabled={!!loading}
             >
               {loading === 'crypto' ? 'Creating...' : 'Pay with Crypto'}
+            </button>
+            <button
+              className="credits-pay credits-pay-coupon"
+              onClick={() => { setStep('coupon'); setError(null); }}
+              disabled={!!loading}
+            >
+              Add credit with coupon
             </button>
           </div>
 

@@ -12,7 +12,9 @@ import { paymentRoutes } from './routes/payments.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { stripePaymentRoutes } from './routes/stripe-payments.js';
 import { stripeWebhookRoutes } from './routes/stripe-webhooks.js';
+import { couponRoutes } from './routes/coupons.js';
 import { startTempCleanup } from './services/temp-cleanup.js';
+import { startTelegramBot } from './services/telegram-bot.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,8 +53,10 @@ app.use('/blob', blobRoutes);
 app.use('/admin', adminRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/stripe', stripePaymentRoutes);
+app.use('/coupon', couponRoutes);
 
 startTempCleanup();
+startTelegramBot();
 
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

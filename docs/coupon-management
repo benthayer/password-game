@@ -1,0 +1,34 @@
+/help
+
+/mint = give a single token and generate a qr (this is the manual token minting)
+
+/limit = summary + help
+/limit list
+/limit <number>
+/limit <number> <duration>
+/limit rm <id as given by output of limit>
+/limit <coupon> <anything above or "global" to use the global settings"
+
+/coupon = summary + help
+/coupon list
+/coupon add ASDF <optional value in terms of credits>
+/coupon remove ASDF
+/coupon clear
+
+/revoke <id or token_value or duration>
+/revoke all (doesn't affect used)
+
+/stop = close gate + help
+/stop coupon
+/stop redemption
+
+/resume = open gate + help
+/resume coupon
+/resume redemption
+
+/stats
+/stats coupons
+/stats tokens
+/stats accounts
+/stats <anything above> <duration>
+/stats <anything above> <duration or date or timestamp> <duration or date or timestamp> (ie 1:34pm 5m checks 1:34 until 5 minutes ago, can also include dates)

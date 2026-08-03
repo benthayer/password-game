@@ -1,0 +1,125 @@
+.coupon-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.coupon-card {
+  background: #12121a;
+  border: 1px solid #1e2a3a;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.coupon-card h1 {
+  color: #e2e8f0;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.coupon-subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+.coupon-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  background: #0a0a0f;
+  border: 1px solid #1e3a4c;
+  border-radius: 8px;
+  color: #e2e8f0;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.coupon-input:focus {
+  outline: none;
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
+}
+
+.coupon-input:disabled {
+  opacity: 0.5;
+}
+
+.coupon-submit,
+.coupon-copy {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.coupon-secondary {
+  width: 100%;
+  margin-top: 20px;
+  background: transparent;
+  border-color: #1e2a3a;
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+.coupon-qr {
+  width: 240px;
+  height: 240px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  margin: 0 auto 20px;
+  display: block;
+}
+
+.coupon-token {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #67e8f9;
+  background: #0a0a0f;
+  border: 1px solid #1e3a4c;
+  border-radius: 8px;
+  padding: 14px 12px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.coupon-error {
+  margin-top: 16px;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.coupon-closed {
+  margin-bottom: 20px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fcd34d;
+  font-size: 0.9rem;
+}
+
+.coupon-warning {
+  margin-top: 16px;
+  color: #fca5a5;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.coupon-note {
+  margin-top: 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.coupon-note strong {
+  color: #cbd5e1;
+}

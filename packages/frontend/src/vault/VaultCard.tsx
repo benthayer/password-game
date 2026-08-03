@@ -258,6 +258,7 @@ export default function VaultCard({
           isOpen={addCreditsModalOpen}
           onClose={() => setAddCreditsModalOpen(false)}
           address={keys.address}
+          authKeys={keys}
           includeSalt={hashConfig.includeSalt}
           fullConfig={fullConfig}
           skipAcknowledgment={accountHasCredits}
