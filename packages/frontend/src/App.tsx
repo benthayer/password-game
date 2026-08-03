@@ -4,6 +4,7 @@ import MainPage from './MainPage';
 import InteractionPage from './InteractionPage';
 import CouponPage from './CouponPage';
 import GitHubLink from './GitHubLink';
+import PrivacyNotice from './PrivacyNotice';
 import { DEFAULT_CONFIG, PERSIST_CONFIG, type GenerationConfig } from './generation-config';
 
 function AppRouter() {
@@ -49,6 +50,7 @@ function AppRouter() {
     <meta name="viewport" content="width=650, initial-scale=1.0">
     </meta>
     <GitHubLink />
+    <PrivacyNotice />
     <BrowserRouter>
       <Routes>
         <Route

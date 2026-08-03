@@ -4,6 +4,8 @@ Password Game is two things
 1. A way to create passwords that are hard to forget
 2. A file storage server
 
+Your file contents are encrypted client-side and I can't read them. Your *network identity and timing metadata* are a different story, and one you cannot verify from the outside — read [Privacy: what actually leaks](#privacy-what-actually-leaks) before you decide to trust this. Short version: use a VPN or Tor.
+
 ## How It Works - Simple Version
 
 Password Game is built on the principle that recognition is easy while free recall is hard. Your password is embedded in a determinstically generated sequence of grids. You practice your password using the interface and recall becomes easy because once you've practice, you've gained familiarity with the words and now recovery means finding the next word in an interface. Recognizing the word from a small set of options is far easier than free recall. With free recall, it's possible to entirely forget your password, with absolutely no recovery mechanism.
@@ -91,6 +93,54 @@ If you decide not to use a salt, you are exposed to a dragnet attack, which is r
 
 Concrete example:
 You and I both have a trivially crackable length 4 passwords based on a 4x4 grid and no salt. Because enropy is related to the grid size and the password length, the total entropy is log2(4 x 4) x 4 = 16 bits = 65k possibilities. We both store $1000 in a crypto wallet. An attacker decides to enumarate all length 4 passwords. The value of this attack is $2000. If instead I used a salt and the attacker chose to target me, the vaule of the attack is now $1000 because he is limited to the people using my salt, which is just me and my one file. If I use a different salt per file I want to store, then the attacker has to choose which to target rather than being able to target all of my files at once. If there are 1000 users with length 4 passwords all storing $1000, then the value of the attack is $1,000,000 while if each user had used a salt, then the attacker has to pick a target user and the value of the attack is only $1,000.
+
+## Privacy: what actually leaks
+
+The encryption story is strong: your file is encrypted client-side with a key derived from your password, and I never hold that key. Everything in this section is about what's left over — who you are on the network, and when you did things. That part is much weaker, and you should read it before trusting this service with anything that matters.
+
+### Start here: you cannot verify any of this
+
+Every claim below is a claim about a server you don't control, made by the person who runs it. You have no way to check whether the config I describe is the config that's running, whether I changed it after writing this, or whether someone with more leverage than you asked me for something. "I don't log your IP" is not a security property. It's a promise, and promises are exactly what this project otherwise tries to avoid relying on.
+
+**So the recommendation is: use a VPN, or Tor.** Not because I think I'm untrustworthy, but because it makes the question moot. If the IP reaching my server isn't yours, then it doesn't matter what I log, what my providers log, or what either of us is later compelled to hand over. That's a property you can verify yourself, which makes it worth more than anything I can tell you.
+
+### IP addresses
+
+What I control, I've turned off. The reverse proxy vhosts for both `passwordgame.apps.benthayer.com` and `api.passwordgame.apps.benthayer.com` are generated with `access_log off` and `error_log /dev/null crit`, including the port-80 redirect that runs before HTTPS — so there's no request trail for this app, even though my other sites do log normally. The application itself has no request logging middleware, reads no IP headers, and has no IP column in its database.
+
+What I don't control:
+
+- **My VPS provider** (DigitalOcean) can see every packet to and from that machine, and my nameservers run on rented hardware too. I have no visibility into their logging and no ability to promise anything about it.
+- **Your ISP and any network between you and me** sees the TLS SNI and the DNS lookup, which is enough to know you visited Password Game and roughly when, even though the URL path and payload are encrypted.
+- **Stripe and Coinbase see your IP directly** if you pay, along with whatever else a card payment reveals about you. The checkout page is theirs, not mine. Payment is the single strongest link between a real-world identity and an account, and coupon codes exist partly so there's a path that avoids it.
+- **Rate limiting** keeps recent IPs in server memory for up to a minute (never on disk) so one client can't drain the coupon budget.
+
+### DNS
+
+My authoritative nameservers (`ns1`/`ns2.benthayer.com`) run PowerDNS with query logging off — it isn't enabled and there are no query logs on disk. But that barely matters: your own resolver sees your lookup, your ISP usually does too, and so does every resolver upstream of them. Encrypted DNS (DoH/DoT) hides it from the network but not from the resolver you chose. A VPN moves that trust to the VPN provider, and Tor spreads it out further.
+
+### Timestamps, and what download activity reveals
+
+This is the weakest part of the design, and it's not about IPs at all. Even a perfectly anonymous network path leaves timing metadata on my server:
+
+- The account row for each address hash stores `created_at`, `updated_at`, the exact file size, and remaining credits.
+- **`updated_at` is rewritten on every download.** So there is a last-access timestamp per address hash.
+- Egress credits are decremented per download, so `egress spent ÷ file size` reveals roughly **how many times a blob has been fetched**.
+- Payments store timestamps, and a crypto payment additionally stores the on-chain `sender_address` alongside the account's address hash — which links a wallet to an account.
+- Coupon tokens record when they were minted and when they were redeemed, plus the address hash that redeemed them.
+- `GET /admin/accounts` lets the operator (me) enumerate every address hash with all of the above. Aggregate counts also get sent to a Telegram bot, though no address hashes are included in those.
+
+Correlating those timestamps with anything else you did at the same moment is the realistic deanonymization path here, and a VPN doesn't help with it. `ANON_PLAN.md` tracks "no timestamps anywhere" as a goal; it is not the current state.
+
+### Storage metadata, and why "delete" isn't erasure
+
+Blobs live in Backblaze B2, and the object key **is your address hash in plaintext**. Backblaze therefore holds, per object: the address hash, its upload and modification timestamps, the exact byte size, and a checksum — the same hash an attacker would need in order to test a cracked password.
+
+The bucket also retains prior versions and delete markers. I verified this: objects uploaded in January are still present as non-latest versions behind delete markers. **Deleting your file removes it from the live path, but does not erase its history at the storage layer.** Treat deletion as "no longer served," not "gone."
+
+### What this adds up to
+
+Use a VPN or Tor, prefer a coupon over a card if payment linkage matters to you, assume the times you uploaded and downloaded are recorded, and don't rely on delete meaning erased. The encryption is the part you can verify by reading the client; everything in this section is the part where you're trusting me, which is precisely why you shouldn't have to. See also "A note on trust" below.
 
 ## Development
 

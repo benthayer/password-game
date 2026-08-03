@@ -179,9 +179,11 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
               Other security considerations:
             </p>
             <ul>
-              <li><strong>Rate Limiting:</strong> The server rate limits per IP, which provides basic protection, 
-              but you should assume it's possible for an attacker to check if a given hash exists. If an 
-              attacker finds a hash, it's very likely because they cracked a weak password.</li>
+              <li><strong>Rate Limiting:</strong> The server caps total request throughput with one shared
+              budget for all traffic (per-IP limiting applies only to coupon minting). This bounds load on
+              the server, but it does not isolate one client from another, so you should assume it's possible
+              for an attacker to check if a given hash exists. If an attacker finds a hash, it's very likely
+              because they cracked a weak password.</li>
               <li><strong>Information Leakage:</strong> The system is designed such that the risk of leaking 
               information is extremely minimal. Even if the client communicated with the server over plain 
               HTTP, this would still not leak enough information to compromise your data. The only way for 
@@ -190,10 +192,62 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
               <li><strong>Data Breach Impact:</strong> A server data breach is minimally useful to an attacker — 
               the only benefit would be that they can now run the same attacks offline rather than polling 
               the server. The encrypted data itself reveals nothing.</li>
-              <li><strong>Anonymity:</strong> Your encrypted data cannot be linked back to you. There are no 
-              accounts, no usernames, no metadata. An attacker looking at the server's database sees only 
-              anonymous encrypted blobs and hashes — with no way to know who they belong to or what they contain.</li>
+              <li><strong>Anonymity:</strong> There are no accounts and no usernames — an attacker looking at
+              the database sees encrypted blobs and hashes, with no way to know what they contain. But
+              "no metadata" would be too strong a claim: timestamps and network metadata do exist, and they
+              are covered honestly in the next section.</li>
             </ul>
+          </section>
+
+          <section>
+            <h3>Privacy: What Actually Leaks</h3>
+            <p>
+              The encryption above is the strong part. This section is about what's left over — who you are
+              on the network, and when you did things. It's weaker, and you should read it before trusting
+              this service with anything that matters.
+            </p>
+            <p>
+              <strong>You cannot verify any of this.</strong> Everything here is a claim about a server you
+              don't control, made by the person who runs it. You have no way to check that the configuration
+              I describe is the one that's running, that I haven't changed it since, or that nobody with more
+              leverage than you has asked me for something. "I don't log your IP" isn't a security property —
+              it's a promise, and promises are what the rest of this project tries hard not to rely on.
+            </p>
+            <p>
+              <strong>So: use a VPN, or Tor.</strong> Not because I think I'm untrustworthy, but because it
+              makes the question moot. If the IP arriving at my server isn't yours, it doesn't matter what I
+              log, what my hosting providers log, or what either of us is later compelled to hand over. That's
+              something you can verify yourself, which makes it worth more than anything I can tell you.
+            </p>
+            <ul>
+              <li><strong>IP addresses:</strong> What I control, I've turned off — the web server for this app
+              and its API is configured to write no access log and no error log, including on the plain-HTTP
+              redirect, and the application itself never reads or stores your IP. What I don't control is my
+              VPS provider, which can see all traffic to the machine regardless of what my software does.</li>
+              <li><strong>Your network sees where you went:</strong> TLS hides the URL and the payload, but the
+              DNS lookup and the TLS server name still tell your ISP and any network in between that you
+              visited Password Game, and when. My own nameservers don't log queries, but your resolver does
+              the work either way — this is the leak a VPN actually fixes.</li>
+              <li><strong>Paying is the biggest link:</strong> Stripe and Coinbase see your IP directly, plus
+              whatever else a card reveals about you. That checkout page is theirs, not mine. Crypto payments
+              additionally record the sending wallet next to your account. Coupon codes exist partly as a path
+              that avoids all of this.</li>
+              <li><strong>Timestamps exist, and downloads are counted:</strong> Each address hash has a
+              creation time, a last-updated time that is rewritten on <em>every download</em>, and an exact
+              file size. Because egress credits are deducted per fetch, the remaining balance reveals roughly
+              how many times a blob has been downloaded. Correlating those times with anything else you did is
+              the realistic way to deanonymize you here, and a VPN does not help with it.</li>
+              <li><strong>Deleting is not erasing:</strong> Blobs are stored in Backblaze B2 under your address
+              hash as the object key, so the storage provider holds that hash, the upload time, and the exact
+              size. The bucket also retains prior versions behind delete markers — I checked, and objects from
+              months ago are still recoverable there. Treat deletion as "no longer served," not "gone."</li>
+            </ul>
+            <p>
+              The honest summary: use a VPN or Tor, prefer a coupon over a card if payment linkage matters,
+              assume your upload and download times are recorded, and don't rely on delete meaning erased. The
+              encryption is the part you can check for yourself by reading the client. Everything in this
+              section is the part where you'd be trusting me — which is exactly why you shouldn't have to.
+            </p>
           </section>
         </div>
 
