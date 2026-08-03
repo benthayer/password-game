@@ -1,0 +1,410 @@
+/**
+ * Command handling for the coupon admin bot (docs/coupon-management).
+ *
+ * Pure with respect to Telegram: takes an unparsed command line, returns the
+ * reply. It never touches the network, reads no env, and throws nothing for user
+ * error — a bad command produces a reply explaining it. That makes every command
+ * form testable without a bot token, which matters because the parsing and
+ * formatting is where the bugs live, not the transport.
+ */
+
+import {
+  CouponError,
+  addCap,
+  addCoupon,
+  allGates,
+  accountStats,
+  clearCoupons,
+  couponStats,
+  formatDuration,
+  limitStatus,
+  listLimits,
+  listLiveCoupons,
+  mintManual,
+  parseDuration,
+  parseStatsRange,
+  removeLimit,
+  resolveLiveCoupon,
+  retireCoupon,
+  revokeTokens,
+  setCouponGlobal,
+  setGate,
+  tokenStats,
+  type GateName,
+  type LimitStatusRow,
+} from './coupon-service.js';
+
+/**
+ * The reply is a string. `qrPayload` is the one exception the transport needs:
+ * a QR is an image, so the handler names the string to encode and lets the
+ * sender rasterise it, rather than returning binary from a text-shaped API.
+ */
+export interface CommandReply {
+  text: string;
+  qrPayload?: string;
+}
+
+// =============================================================================
+// FORMATTING
+// =============================================================================
+
+export function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Monospace block — the only reliable way to keep columns aligned in Telegram. */
+function pre(text: string): string {
+  return `<pre>${escapeHtml(text)}</pre>`;
+}
+
+function formatLimitRow(row: LimitStatusRow): string {
+  const id = `#${row.id}`.padEnd(5);
+  if (row.kind === 'inherit_global') return `  ${id}inherit global`;
+
+  const cap = `${row.maxCount} / ${formatDuration(row.windowSeconds)}`.padEnd(16);
+  const usage = `${row.used} used, ${row.remaining} left`;
+  const frees = row.freesAt
+    ? `   exhausted, frees ${new Date(row.freesAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+    : '';
+  return `  ${id}${cap}${usage}${frees}`;
+}
+
+function formatLimitStatus(couponId?: number | null): string {
+  const { rows, inertCoupons } = limitStatus(couponId);
+  if (rows.length === 0 && inertCoupons.length === 0) {
+    return 'No limits configured anywhere. Nothing can be minted.';
+  }
+
+  const lines: string[] = [];
+  const scopes = [...new Set(rows.map(r => r.scope))];
+  // GLOBAL first; it binds everything else.
+  scopes.sort((a, b) => (a === 'GLOBAL' ? -1 : b === 'GLOBAL' ? 1 : a.localeCompare(b)));
+
+  for (const scope of scopes) {
+    lines.push(scope === 'GLOBAL' ? 'GLOBAL' : `COUPON ${scope}`);
+    for (const row of rows.filter(r => r.scope === scope)) lines.push(formatLimitRow(row));
+  }
+
+  if (!scopes.includes('GLOBAL')) {
+    lines.unshift('GLOBAL', '  (none — global imposes no ceiling)');
+  }
+  if (inertCoupons.length) {
+    lines.push('', `INERT (no rules, unusable): ${inertCoupons.join(', ')}`);
+  }
+  return pre(lines.join('\n'));
+}
+
+export const HELP = [
+  '<b>Coupon management</b>',
+  '',
+  '/mint [credits] — mint a token directly (bypasses gates and limits)',
+  '',
+  '/coupon list',
+  '/coupon add CODE [credits] — new coupon, or reprice an existing one',
+  '/coupon remove CODE — stop future minting, free the code for reuse',
+  '/coupon clear',
+  '',
+  '/limit — summary',
+  '/limit status — live usage of every rule',
+  '/limit list | /limit N | /limit N DURATION | /limit rm ID',
+  '/limit CODE ... — same, scoped to one coupon',
+  '/limit CODE global — that coupon uses only the global caps',
+  '',
+  '/revoke ID | TOKEN | DURATION | all — kills unredeemed tokens only',
+  '/stop coupon | /stop redemption',
+  '/resume coupon | /resume redemption',
+  '/stats [coupons|tokens|accounts] [WHEN] [WHEN]',
+  '    WHEN = 5m | 2h | 7d | 1:34pm | 13:34 | 2026-08-01 | 8/1 | 2026-08-01 1:34pm',
+  '    one WHEN means "since then"; two means the window between them',
+  '    e.g. /stats tokens 1:34pm 5m',
+  '',
+  'A coupon cannot be minted from until it has a limit.',
+  'Tokens are stored hashed — a minted token is shown once and cannot be recovered.',
+].join('\n');
+
+const reply = (text: string): CommandReply => ({ text });
+
+// =============================================================================
+// COMMANDS
+// =============================================================================
+
+function commandMint(args: string[]): CommandReply {
+  const credits = args.length ? Number(args[0]) : 1;
+  if (!Number.isFinite(credits) || credits <= 0) {
+    return reply(`Usage: /mint [credits]  (got "${escapeHtml(args[0] ?? '')}")`);
+  }
+
+  const minted = mintManual(credits);
+  return {
+    text: [
+      `<b>Token #${minted.tokenId}</b> — ${credits} credit${credits === 1 ? '' : 's'}`,
+      `<code>${escapeHtml(minted.token)}</code>`,
+      '',
+      'Admin mint: ignored by every limit. Shown once — not recoverable.',
+    ].join('\n'),
+    qrPayload: minted.token,
+  };
+}
+
+function commandCoupon(args: string[]): CommandReply {
+  const sub = (args[0] ?? '').toLowerCase();
+
+  if (!sub || sub === 'list') {
+    const coupons = listLiveCoupons();
+    if (!coupons.length) return reply('No coupons. Add one with /coupon add CODE [credits]');
+
+    const lines = coupons.map(c => {
+      const limits = listLimits(c.id);
+      const state = limits.length === 0
+        ? 'INERT — set a limit to activate'
+        : limits.some(l => l.kind === 'inherit_global') && limits.length === 1
+          ? 'live (global limits only)'
+          : `live (${limits.filter(l => l.kind === 'cap').length} own cap(s))`;
+      return `${c.code.padEnd(14)}${String(c.valueCredits).padStart(5)} cr   ${state}`;
+    });
+    return reply(pre(lines.join('\n')));
+  }
+
+  if (sub === 'add') {
+    if (!args[1]) return reply('Usage: /coupon add CODE [credits]');
+    const credits = args[2] !== undefined ? Number(args[2]) : 1;
+    if (!Number.isFinite(credits)) return reply(`"${escapeHtml(args[2]!)}" is not a number`);
+
+    const { coupon, repriced } = addCoupon(args[1], credits);
+    if (repriced) {
+      return reply(
+        `${coupon.code} repriced to ${coupon.valueCredits} credits.\n` +
+        `Tokens already minted keep their original value.`
+      );
+    }
+    return reply(
+      `${coupon.code} created at ${coupon.valueCredits} credits (id ${coupon.id}).\n\n` +
+      `<b>It is inert until you set a limit.</b>\n` +
+      `/limit ${coupon.code} N DURATION — own cap\n` +
+      `/limit ${coupon.code} global — global caps only`
+    );
+  }
+
+  if (sub === 'remove') {
+    if (!args[1]) return reply('Usage: /coupon remove CODE');
+    const { coupon, limitsRemoved, activeTokens } = retireCoupon(args[1]);
+    const note = activeTokens
+      ? `\n${activeTokens} unredeemed token(s) from it remain valid — use /revoke to kill them.`
+      : '';
+    return reply(
+      `${coupon.code} retired (${limitsRemoved} limit rule(s) removed). ` +
+      `The code is free to add again as a fresh coupon.${note}`
+    );
+  }
+
+  if (sub === 'clear') {
+    const n = clearCoupons();
+    return reply(`Retired ${n} coupon(s). Unredeemed tokens are untouched.`);
+  }
+
+  return reply(`Unknown: /coupon ${escapeHtml(sub)}\n\n${HELP}`);
+}
+
+function applyCap(couponId: number | null, args: string[], scopeLabel: string): CommandReply {
+  const maxCount = Number(args[0]);
+  let windowSeconds: number | null = null;
+
+  if (args[1] !== undefined) {
+    windowSeconds = parseDuration(args[1]);
+    if (windowSeconds === null) {
+      return reply(`Can't read "${escapeHtml(args[1])}" as a duration (try 30s, 5m, 2h, 7d, 1w)`);
+    }
+  }
+
+  const limit = addCap(couponId, maxCount, windowSeconds);
+  const scope = couponId === null ? 'Global' : scopeLabel;
+  return reply(
+    `${scope} cap #${limit.id}: ${maxCount} per ${formatDuration(windowSeconds)}.\n\n` +
+    formatLimitStatus(couponId)
+  );
+}
+
+function commandLimit(args: string[]): CommandReply {
+  if (args.length === 0) {
+    const globals = listLimits(null).filter(l => l.kind === 'cap');
+    const summary = globals.length
+      ? `${globals.length} global cap(s).`
+      : 'No global caps — global imposes no ceiling.';
+    return reply(`${summary}\n\n${formatLimitStatus()}`);
+  }
+
+  const first = args[0].toLowerCase();
+
+  // Global-scope forms.
+  if (first === 'status') return reply(formatLimitStatus());
+  if (first === 'list') return reply(formatLimitStatus(null));
+  if (first === 'rm') {
+    if (!args[1]) return reply('Usage: /limit rm ID');
+    const id = Number(args[1].replace('#', ''));
+    if (!Number.isFinite(id)) return reply(`"${escapeHtml(args[1])}" is not an id`);
+    removeLimit(null, id);
+    return reply(`Removed global limit #${id}.\n\n${formatLimitStatus()}`);
+  }
+  if (/^\d+$/.test(first)) return applyCap(null, args, 'GLOBAL');
+
+  // Otherwise the first token is a coupon code.
+  const coupon = resolveLiveCoupon(first);
+  if (!coupon) return reply(`No live coupon "${escapeHtml(args[0])}"`);
+
+  const rest = args.slice(1);
+  const sub = (rest[0] ?? '').toLowerCase();
+
+  if (!sub || sub === 'status' || sub === 'list') {
+    return reply(formatLimitStatus(coupon.id));
+  }
+
+  if (sub === 'global') {
+    const { removed } = setCouponGlobal(coupon.id);
+    const globals = listLimits(null).filter(l => l.kind === 'cap');
+    const warning = globals.length === 0
+      ? '\n\n<b>Warning:</b> there are no global caps, so this coupon is now live and effectively uncapped.'
+      : '';
+    const cleared = removed ? ` ${removed} own rule(s) removed.` : '';
+    return reply(`${coupon.code} now uses the global caps only.${cleared}${warning}`);
+  }
+
+  if (sub === 'rm') {
+    if (!rest[1]) return reply(`Usage: /limit ${coupon.code} rm ID`);
+    const id = Number(rest[1].replace('#', ''));
+    if (!Number.isFinite(id)) return reply(`"${escapeHtml(rest[1])}" is not an id`);
+    const { nowInert } = removeLimit(coupon.id, id);
+    const note = nowInert
+      ? `\n\n<b>${coupon.code} has no rules left and can no longer be minted.</b>`
+      : '';
+    return reply(`Removed limit #${id}.${note}\n\n${formatLimitStatus(coupon.id)}`);
+  }
+
+  if (/^\d+$/.test(sub)) return applyCap(coupon.id, rest, coupon.code);
+
+  return reply(`Unknown: /limit ${escapeHtml(coupon.code)} ${escapeHtml(sub)}\n\n${HELP}`);
+}
+
+function commandRevoke(args: string[]): CommandReply {
+  if (!args.length) return reply('Usage: /revoke ID | TOKEN | DURATION | all');
+  const { revoked, description } = revokeTokens(args.join(' '));
+  return reply(
+    revoked
+      ? `Revoked ${revoked} token(s) — ${description}. Already-redeemed tokens were not touched.`
+      : `Nothing to revoke for ${description} (no unredeemed matches).`
+  );
+}
+
+function commandGate(open: boolean, args: string[]): CommandReply {
+  const verb = open ? 'resume' : 'stop';
+  const target = (args[0] ?? '').toLowerCase();
+  const state = () => {
+    const g = allGates();
+    return `coupon minting: ${g.coupon ? 'OPEN' : 'CLOSED'}\nredemption: ${g.redemption ? 'OPEN' : 'CLOSED'}`;
+  };
+
+  if (target !== 'coupon' && target !== 'redemption') {
+    return reply(`Usage: /${verb} coupon | /${verb} redemption\n\n${state()}`);
+  }
+
+  setGate(target as GateName, open);
+  return reply(`${target} ${open ? 'resumed' : 'stopped'}.\n\n${state()}`);
+}
+
+function commandStats(args: string[]): CommandReply {
+  const bucket = (args[0] ?? '').toLowerCase();
+  const known = ['coupons', 'tokens', 'accounts'];
+  const rangeArgs = known.includes(bucket) ? args.slice(1) : args;
+  const range = parseStatsRange(rangeArgs);
+
+  const sections: string[] = [];
+
+  if (!known.includes(bucket) || bucket === 'tokens') {
+    const s = tokenStats(range);
+    sections.push(pre([
+      `TOKENS (${range.label})`,
+      `  minted    ${s.minted}   (web ${s.web}, admin ${s.admin})`,
+      `  redeemed  ${s.redeemed}`,
+      `  active    ${s.active}`,
+      `  revoked   ${s.revoked}`,
+      `  credits granted  ${s.creditsGranted}`,
+    ].join('\n')));
+  }
+
+  if (!known.includes(bucket) || bucket === 'coupons') {
+    const rows = couponStats(range);
+    if (!rows.length) {
+      sections.push('No coupons yet.');
+    } else {
+      // Keyed on id, so a reused code shows as separate rows: two coupons that
+      // share a label are different campaigns.
+      const lines = rows.map(r =>
+        `${r.code.padEnd(12)}${r.createdAt.slice(0, 10)}  ` +
+        `minted ${String(r.minted).padStart(4)}  redeemed ${String(r.redeemed).padStart(4)}  ` +
+        `${String(r.creditsGranted).padStart(5)} cr${r.retired ? '  (retired)' : ''}`
+      );
+      sections.push(pre([`COUPONS (${range.label})`, ...lines].join('\n')));
+    }
+  }
+
+  if (!known.includes(bucket) || bucket === 'accounts') {
+    const s = accountStats(range);
+    sections.push(pre([
+      `ACCOUNTS (${range.label})`,
+      `  credited  ${s.accountsCredited}`,
+      `  credits   ${s.creditsGranted}`,
+    ].join('\n')));
+  }
+
+  return reply(sections.join('\n'));
+}
+
+// =============================================================================
+// DISPATCH
+// =============================================================================
+
+/**
+ * Turn one raw command line into a reply. Never throws for user error: a
+ * CouponError becomes readable text, so a mistyped command can't wedge the loop
+ * that calls this.
+ */
+export function handleCommand(input: string): CommandReply {
+  const trimmed = input.trim();
+  if (!trimmed.startsWith('/')) return reply(HELP);
+
+  // Strip the @BotName suffix Telegram appends in groups.
+  const parts = trimmed.split(/\s+/);
+  const command = parts[0].toLowerCase().replace(/@.*$/, '');
+  const args = parts.slice(1);
+
+  try {
+    switch (command) {
+      case '/help':
+      case '/start':
+        return reply(HELP);
+      case '/mint':
+        return commandMint(args);
+      case '/coupon':
+      case '/coupons':
+        return commandCoupon(args);
+      case '/limit':
+      case '/limits':
+        return commandLimit(args);
+      case '/revoke':
+        return commandRevoke(args);
+      case '/stop':
+        return commandGate(false, args);
+      case '/resume':
+        return commandGate(true, args);
+      case '/stats':
+        return commandStats(args);
+      default:
+        return reply(`Unknown command ${escapeHtml(command)}\n\n${HELP}`);
+    }
+  } catch (err) {
+    if (err instanceof CouponError) {
+      return reply(escapeHtml(err.message) + (err.detail ? `\n${escapeHtml(err.detail)}` : ''));
+    }
+    console.error('[telegram] command failed:', err);
+    return reply(`Something went wrong: ${escapeHtml(String(err))}`);
+  }
+}

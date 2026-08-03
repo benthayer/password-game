@@ -10,12 +10,10 @@
     "dev:backend": "npm run dev -w packages/backend",
     "build:frontend": "npm run build -w packages/frontend",
     "build:backend": "npm run build -w packages/backend",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "test:e2e": "npm run build:backend && npm run --workspace packages/frontend test:e2e"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
 }
-
-
-

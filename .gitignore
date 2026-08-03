@@ -17,3 +17,7 @@ packages/backend/data/*
 
 # Docker volume mount target for the same data (see docker-compose.yml)
 /data/
+
+# Playwright
+packages/frontend/test-results/
+packages/frontend/playwright-report/
