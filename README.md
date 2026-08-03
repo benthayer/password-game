@@ -177,5 +177,95 @@ Returns: { checkoutUrl, sessionId }
 
 Redirect checkoutUrl to complete payment. The checkoutUrl is a hosted Stripe page where the user enters their card details and pays. Once confirmed, a webhook credits the account.
 
+## Self-Hosting
 
+If you don't want to depend on me at all, run the whole thing yourself. Everything in this repo is what I run in production. There are two services:
+
+- **frontend** — a static bundle served by nginx. No server-side logic, no secrets.
+- **backend** — a Node/Express server that keeps accounts in SQLite (local disk) and encrypted blobs in an S3-compatible bucket.
+
+The only external dependency you actually need is object storage. Payments, the admin API, and the ops bot are all optional and the server starts fine without them.
+
+### Configuration
+
+The backend loads `.env`, then `.env.local` on top of it (local overrides win). `docker-compose.yml` reads `env_file: .env`, so for a Docker deploy put your values there. Nothing is committed — `.env*` is gitignored.
+
+Storage (required):
+
+    B2_KEY_ID       — S3 access key id
+    B2_KEY          — S3 secret key
+    B2_BUCKET       — bucket name
+    B2_ENDPOINT     — defaults to https://s3.us-east-005.backblazeb2.com
+
+The names say B2 because that's what I use, but it's the plain AWS S3 SDK, so any S3-compatible endpoint works (MinIO, Garage, S3 itself). One caveat: the region is pinned to `us-east-005` in `packages/backend/src/storage/b2.ts`. Backblaze ignores it, but if your provider signs against a real region you'll need to change that line.
+
+Billing (optional):
+
+    DISABLE_CREDIT_CHECK=true    — skip all credit accounting
+
+Set this if you're running an instance for yourself or a few people and don't want to sell storage. Uploads and downloads become unlimited and free, and you can ignore Stripe, Coinbase, and the nightly billing job entirely.
+
+If you do want billing, supply whichever provider you use:
+
+    STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+    COINBASE_COMMERCE_API_KEY, COINBASE_COMMERCE_WEBHOOK_SECRET
+
+Point Coinbase's webhook at `/webhooks/coinbase` and Stripe's at `/webhooks/stripe`. You can configure one provider and not the other — an unconfigured provider only fails its own create-payment endpoint (a 500), and the rest of the server is unaffected. If you configure neither, don't expose the credit-purchase UI, because both buttons will fail.
+
+Everything else (optional):
+
+    ADMIN_SECRET             — enables /admin; unset means /admin returns 404
+    TELEGRAM_BOT_TOKEN       — ops bot, disables itself if unset
+    TELEGRAM_ADMIN_CHAT_ID   — chat the bot will talk to
+    PORT                     — default 3001
+    DATA_DIR                 — default ./data (SQLite lives here)
+    TEMP_DIR                 — default ./data/temp (in-flight uploads)
+
+### With Docker
+
+    docker compose up -d --build
+
+Before you build, change `VITE_API_URL` in `docker-compose.yml` to your own API hostname. It's a build arg, not a runtime variable — Vite compiles it into the bundle, so a frontend built with my URL will keep talking to my backend no matter what environment you set later.
+
+Both containers bind to loopback only (frontend on `127.0.0.1:48607`, backend on `127.0.0.1:48608`), on the assumption that you're terminating TLS in front of them. Put your own reverse proxy over the top; the backend already trusts one proxy hop for `X-Forwarded-For`, and it sends `Access-Control-Allow-Origin: *` so the frontend doesn't need to share an origin with it.
+
+Account data is persisted through the `./data` bind mount at the repo root. That directory is the thing to back up — blobs live in your bucket, but the SQLite database holding addresses, balances, and file sizes is only on that disk.
+
+`TZ` defaults to `America/Bogota` because absolute dates in the Telegram bot's `/stats` queries are resolved in local time. Set it to your own zone.
+
+### Without Docker
+
+Backend:
+
+    npm install
+    npm run build:backend
+    cd packages/backend && node dist/index.js
+
+Run it from `packages/backend`. That's also where your `.env` needs to live, since dotenv and the default `DATA_DIR`/`TEMP_DIR` paths are all resolved relative to the working directory — only the Docker path reads the `.env` at the repo root.
+
+Frontend:
+
+    VITE_API_URL=https://api.example.com npm run build:frontend
+
+That writes a static bundle to `packages/frontend/dist` — serve it with anything. If you use your own web server config rather than the provided `nginx.conf`, two things there matter: unknown paths need to fall through to `index.html` for client-side routing, and `index.html` itself must not be cached, or browsers will keep asking for hashed bundles that a later deploy deleted.
+
+### Operating an instance
+
+If you left credit checks on, run the billing job once a day. It's idempotent, so a missed night is charged the next time it runs:
+
+    node dist/services/nightly-billing.js        # from packages/backend, in a built image
+    npm run nightly-billing -w packages/backend  # from a checkout with dev deps
+
+To hand out credit without taking a payment, use the admin API with `ADMIN_SECRET` set:
+
+    curl -X POST https://api.example.com/admin/credits \
+      -H "Authorization: Bearer $ADMIN_SECRET" \
+      -H "Content-Type: application/json" \
+      -d '{"addressHash":"<address>","amount":5}'
+
+`amount` is in dollars, on the same scale as a real payment: $1 grants 1 GB-year of storage and 50 GB of egress. `GET /admin/accounts` lists every account, and `GET /admin/accounts/:addressHash` shows one.
+
+### A note on trust
+
+Self-hosting the backend does not buy you much security, because the design already assumes the backend is hostile: files are encrypted client-side with a key derived from your password, requests are signed with a private key that never leaves your device, and the server only ever sees an Ed25519 public key and a ciphertext. What self-hosting actually buys you is availability and independence — your recovery path doesn't disappear if I lose interest, and nobody can meter or delete your blob but you. If your concern is specifically the code handling your password, the frontend is the part that matters, and you can address that without running any infrastructure at all — see "Running the client yourself" above.
 
