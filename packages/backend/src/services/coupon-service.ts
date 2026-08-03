@@ -46,7 +46,6 @@ export class CouponError extends Error {
 // Crockford base32: no I, L, O or U, so nothing reads ambiguously when a token
 // is copied off a QR by hand.
 const BASE32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const TOKEN_PREFIX = 'PG';
 const TOKEN_BYTES = 16; // 128 bits
 
 function encodeBase32(bytes: Buffer): string {
@@ -73,7 +72,7 @@ function generateToken(): string {
   if (groups.length > 1 && groups[groups.length - 1].length < 5) {
     groups[groups.length - 2] += groups.pop();
   }
-  return [TOKEN_PREFIX, ...groups].join('-');
+  return groups.join('-');
 }
 
 /**

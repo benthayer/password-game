@@ -14,6 +14,9 @@ export const WEB_PORT = 4173;
 
 export default defineConfig({
   testDir: './e2e',
+  // *.e2e.ts rather than *.spec.ts: vitest's default include pattern matches
+  // *.spec.ts, and it would otherwise try to run these as unit tests.
+  testMatch: '**/*.e2e.ts',
   timeout: 30_000,
   fullyParallel: false, // shared sqlite file and shared mint budgets
   workers: 1,

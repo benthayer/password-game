@@ -79,10 +79,10 @@ describe('receive: dispatch', () => {
   it('sends a photo when the reply carries a QR payload', async () => {
     const f = fakeTransport([{ updates: [message(1, '/mint')] }]);
     await bot.pumpOnce(deps(f.transport, {
-      handle: () => ({ text: 'caption here', qrPayload: 'PG-TOKEN' }),
+      handle: () => ({ text: 'caption here', qrPayload: 'FAKE-TOKEN' }),
     }));
 
-    expect(f.sent).toEqual([{ kind: 'photo', text: 'caption here', qrPayload: 'PG-TOKEN' }]);
+    expect(f.sent).toEqual([{ kind: 'photo', text: 'caption here', qrPayload: 'FAKE-TOKEN' }]);
   });
 
   it('falls back to text when the photo upload fails, so the token is not lost', async () => {
@@ -94,11 +94,11 @@ describe('receive: dispatch', () => {
     };
 
     await bot.pumpOnce(deps(transport, {
-      handle: () => ({ text: 'token PG-ABC', qrPayload: 'PG-ABC' }),
+      handle: () => ({ text: 'token FAKE-ABC', qrPayload: 'FAKE-ABC' }),
     }));
 
     expect(sent).toHaveLength(1);
-    expect(sent[0].text).toContain('token PG-ABC');
+    expect(sent[0].text).toContain('token FAKE-ABC');
     expect(sent[0].text).toContain('QR image failed');
   });
 
@@ -295,7 +295,7 @@ describe('send: HTTP transport', () => {
     const calls = stubFetch({ ok: true });
     const t = transportMod.createHttpTransport(TOKEN, CHAT);
 
-    expect(await t.sendPhoto('PG-ABCDE', 'a caption')).toBe(true);
+    expect(await t.sendPhoto('ABCDE-FGHIJ', 'a caption')).toBe(true);
 
     const form = calls[0].init.body as FormData;
     expect(form).toBeInstanceOf(FormData);
@@ -313,7 +313,7 @@ describe('send: HTTP transport', () => {
     const calls = stubFetch({ ok: true });
     const t = transportMod.createHttpTransport(TOKEN, CHAT);
 
-    await t.sendPhoto('PG-ABCDE', 'y'.repeat(3000));
+    await t.sendPhoto('ABCDE-FGHIJ', 'y'.repeat(3000));
     expect((calls[0].init.body as FormData).get('caption')!.toString().length).toBe(1024);
     vi.unstubAllGlobals();
   });

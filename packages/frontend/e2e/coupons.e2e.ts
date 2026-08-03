@@ -59,7 +59,7 @@ test.describe('/coupons', () => {
     await expect(page.getByText('Worth 5 credits')).toBeVisible();
 
     const token = await page.locator('.coupon-token').innerText();
-    expect(token).toMatch(/^PG-[0-9A-Z-]+$/);
+    expect(token).toMatch(/^[0-9A-Z]{5}(-[0-9A-Z]{5}){3}-[0-9A-Z]{6}$/);
 
     // The QR is generated client-side onto a canvas; assert a real data URL with
     // actual pixels rather than just that an <img> exists.

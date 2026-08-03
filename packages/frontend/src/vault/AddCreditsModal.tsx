@@ -215,7 +215,7 @@ export default function AddCreditsModal({ isOpen, onClose, address, authKeys, in
                     type="text"
                     value={couponToken}
                     onChange={(e) => setCouponToken(e.target.value)}
-                    placeholder="PG-XXXXX-XXXXX-..."
+                    placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX"
                     autoComplete="off"
                     spellCheck={false}
                   />

@@ -68,7 +68,7 @@ describe('/mint', () => {
   it('mints one credit by default and returns a QR payload', () => {
     const out = run('/mint');
     expect(out.text).toContain('1 credit');
-    expect(out.qrPayload).toMatch(/^PG-/);
+    expect(out.qrPayload).toMatch(/^[0-9A-Z]{5}(-[0-9A-Z]{5}){3}-[0-9A-Z]{6}$/);
     // The QR encodes exactly the token shown in the text.
     expect(out.text).toContain(out.qrPayload!);
   });

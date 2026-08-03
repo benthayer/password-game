@@ -87,7 +87,7 @@ describe('redeeming', () => {
   });
 
   it('refuses an unknown token', async () => {
-    await expect(svc.redeemToken('PG-ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZZ', ADDRESS))
+    await expect(svc.redeemToken('ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZZ', ADDRESS))
       .rejects.toMatchObject({ code: 'invalid_token' });
   });
 

@@ -78,7 +78,7 @@ describe('AddCreditsModal coupon step', () => {
     expect(redeem().disabled).toBe(true);
     fireEvent.change(input, { target: { value: '   ' } });
     expect(redeem().disabled).toBe(true);
-    fireEvent.change(input, { target: { value: 'PG-ABCDE' } });
+    fireEvent.change(input, { target: { value: 'ABCDE-FGHIJ' } });
     expect(redeem().disabled).toBe(false);
   });
 
@@ -86,7 +86,7 @@ describe('AddCreditsModal coupon step', () => {
     redeemCoupon.mockResolvedValue({ credits: 5, gbYearsRemaining: 7.5, egressGbRemaining: 375 });
 
     const input = await openCouponStep();
-    fireEvent.change(input, { target: { value: 'PG-ABCDE-FGHIJ' } });
+    fireEvent.change(input, { target: { value: 'ABCDE-FGHIJ-KLMNP' } });
     fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
 
     await waitFor(() => expect(screen.getByText('5 credits')).toBeTruthy());
@@ -99,18 +99,18 @@ describe('AddCreditsModal coupon step', () => {
     redeemCoupon.mockResolvedValue({ credits: 1, gbYearsRemaining: 1, egressGbRemaining: 50 });
 
     const input = await openCouponStep();
-    fireEvent.change(input, { target: { value: '  PG-ABCDE  ' } });
+    fireEvent.change(input, { target: { value: '  ABCDE-FGHIJ  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
 
     await waitFor(() => expect(redeemCoupon).toHaveBeenCalledTimes(1));
-    expect(redeemCoupon).toHaveBeenCalledWith(AUTH_KEYS, 'PG-ABCDE');
+    expect(redeemCoupon).toHaveBeenCalledWith(AUTH_KEYS, 'ABCDE-FGHIJ');
   });
 
   it('says "1 credit" rather than "1 credits"', async () => {
     redeemCoupon.mockResolvedValue({ credits: 1, gbYearsRemaining: 1, egressGbRemaining: 50 });
 
     const input = await openCouponStep();
-    fireEvent.change(input, { target: { value: 'PG-ABCDE' } });
+    fireEvent.change(input, { target: { value: 'ABCDE-FGHIJ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
 
     await waitFor(() => expect(screen.getByText('1 credit')).toBeTruthy());
@@ -120,12 +120,12 @@ describe('AddCreditsModal coupon step', () => {
     redeemCoupon.mockRejectedValue(new Error('That token has already been used'));
 
     const input = await openCouponStep();
-    fireEvent.change(input, { target: { value: 'PG-USED' } });
+    fireEvent.change(input, { target: { value: 'USED1-USED2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
 
     await waitFor(() => expect(screen.getByText('That token has already been used')).toBeTruthy());
     // Still on the entry step, token preserved.
-    expect((screen.getByLabelText('Token') as HTMLInputElement).value).toBe('PG-USED');
+    expect((screen.getByLabelText('Token') as HTMLInputElement).value).toBe('USED1-USED2');
     expect(screen.getByRole('button', { name: 'Redeem' })).toBeTruthy();
   });
 
@@ -133,7 +133,7 @@ describe('AddCreditsModal coupon step', () => {
     redeemCoupon.mockRejectedValue(new Error('nope'));
 
     const input = await openCouponStep();
-    fireEvent.change(input, { target: { value: 'PG-X' } });
+    fireEvent.change(input, { target: { value: 'XXXXX-XXXXX' } });
     fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
 
     await waitFor(() => expect(screen.getByText('nope')).toBeTruthy());
