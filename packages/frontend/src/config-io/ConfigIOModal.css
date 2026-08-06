@@ -1,0 +1,212 @@
+.config-io-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1150;
+  padding: 16px;
+}
+
+.config-io-modal {
+  background: #12121a;
+  border-radius: 12px;
+  border: 1px solid #1e2a3a;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header stays put while the body scrolls, so the close button is always
+   reachable no matter how short the window is. */
+.config-io-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #1e2a3a;
+  flex-shrink: 0;
+}
+
+.config-io-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #e2e8f0;
+  font-weight: 400;
+}
+
+.config-io-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.config-io-close:hover {
+  background: #1a1a24;
+  color: #e2e8f0;
+  border: none;
+  box-shadow: none;
+}
+
+.config-io-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.config-io-intro {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.config-io-label {
+  display: block;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.config-io-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #0a0a0f;
+  border: 1px solid #1e3a4c;
+  color: #67e8f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: vertical;
+  word-break: break-all;
+}
+
+.config-io-textarea:focus {
+  outline: none;
+  border-color: #0891b2;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+}
+
+.config-io-textarea.readonly {
+  color: #a5f3fc;
+}
+
+.config-io-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.config-io-actions button {
+  flex: 1 1 180px;
+  min-height: 44px;
+}
+
+.config-io-primary {
+  background: #1e3a4c;
+  border: 1px solid #0891b2;
+  color: #22d3ee;
+}
+
+.config-io-primary:hover:not(:disabled) {
+  background: #164e63;
+  border-color: #22d3ee;
+}
+
+.config-io-secondary {
+  background: #1a1a24;
+  border: 1px solid #2a3444;
+  color: #94a3b8;
+}
+
+.config-io-secondary:hover:not(:disabled) {
+  background: #22222e;
+  border-color: #3a4a5a;
+  color: #cbd5e1;
+}
+
+.config-io-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #475569;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.config-io-divider::before,
+.config-io-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #1e2a3a;
+}
+
+.config-io-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(127, 29, 29, 0.25);
+  border: 1px solid #7f1d1d;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.config-io-status {
+  margin-top: 12px;
+  color: #34d399;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+.config-io-hint {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .config-io-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .config-io-modal {
+    max-width: none;
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+  }
+
+  .config-io-actions button {
+    flex: 1 1 100%;
+  }
+}

@@ -1,19 +1,30 @@
 /**
  * JSON export/import utilities for GenerationConfig.
  * Used for config backup and recovery.
+ *
+ * Version history:
+ *   v1 - seedPhrase, gridRows, gridCols, hashAlgorithm, useRecommendedHash,
+ *        includeSalt, salt
+ *   v2 - drops useRecommendedHash and includeSalt. Neither was a derivation
+ *        input: useRecommendedHash was a UI affordance, and includeSalt only
+ *        gated the salt (effectiveSalt = includeSalt ? salt : ''), which the
+ *        empty string already expresses.
+ *
+ * v1 payloads still import: includeSalt:false collapses to salt:'', and
+ * useRecommendedHash is discarded.
  */
 
 import type { GenerationConfig } from './generation-config';
 import type { HashAlgorithmConfig, HashAlgorithm } from './hash-config';
-import { 
-  AVAILABLE_ALGORITHMS, 
+import {
+  AVAILABLE_ALGORITHMS,
   DEFAULT_ARGON2ID_CONFIG,
   DEFAULT_SCRYPT_CONFIG,
   DEFAULT_BCRYPT_CONFIG,
   DEFAULT_PBKDF2_CONFIG,
 } from './hash-config';
 
-const CONFIG_VERSION = 1;
+export const CONFIG_VERSION = 2;
 const CONFIG_FILENAME = 'password-game-config.json';
 
 // ============================================================
@@ -26,8 +37,6 @@ interface ConfigJson {
   gridRows: number;
   gridCols: number;
   hashAlgorithm: HashAlgorithmConfig;
-  useRecommendedHash: boolean;
-  includeSalt: boolean;
   salt: string;
 }
 
@@ -42,22 +51,24 @@ export function configToJson(config: GenerationConfig): ConfigJson {
     gridRows: config.gridRows,
     gridCols: config.gridCols,
     hashAlgorithm: config.hashAlgorithm,
-    useRecommendedHash: config.useRecommendedHash,
-    includeSalt: config.includeSalt,
-    salt: config.salt,
+    // v2 has no includeSalt flag; an unused salt is simply empty.
+    salt: config.includeSalt ? config.salt : '',
   };
 }
 
+export function configToJsonText(config: GenerationConfig): string {
+  return JSON.stringify(configToJson(config), null, 2);
+}
+
 export function downloadConfigAsJson(config: GenerationConfig): void {
-  const json = configToJson(config);
-  const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+  const blob = new Blob([configToJsonText(config)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  
+
   const a = document.createElement('a');
   a.href = url;
   a.download = CONFIG_FILENAME;
   a.click();
-  
+
   URL.revokeObjectURL(url);
 }
 
@@ -72,26 +83,27 @@ export class ConfigParseError extends Error {
   }
 }
 
-export async function parseConfigFromJson(file: File): Promise<GenerationConfig> {
-  const text = await file.text();
-  
+export function parseConfigFromJsonText(text: string): GenerationConfig {
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
     throw new ConfigParseError('Invalid JSON format');
   }
-  
   return validateAndParseConfig(json);
+}
+
+export async function parseConfigFromJson(file: File): Promise<GenerationConfig> {
+  return parseConfigFromJsonText(await file.text());
 }
 
 function validateAndParseConfig(json: unknown): GenerationConfig {
   if (typeof json !== 'object' || json === null) {
     throw new ConfigParseError('Config must be an object');
   }
-  
+
   const obj = json as Record<string, unknown>;
-  
+
   // Version check
   if (typeof obj.version !== 'number') {
     throw new ConfigParseError('Missing or invalid version');
@@ -99,7 +111,7 @@ function validateAndParseConfig(json: unknown): GenerationConfig {
   if (obj.version > CONFIG_VERSION) {
     throw new ConfigParseError(`Config version ${obj.version} is newer than supported (${CONFIG_VERSION})`);
   }
-  
+
   // Required string fields
   if (typeof obj.seedPhrase !== 'string') {
     throw new ConfigParseError('Missing or invalid seedPhrase');
@@ -107,7 +119,7 @@ function validateAndParseConfig(json: unknown): GenerationConfig {
   if (typeof obj.salt !== 'string') {
     throw new ConfigParseError('Missing or invalid salt');
   }
-  
+
   // Required number fields
   if (typeof obj.gridRows !== 'number' || obj.gridRows < 2 || obj.gridRows > 10) {
     throw new ConfigParseError('gridRows must be a number between 2 and 10');
@@ -115,26 +127,24 @@ function validateAndParseConfig(json: unknown): GenerationConfig {
   if (typeof obj.gridCols !== 'number' || obj.gridCols < 2 || obj.gridCols > 10) {
     throw new ConfigParseError('gridCols must be a number between 2 and 10');
   }
-  
-  // Required boolean fields
-  if (typeof obj.useRecommendedHash !== 'boolean') {
-    throw new ConfigParseError('Missing or invalid useRecommendedHash');
-  }
-  if (typeof obj.includeSalt !== 'boolean') {
-    throw new ConfigParseError('Missing or invalid includeSalt');
-  }
-  
+
   // Hash algorithm validation
   const hashAlgorithm = validateHashAlgorithm(obj.hashAlgorithm);
-  
+
+  // v1 carried an includeSalt flag. Honour it when present so old configs
+  // derive identical keys, then collapse to the v2 representation.
+  const saltDisabledByV1Flag = obj.version < 2 && obj.includeSalt === false;
+  const salt = saltDisabledByV1Flag ? '' : obj.salt;
+
   return {
     seedPhrase: obj.seedPhrase,
     gridRows: obj.gridRows,
     gridCols: obj.gridCols,
     hashAlgorithm,
-    useRecommendedHash: obj.useRecommendedHash,
-    includeSalt: obj.includeSalt,
-    salt: obj.salt,
+    // Dropped in v2; kept on the in-memory type for now.
+    useRecommendedHash: false,
+    includeSalt: salt !== '',
+    salt,
   };
 }
 
@@ -142,19 +152,19 @@ function validateHashAlgorithm(value: unknown): HashAlgorithmConfig {
   if (typeof value !== 'object' || value === null) {
     throw new ConfigParseError('hashAlgorithm must be an object');
   }
-  
+
   const obj = value as Record<string, unknown>;
-  
+
   if (typeof obj.algorithm !== 'string') {
     throw new ConfigParseError('hashAlgorithm.algorithm must be a string');
   }
-  
+
   if (!AVAILABLE_ALGORITHMS.includes(obj.algorithm as HashAlgorithm)) {
     throw new ConfigParseError(`Unknown algorithm: ${obj.algorithm}`);
   }
-  
+
   const algorithm = obj.algorithm as HashAlgorithm;
-  
+
   // Validate algorithm-specific fields, using defaults for missing values
   switch (algorithm) {
     case 'argon2id':
@@ -202,4 +212,3 @@ function validatePbkdf2Hash(value: unknown): 'sha256' | 'sha512' {
   }
   return value;
 }
-

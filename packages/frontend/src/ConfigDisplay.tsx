@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { GenerationConfig, HashAlgorithmConfig } from './generation-config';
-import { downloadConfigAsJson } from './config-json';
+import { SaveConfigModal } from './config-io';
 import './ConfigDisplay.css';
 
 interface ConfigDisplayProps {
@@ -9,28 +9,29 @@ interface ConfigDisplayProps {
 }
 
 export default function ConfigDisplay({ config, importedFromJson }: ConfigDisplayProps) {
-  const handleDownload = () => downloadConfigAsJson(config);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   return (
     <div className="config-display">
       <div className="config-header">
         <h3 className="config-title">Configuration</h3>
         {importedFromJson && (
-          <span className="config-imported-badge" title="This configuration was loaded from an uploaded JSON file">
-            🔒 From uploaded JSON
+          <span className="config-imported-badge" title="This configuration was loaded from an imported config">
+            🔒 Imported
           </span>
         )}
         <button
           className="config-download-button"
-          onClick={handleDownload}
-          title="Download configuration as JSON"
+          onClick={() => setSaveOpen(true)}
+          title="Copy the config string or download a file"
         >
-          Download
+          Save Config
         </button>
       </div>
       <div className="config-notice">
-        Download this or write this down! You need it for recovery. It does not need to be private.
+        Save this or write it down! You need it for recovery. It does not need to be private.
       </div>
+      <SaveConfigModal isOpen={saveOpen} onClose={() => setSaveOpen(false)} config={config} />
       <SeedPhraseDisplay seedPhrase={config.seedPhrase || ''} />
       <div className="config-display-item">
         <span className="config-label">Grid:</span>

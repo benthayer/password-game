@@ -26,7 +26,7 @@ import ConfigModal from './ConfigModal';
 import ConfigDisplay from './ConfigDisplay';
 import { DisplayModeSelect, HighlightCurrentWordCheckbox, HintCheckbox } from './PracticeConfigDisplay';
 import VaultCard from './vault/VaultCard';
-import { downloadConfigAsJson } from './config-json';
+import { SaveConfigModal } from './config-io';
 import './InteractionPage.css';
 import './PracticePage.css';
 
@@ -340,13 +340,14 @@ function WordSelectionSection({
 }
 
 function DownloadConfigButton({ config }: { config: GenerationConfig }) {
-  const handleDownload = () => downloadConfigAsJson(config);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   return (
     <div className="download-config-section">
-      <button className="download-config-button" onClick={handleDownload}>
-        Download Configuration (JSON)
+      <button className="download-config-button" onClick={() => setSaveOpen(true)}>
+        Save Config
       </button>
+      <SaveConfigModal isOpen={saveOpen} onClose={() => setSaveOpen(false)} config={config} />
     </div>
   );
 }

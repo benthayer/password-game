@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GenerationConfig } from '../generation-config';
-import { downloadConfigAsJson } from '../config-json';
+import { SaveConfigModal } from '../config-io';
 import { CloseConfirmModal } from '../shared';
 import './VaultModal.css';
 import './AcknowledgmentModal.css';
@@ -71,11 +71,7 @@ export default function AcknowledgmentModal({
     setShowCloseConfirm(false);
   };
 
-  const handleDownload = () => {
-    if (fullConfig) {
-      downloadConfigAsJson(fullConfig);
-    }
-  };
+  const [saveOpen, setSaveOpen] = useState(false);
 
   const toggleAcknowledgment = (index: number) => {
     setAcknowledgmentChecks(prev => {
@@ -141,13 +137,20 @@ export default function AcknowledgmentModal({
                   checked={configConfirmed}
                   onChange={() => setConfigConfirmed(!configConfirmed)}
                 />
-                <span>I have downloaded or written down my configuration and will be able to easily access it when I need to recover</span>
+                <span>I have saved or written down my configuration and will be able to easily access it when I need to recover</span>
               </div>
             </div>
             {fullConfig && (
-              <button className="acknowledgment-download-button" onClick={handleDownload}>
-                Download Configuration (JSON)
-              </button>
+              <>
+                <button className="acknowledgment-download-button" onClick={() => setSaveOpen(true)}>
+                  Save Config
+                </button>
+                <SaveConfigModal
+                  isOpen={saveOpen}
+                  onClose={() => setSaveOpen(false)}
+                  config={fullConfig}
+                />
+              </>
             )}
             <div className="vault-modal-buttons">
               <button className="vault-modal-cancel" onClick={() => setStage('password')}>

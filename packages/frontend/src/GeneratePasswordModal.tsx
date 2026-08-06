@@ -12,7 +12,7 @@ import { generatePassword, generateSalt } from './crypto-utils';
 import { prefetchVaultKeys } from './vault/vault-keys-cache';
 import { calculateCostToCrack } from './cost-calculation';
 import { useConfigForm } from './hooks/useConfigForm';
-import { downloadConfigAsJson } from './config-json';
+import { SaveConfigModal } from './config-io';
 import { CloseConfirmModal } from './shared';
 import {
   GridSettingsSection,
@@ -149,12 +149,6 @@ export default function GeneratePasswordModal({
     prefetchVaultKeys(password, generatedConfig);
     navigate('/practice');
     onClose();
-  };
-
-  const handleDownloadConfig = () => {
-    if (generatedConfig) {
-      downloadConfigAsJson(generatedConfig);
-    }
   };
 
   const handleBack = () => {
@@ -320,13 +314,9 @@ function ConfirmStage({
 }) {
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const [hasSavedAcknowledgment, setHasSavedAcknowledgment] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   const canContinue = hasSavedAcknowledgment;
-
-  const handleDownload = () => {
-    downloadConfigAsJson(config);
-    setHasDownloaded(true);
-  };
 
   const hashDisplay = config.useRecommendedHash 
     ? 'Recommended (argon2id)' 
@@ -368,13 +358,19 @@ function ConfirmStage({
           </div>
         </div>
 
-        <button 
+        <button
           className={`confirm-download-button ${hasDownloaded ? 'downloaded' : ''}`}
-          onClick={handleDownload}
-          disabled={hasDownloaded}
+          onClick={() => setSaveOpen(true)}
         >
-          {hasDownloaded ? '✓ Downloaded' : 'Download Configuration (JSON)'}
+          {hasDownloaded ? '✓ Saved — save again' : 'Save Config'}
         </button>
+
+        <SaveConfigModal
+          isOpen={saveOpen}
+          onClose={() => setSaveOpen(false)}
+          config={config}
+          onSaved={() => setHasDownloaded(true)}
+        />
 
         <div className="confirm-acknowledgment">
           <input

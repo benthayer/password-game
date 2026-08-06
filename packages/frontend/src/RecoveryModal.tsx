@@ -3,12 +3,12 @@
  * Configure grid before starting password recovery.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GenerationConfig } from './generation-config';
 import { useConfigForm } from './hooks/useConfigForm';
-import { parseConfigFromJson, ConfigParseError } from './config-json';
 import { CloseConfirmModal, ImportedConfigBanner } from './shared';
+import { ImportConfigModal } from './config-io';
 import {
   GridSettingsSection,
   HashSettingsSection,
@@ -34,15 +34,14 @@ export default function RecoveryModal({
 }: RecoveryModalProps) {
   const navigate = useNavigate();
   const form = useConfigForm(config, isOpen);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [boundToImport, setBoundToImport] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setShowCloseConfirm(false);
-      setImportError(null);
+      setImportOpen(false);
       setBoundToImport(configImportedFromJson);
     }
   }, [isOpen, configImportedFromJson]);
@@ -69,54 +68,18 @@ export default function RecoveryModal({
     onClose();
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setImportError(null);
-      const importedConfig = await parseConfigFromJson(file);
-      form.loadFromConfig(importedConfig);
-      setBoundToImport(true);
-    } catch (err) {
-      if (err instanceof ConfigParseError) {
-        setImportError(err.message);
-      } else {
-        setImportError('Failed to read configuration file');
-      }
-    }
-
-    // Reset file input so same file can be selected again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleImported = (importedConfig: GenerationConfig) => {
+    form.loadFromConfig(importedConfig);
+    setBoundToImport(true);
   };
 
   return (
     <>
       <div className="recovery-modal-overlay" onClick={handleCloseAttempt}>
         <div className="recovery-modal-content" onClick={(e) => e.stopPropagation()}>
-          <ModalHeader onClose={handleCloseAttempt} onImport={handleImportClick} />
+          <ModalHeader onClose={handleCloseAttempt} onImport={() => setImportOpen(true)} />
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileSelect}
-            style={{ display: 'none' }}
-          />
 
-          {importError && (
-            <div className="import-error">
-              <span className="import-error-icon">⚠</span>
-              <span>{importError}</span>
-              <button className="import-error-dismiss" onClick={() => setImportError(null)}>×</button>
-            </div>
-          )}
 
           {boundToImport && (
             <ImportedConfigBanner onEditManually={() => setBoundToImport(false)} />
@@ -154,6 +117,11 @@ export default function RecoveryModal({
           <ModalFooter onCancel={handleCloseAttempt} onRecover={handleRecover} />
         </div>
       </div>
+      <ImportConfigModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImported}
+      />
       <CloseConfirmModal
         isOpen={showCloseConfirm}
         onConfirm={handleConfirmClose}
@@ -172,8 +140,8 @@ function ModalHeader({ onClose, onImport }: { onClose: () => void; onImport: () 
     <div className="recovery-modal-header">
       <h2>Recover Password</h2>
       <div className="recovery-modal-header-buttons">
-        <button className="recovery-import-button" onClick={onImport} title="Import configuration from JSON file">
-          ↑ Import JSON
+        <button className="recovery-import-button" onClick={onImport} title="Paste a config string or upload a file">
+          ↑ Import
         </button>
         <button className="recovery-modal-close" onClick={onClose}>×</button>
       </div>
