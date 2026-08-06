@@ -3,13 +3,14 @@
  * Orchestrates recovery and practice modes.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { GenerationConfig, PracticeDisplayConfig } from './generation-config';
 import { DEFAULT_PRACTICE_DISPLAY_CONFIG, getGridSize, calculateEntropyPerWord } from './generation-config';
 import { SecurityEstimate } from './config-modal';
 import { useRecoveryMode } from './hooks/useRecoveryMode';
 import { usePracticeMode } from './hooks/usePracticeMode';
+import { useIsMobile } from './hooks/useIsMobile';
 import {
   RecoveryControls,
   PracticeControls,
@@ -183,22 +184,51 @@ function ConfigSection({
     const entropyPerWord = calculateEntropyPerWord(config);
 
     return (
-      <div className="config-section-container practice-configs-container">
-        <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
-        <SecurityEstimate
-          gridSize={gridSize}
-          wordCount={wordCount}
-          entropyPerWord={entropyPerWord}
-          hashConfig={config.hashAlgorithm}
-          includeSalt={config.includeSalt}
-        />
-      </div>
+      <CollapseOnMobile summary="Configuration & security details">
+        <div className="config-section-container practice-configs-container">
+          <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
+          <SecurityEstimate
+            gridSize={gridSize}
+            wordCount={wordCount}
+            entropyPerWord={entropyPerWord}
+            hashConfig={config.hashAlgorithm}
+            includeSalt={config.includeSalt}
+          />
+        </div>
+      </CollapseOnMobile>
     );
   }
   return (
-    <div className="config-section-container">
-      <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
-    </div>
+    <CollapseOnMobile summary="Configuration & recovery details">
+      <div className="config-section-container">
+        <ConfigDisplay config={config} importedFromJson={configImportedFromJson} />
+      </div>
+    </CollapseOnMobile>
+  );
+}
+
+/**
+ * On a phone the config/security panels are ~500px of reference material
+ * sitting between the header and the word grid. Collapse them behind a
+ * disclosure so the grid -- the thing you actually tap -- stays near the top.
+ * Desktop renders children inline, exactly as before.
+ */
+function CollapseOnMobile({
+  summary,
+  children,
+}: {
+  summary: string;
+  children: ReactNode;
+}) {
+  const isMobile = useIsMobile();
+
+  if (!isMobile) return <>{children}</>;
+
+  return (
+    <details className="config-collapsible">
+      <summary>{summary}</summary>
+      {children}
+    </details>
   );
 }
 

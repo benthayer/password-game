@@ -47,8 +47,6 @@ function AppRouter() {
   
   return (
     <>
-    <meta name="viewport" content="width=650, initial-scale=1.0">
-    </meta>
     <GitHubLink />
     <PrivacyNotice />
     <BrowserRouter>

@@ -1,0 +1,451 @@
+/**
+ * Mobile-only refinements.
+ *
+ * Everything here is inside a max-width media query, so desktop rendering is
+ * byte-for-byte unchanged. Desktop browsers never evaluate these rules.
+ *
+ * Context: the app previously shipped `<meta name="viewport" content="width=650">`,
+ * which told phones to lay out at 650px inside a ~390px screen. Every control
+ * past x=390 was physically untappable. With that removed the real layout is
+ * visible for the first time, and these rules clean up what it exposed.
+ */
+
+@media (max-width: 640px) {
+  body {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  /* ---- Comfortable touch targets (Apple/Google both say ~44px) ---- */
+  button {
+    min-height: 44px;
+  }
+
+  .config-field input[type='checkbox'],
+  .checkbox-row input[type='checkbox'],
+  .acknowledgment-checkbox-item input[type='checkbox'],
+  .confirm-acknowledgment input[type='checkbox'] {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  /* Close "×" buttons: keep the glyph small but the tap area big. */
+  .recovery-modal-close,
+  .config-modal-close,
+  .generate-modal-close,
+  .practice-modal-close,
+  .about-modal-close,
+  .salt-info-close,
+  .modal-close-x,
+  .payment-result-close {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---- Grid steppers: stack instead of overflowing ---- */
+  .grid-fields-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .grid-control {
+    justify-content: space-between;
+  }
+
+  /* ---- Modals: full-bleed sheets, sticky header, scrollable body ---- */
+  .recovery-modal-overlay,
+  .config-modal-overlay,
+  .generate-modal-overlay,
+  .about-modal-overlay,
+  .practice-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .recovery-modal-content,
+  .config-modal-content,
+  .generate-modal-content,
+  .about-modal-content,
+  .practice-modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* The header must never scroll away — it holds the only close button. */
+  .recovery-modal-header,
+  .config-modal-header,
+  .generate-modal-header,
+  .about-modal-header,
+  .practice-modal-header {
+    flex-shrink: 0;
+    padding: 16px;
+  }
+
+  .recovery-modal-body,
+  .config-modal-body,
+  .generate-modal-body,
+  .about-modal-body,
+  .practice-modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Footers stack so primary actions are full-width and thumb-reachable. */
+  .recovery-modal-footer,
+  .config-modal-footer,
+  .generate-modal-footer,
+  .about-modal-footer,
+  .practice-modal-footer {
+    flex-shrink: 0;
+    flex-direction: column-reverse;
+    gap: 10px;
+    padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .recovery-modal-footer button,
+  .config-modal-footer button,
+  .generate-modal-footer button,
+  .about-modal-footer button,
+  .practice-modal-footer button {
+    width: 100%;
+  }
+
+  .recovery-modal-header h2,
+  .config-modal-header h2,
+  .generate-modal-header h2,
+  .about-modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Header action row (Import + close) shouldn't wrap awkwardly. */
+  .recovery-modal-header-buttons,
+  .config-modal-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* The confirm dialog sits above modals; keep it thumb-friendly too. */
+  .close-confirm-modal {
+    min-width: 0;
+    width: calc(100% - 32px);
+    max-width: 400px;
+  }
+
+  .close-confirm-buttons {
+    flex-direction: column-reverse;
+  }
+
+  .close-confirm-buttons button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* ---- Chrome that competes for space ---- */
+  .github-link {
+    position: static;
+    display: inline-flex;
+    margin: 0 0 10px;
+  }
+
+  /* The banner must stay (it is a deliberate up-front disclosure), but its
+     full text does not need to cost a third of the first screen. Clamp the
+     collapsed summary; expanding still shows everything. */
+  .privacy-notice {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .privacy-notice-summary {
+    gap: 6px;
+  }
+
+  .privacy-notice:not(:has(.privacy-notice-details)) .privacy-notice-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .privacy-notice-toggle {
+    min-height: 44px;
+  }
+
+  /* ---- Main page ---- */
+  .main-content {
+    padding: 24px 20px;
+  }
+
+  .main-content h1 {
+    font-size: 2rem;
+  }
+}
+
+/* ============================================================
+   Practice / recovery page
+   ============================================================
+   The practice screen is the one that mattered most. On a phone the old
+   layout put the word grid ~2200px down the page: a tall header, a
+   full-width config panel, and a progress box that grew unbounded all
+   stacked above the thing you actually tap. The grid is the interaction
+   loop, so it needs to be reachable without scrolling.
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .game-page {
+    padding: 0;
+  }
+
+  .game-content {
+    padding: 16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .game-header {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .game-header h1 {
+    font-size: 1.35rem;
+  }
+
+  /* InteractionPage.css stacks these vertically under 768px, which costs
+     ~140px before you reach anything interactive. They fit fine in a row. */
+  .header-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .header-button {
+    flex: 1 1 auto;
+    width: auto;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    min-height: 44px;
+  }
+
+  /* Config panel is reference material, not part of the loop. Collapse it
+     into a disclosure so it stops pushing the grid off-screen. */
+  details.config-collapsible {
+    border: 1px solid #1e2a3a;
+    border-radius: 8px;
+    background: #0f0f16;
+    margin-bottom: 16px;
+  }
+
+  details.config-collapsible > summary {
+    cursor: pointer;
+    padding: 0 14px;
+    color: #67e8f9;
+    font-size: 0.9rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    list-style: none;
+  }
+
+  details.config-collapsible > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.config-collapsible > summary::after {
+    content: '▾';
+    margin-left: auto;
+    transition: transform 0.2s;
+  }
+
+  details.config-collapsible[open] > summary::after {
+    transform: rotate(180deg);
+  }
+
+  details.config-collapsible .config-display {
+    border: none;
+    background: transparent;
+    margin: 0;
+  }
+
+  /* The practice controls row (checkbox + select + 3 nav buttons) was
+     592px wide against a 390px screen. Wrap it into a compact two-row block
+     rather than a tall stack -- vertical space above the grid is the scarce
+     resource here. */
+  .section-header-right {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .practice-config-select {
+    flex: 1 1 100%;
+    min-height: 44px;
+    order: 1;
+  }
+
+  .practice-config-checkbox-label {
+    flex: 1 1 auto;
+    justify-content: space-between;
+    min-height: 44px;
+    order: 2;
+    gap: 8px;
+    font-size: 0.85rem;
+  }
+
+  .practice-controls {
+    display: flex;
+    flex: 0 0 auto;
+    order: 3;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .practice-controls .navigation-button {
+    min-width: 48px;
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .current-password-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .current-password-section {
+    margin-bottom: 12px;
+  }
+
+  .word-selection-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .current-password-header h2,
+  .word-selection-section h2 {
+    font-size: 1.1rem;
+  }
+
+  /* Cap the progress box so a long password can't bury the grid.
+     It scrolls internally instead of growing the page. */
+  .password-progress-display {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 12px;
+    margin-bottom: 12px;
+    max-height: 22vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .password-progress-display.game-mode {
+    min-height: 96px;
+  }
+
+  .password-word {
+    margin: 2px;
+    padding: 3px 6px;
+  }
+
+  /* Word grid: the primary interaction.
+     The practice loop is "read progress -> tap a word -> repeat", so the grid
+     needs to be reachable at all times. Sticking it to the bottom of the
+     viewport means the progress display scrolls above it while the tap
+     targets stay put -- no scrolling back and forth between every word. */
+  .word-selection-section {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: #12121a;
+    padding-top: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-top: 1px solid #1e2a3a;
+  }
+
+  .word-grid {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .word-button {
+    padding: 12px 6px;
+    font-size: 0.85rem;
+    min-height: 52px;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .display-password-button,
+  .download-config-button {
+    min-height: 48px;
+  }
+
+  /* Six vault buttons in a nowrap row blow past the screen. Wrap into a
+     2-up grid so every action stays reachable. */
+  .vault-card {
+    padding: 16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .vault-button {
+    width: 100%;
+    padding: 12px 8px;
+    min-height: 48px;
+    font-size: 0.9rem;
+  }
+
+  .config-display {
+    min-width: 0;
+  }
+
+  .config-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .config-display-item {
+    flex-wrap: wrap;
+    word-break: break-word;
+  }
+
+  .copyable-value-container {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .config-value {
+    word-break: break-all;
+  }
+}
