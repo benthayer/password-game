@@ -285,6 +285,13 @@
     margin: 0;
   }
 
+  /* The page-level "Save Config" button below the grid is the reachable one
+     while this panel is collapsed, so hide the duplicate inside it rather
+     than leaving a button that only exists once you expand. */
+  details.config-collapsible .config-download-button {
+    display: none;
+  }
+
   /* The practice controls row (checkbox + select + 3 nav buttons) was
      592px wide against a 390px screen. Wrap it into a compact two-row block
      rather than a tall stack -- vertical space above the grid is the scarce
