@@ -1,0 +1,65 @@
+---
+description: How mobile support works and the rule that keeps desktop unchanged
+globs:
+  - "packages/frontend/src/mobile.css"
+  - "packages/frontend/src/hooks/useIsMobile.ts"
+  - "packages/frontend/src/**/*.css"
+---
+
+# Mobile Support
+
+Desktop is the established experience. **Mobile work must not change desktop
+rendering.** The mechanism for that is a hard constraint, not a convention:
+
+- All mobile CSS lives in `mobile.css`, entirely inside
+  `@media (max-width: 640px)`. Desktop browsers never evaluate it.
+- Behavioural differences use the `useIsMobile()` hook, which matches the
+  **same 640px breakpoint**. Keep them in sync.
+
+To verify a mobile change is desktop-safe, capture the geometry of the key
+containers at 1280x800 before and after and diff it. It should be identical.
+
+## Never render a viewport meta tag from React
+
+`App.tsx` used to render `<meta name="viewport" content="width=650">` inside
+the component tree. React injected it at mount, overriding the correct
+`width=device-width` tag in `index.html`, and phones laid out at 650px inside
+a ~390px screen.
+
+The failure mode is nasty: content past x=390 is rendered and the DOM happily
+hit-tests it, but it is **physically unreachable** — the layout viewport is not
+overflowing, it is lying about its width, so there is nothing to scroll. Every
+modal's close button and primary action sat in that dead zone, which made
+opening a modal on a phone a one-way trip.
+
+The viewport tag belongs in `index.html` and nowhere else.
+
+## The practice screen is a loop
+
+Practice is "read progress -> tap a word -> repeat". The word grid is the
+interaction, so on mobile it is `position: sticky; bottom: 0` — it stays
+tappable while the progress display scrolls above it. Do not un-stick it, and
+do not add tall chrome above it without checking where the grid lands.
+
+Supporting moves, in order of impact: config/security panels collapse into a
+`<details>`, the progress box is capped at 22vh and scrolls internally, and
+header/control rows pack horizontally instead of stacking.
+
+## Modals
+
+Full-height sheets with a **fixed header** and a scrolling body. The header
+holds the only close button, so it must never scroll out of reach. Desktop
+modal headers are `position: sticky` for the same reason.
+
+## Touch targets
+
+~44px minimum. Keep the glyph small if you like, but give `x` buttons a 44px
+box.
+
+## Checking it
+
+Playwright with a real device profile and `page.tap()` — not `click()`, which
+bypasses the hit-testing that catches unreachable controls. Assert that
+`document.documentElement.scrollWidth` does not exceed
+`window.visualViewport.width`, and that no interactive element's right edge
+extends past it.
