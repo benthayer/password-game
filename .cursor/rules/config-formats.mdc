@@ -1,0 +1,76 @@
+---
+description: Config export/import formats and the rules for changing them
+globs:
+  - "packages/frontend/src/config-*.ts"
+  - "packages/frontend/src/config-io/**"
+---
+
+# Config Formats
+
+A config is everything needed to recover a password *except* the password.
+It is not secret, but losing it means losing access to the encrypted data.
+
+## Two representations, one meaning
+
+1. **String** (preferred) — `v2:<seed>:<rows>x<cols>:<algorithm>:<param>...:<salt>`
+2. **File** — `password-game-config.json`, v2 schema
+
+`config-transfer.ts` is the single entry point. `parseConfigText` sniffs which
+one it was handed (JSON starts with `{`), so a user can paste either into the
+same box. All UI goes through the two inverse modals in `config-io/`:
+
+- `SaveConfigModal` — copy the string, or download the file
+- `ImportConfigModal` — paste a string, or upload a file
+
+**Never call `downloadConfigAsJson` or a file input directly from a component.**
+Route through those modals so both representations are always offered together.
+
+## Vocabulary
+
+"Save Config" for export, "Import" for import. Not "Download", not
+"Import JSON" — the string form is the primary path and the naming should not
+imply a file.
+
+## String escaping
+
+Exactly two rules, and nothing else is escaped:
+
+    :  ->  \:
+    \  ->  \\
+
+## Why there is no length prefix
+
+Arity is **fixed per algorithm**, so the parser reads the algorithm name,
+consumes exactly that many params, and treats the remainder as the salt:
+
+| algorithm | params |
+|-----------|--------|
+| `sha256`  | 0 |
+| `bcrypt`  | 1 — `cost` |
+| `pbkdf2`  | 2 — `iterations`, `hash` |
+| `argon2id`| 3 — `memoryCost`, `timeCost`, `parallelism` |
+| `scrypt`  | 3 — `N`, `r`, `p` |
+
+If you add an algorithm, add it to `ALGORITHM_PARAMS` in `config-string.ts`
+and give it a fixed arity. A variadic algorithm would break the trailing-salt
+rule and needs a format discussion first.
+
+## Bumping the version
+
+**Old versions must keep importing. That is the entire point of the version.**
+
+v1 -> v2 dropped `useRecommendedHash` and `includeSalt`. That was only safe
+because neither was a derivation input:
+
+- `useRecommendedHash` was a UI affordance and never reached the hash.
+- `includeSalt` gated the salt — `hash-function.ts` does
+  `effectiveSalt = includeSalt ? salt : ''` — which an empty salt already
+  expresses. So v1 `includeSalt:false` imports as `salt:''`.
+
+Before removing any field, prove it is not a derivation input. If it is,
+migrate it to something that reproduces the same effective value.
+
+`config-migration.test.ts` guards this: a v1 config must derive a
+**byte-identical hash** after import. Extend it whenever you bump the version.
+A failure there means someone's stored data has become unrecoverable — treat
+it as data loss, not a test failure.
