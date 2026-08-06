@@ -101,6 +101,38 @@ must derive a **byte-identical hash** after import, for both
 `includeSalt: true` and `false`. If that test ever fails, someone's stored
 data has become unrecoverable.
 
+## The desktop close bug, probably found
+
+Ben: "see if you can do things like click a pixel location rather than the
+button itself for the close repro." That was the right instinct and it worked
+immediately.
+
+Clicking raw pixel offsets around the close "x" (which was only 32x32):
+
+    dead center      -> closes
+    14px any dir     -> closes
+    20px left        -> *** NOTHING HAPPENED ***
+    20px right       -> *** NOTHING HAPPENED ***
+    20px up          -> *** NOTHING HAPPENED ***
+    20px down        -> *** NOTHING HAPPENED ***
+
+A near-miss lands on `.recovery-modal-header`, which is inside the
+`onClick={(e) => e.stopPropagation()}` wrapper. So the click is swallowed in
+silence: no close, no overlay dismiss, no feedback. The button *looks* broken
+while being perfectly wired — which is exactly the symptom described, and
+explains why every programmatic test passed (Playwright and I both aimed at
+the element's center, the one place that always worked).
+
+The same trap exists on "Yes, Close" (26px above/below hits
+`.close-confirm-modal`) and Cancel (28px above hits the footer).
+
+Fix: close buttons get real 44px hit boxes; the glyph is unchanged. All four
+20px near-misses now close correctly.
+
+Lesson for future repros: testing by selector hides target-size bugs
+entirely, because the selector always resolves to the element's center. Click
+coordinates, and probe `elementFromPoint` in a ring around the target.
+
 ## Still open
 
 Ben reports the modal not closing **on desktop**. Could not reproduce, and it
