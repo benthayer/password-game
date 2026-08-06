@@ -45,7 +45,14 @@
   background: #155e75;
 }
 
+/* The content box is the scroll container. Pinning the header keeps the
+   close button reachable no matter how far the body is scrolled -- without
+   it, a short window scrolls the "x" clean out of view. */
 .recovery-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #12121a;
   display: flex;
   justify-content: space-between;
   align-items: center;
