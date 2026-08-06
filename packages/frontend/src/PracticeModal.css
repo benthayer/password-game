@@ -40,6 +40,15 @@
 }
 
 .practice-modal-close {
+  /* A 32px glyph is an easy thing to miss, and a near-miss lands on the
+     header -- which is inside the stopPropagation wrapper, so the click is
+     silently swallowed and the button looks broken. Give it a real 44px
+     target. */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   font-size: 2rem;

@@ -362,7 +362,8 @@
     line-height: 1.7;
     padding: 12px;
     margin-bottom: 12px;
-    max-height: 22vh;
+    max-height: 20vh;
+    max-height: 20dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -381,24 +382,31 @@
      needs to be reachable at all times. Sticking it to the bottom of the
      viewport means the progress display scrolls above it while the tap
      targets stay put -- no scrolling back and forth between every word. */
+  /* Only the GRID sticks, not the whole section. Sticking the section meant
+     its header counted toward the pinned height, and once that block was
+     taller than the viewport the browser pinned its bottom and pushed the
+     first row of words off the top -- exactly what happens when iOS Safari's
+     toolbar reappears and shrinks the viewport mid-session. */
   .word-selection-section {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .word-grid {
     position: sticky;
     bottom: 0;
     z-index: 5;
     background: #12121a;
-    padding-top: 8px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 8px;
     margin-left: -16px;
     margin-right: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 8px 16px;
     border-top: 1px solid #1e2a3a;
+    max-height: 52vh;
+    max-height: 52dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .word-grid {
-    gap: 8px;
-    margin-bottom: 8px;
-  }
 
   .word-button {
     padding: 12px 6px;
