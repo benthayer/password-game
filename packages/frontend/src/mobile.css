@@ -163,29 +163,6 @@
     margin: 0 0 10px;
   }
 
-  /* The banner must stay (it is a deliberate up-front disclosure), but its
-     full text does not need to cost a third of the first screen. Clamp the
-     collapsed summary; expanding still shows everything. */
-  .privacy-notice {
-    margin-bottom: 12px;
-    padding: 10px 12px;
-    font-size: 12px;
-  }
-
-  .privacy-notice-summary {
-    gap: 6px;
-  }
-
-  .privacy-notice:not(:has(.privacy-notice-details)) .privacy-notice-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .privacy-notice-toggle {
-    min-height: 44px;
-  }
 
   /* ---- Main page ---- */
   .main-content {
